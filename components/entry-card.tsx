@@ -19,9 +19,6 @@ interface EntryCardProps {
 export function EntryCard({
   id,
   type,
-  year,
-  month,
-  day,
   encrypted_content,
   iv,
 }: EntryCardProps) {

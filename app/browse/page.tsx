@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { initActivityListeners, onLock, getKey } from "@/lib/key-manager";
@@ -55,7 +55,7 @@ export default function BrowsePage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
-  const [needsPassphrase, setNeedsPassphrase] = useState(false);
+  const [hasKey, setHasKey] = useState(() => !!getKey());
   const { isLocked, setIsLocked } = useVisibilityLock();
 
   useEffect(() => {
@@ -64,26 +64,25 @@ export default function BrowsePage() {
     return cleanup;
   }, [setIsLocked]);
 
-  const fetchEntries = useCallback(async () => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (typeFilter) params.set("type", typeFilter);
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchEntries() {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (typeFilter) params.set("type", typeFilter);
 
-    const res = await fetch(`/api/entries?${params}`);
-    const data = await res.json();
-    setEntries(data);
-    setLoading(false);
+      const res = await fetch(`/api/entries?${params}`);
+      if (cancelled) return;
+      const data = await res.json();
+      if (cancelled) return;
+      setEntries(data);
+      setLoading(false);
+    }
+    fetchEntries();
+    return () => { cancelled = true; };
   }, [typeFilter]);
 
-  useEffect(() => {
-    fetchEntries();
-  }, [fetchEntries]);
-
-  useEffect(() => {
-    if (!isLocked && !getKey()) {
-      setNeedsPassphrase(true);
-    }
-  }, [isLocked]);
+  const needsPassphrase = !isLocked && !hasKey;
 
   if (isLocked) {
     return <LockScreen onUnlock={() => setIsLocked(false)} />;
@@ -97,7 +96,7 @@ export default function BrowsePage() {
           <p className="mb-3 text-sm text-muted-foreground">
             Enter your passphrase to decrypt entries.
           </p>
-          <PassphrasePrompt onUnlock={() => setNeedsPassphrase(false)} />
+          <PassphrasePrompt onUnlock={() => setHasKey(true)} />
         </div>
       </div>
     );

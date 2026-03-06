@@ -76,7 +76,7 @@ export default function WritePage() {
     [content, type],
   );
 
-  function handleUnlockFromLock(key: CryptoKey) {
+  function handleUnlockFromLock(_key: CryptoKey) {
     setIsLocked(false);
   }
 

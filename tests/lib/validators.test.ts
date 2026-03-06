@@ -57,7 +57,7 @@ describe("createEntrySchema", () => {
   });
 
   it("rejects missing encrypted_content", () => {
-    const { encrypted_content, ...rest } = validEntry;
+    const { encrypted_content: _ec, ...rest } = validEntry;
     const result = createEntrySchema.safeParse(rest);
     expect(result.success).toBe(false);
   });

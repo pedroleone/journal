@@ -4,14 +4,15 @@ import { NextRequest } from "next/server";
 // Access the mocked db
 import { db } from "@/lib/db";
 
-const mockDb = vi.mocked(db);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockDb = vi.mocked(db) as any;
 
 describe("POST /api/entries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset the chain mock
     mockDb.insert.mockReturnThis();
-    (mockDb as any).values.mockResolvedValue(undefined);
+    mockDb.values.mockResolvedValue(undefined);
   });
 
   async function postEntry(body: Record<string, unknown>) {
@@ -49,7 +50,7 @@ describe("POST /api/entries", () => {
   });
 
   it("returns 400 on missing type", async () => {
-    const { type, ...rest } = validBody;
+    const { type: _type, ...rest } = validBody;
     const res = await postEntry(rest);
     expect(res.status).toBe(400);
   });
@@ -60,7 +61,7 @@ describe("POST /api/entries", () => {
   });
 
   it("returns 400 on missing encrypted_content", async () => {
-    const { encrypted_content, ...rest } = validBody;
+    const { encrypted_content: _ec, ...rest } = validBody;
     const res = await postEntry(rest);
     expect(res.status).toBe(400);
   });
@@ -87,9 +88,9 @@ describe("GET /api/entries", () => {
     const mockResult = mockEntries;
     mockResult.reverse = vi.fn().mockReturnValue(mockEntries);
     mockDb.select.mockReturnThis();
-    (mockDb as any).from.mockReturnThis();
-    (mockDb as any).where.mockReturnThis();
-    (mockDb as any).orderBy.mockReturnValue(mockResult);
+    mockDb.from.mockReturnThis();
+    mockDb.where.mockReturnThis();
+    mockDb.orderBy.mockReturnValue(mockResult);
 
     const res = await getEntries();
     expect(res.status).toBe(200);
@@ -99,12 +100,12 @@ describe("GET /api/entries", () => {
   });
 
   it("passes type filter to query", async () => {
-    const mockResult: any[] = [];
-    mockResult.reverse = vi.fn().mockReturnValue([]);
+    const mockResult: unknown[] = [];
+    (mockResult as Record<string, unknown>).reverse = vi.fn().mockReturnValue([]);
     mockDb.select.mockReturnThis();
-    (mockDb as any).from.mockReturnThis();
-    (mockDb as any).where.mockReturnThis();
-    (mockDb as any).orderBy.mockReturnValue(mockResult);
+    mockDb.from.mockReturnThis();
+    mockDb.where.mockReturnThis();
+    mockDb.orderBy.mockReturnValue(mockResult);
 
     const res = await getEntries({ type: "food" });
     expect(res.status).toBe(200);
