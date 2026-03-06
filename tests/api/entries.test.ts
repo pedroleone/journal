@@ -89,7 +89,7 @@ describe("GET /api/entries", () => {
 
   it("passes year filter to query", async () => {
     const mockResult: unknown[] = [];
-    (mockResult as Record<string, unknown>).reverse = vi.fn().mockReturnValue([]);
+    (mockResult as unknown as Record<string, unknown>).reverse = vi.fn().mockReturnValue([]);
     mockDb.select.mockReturnThis();
     mockDb.from.mockReturnThis();
     mockDb.where.mockReturnThis();
