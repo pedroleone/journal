@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { PassphrasePrompt } from "@/components/passphrase-prompt";
 
 interface LockScreenProps {
@@ -16,17 +9,15 @@ interface LockScreenProps {
 export function LockScreen({ onUnlock }: LockScreenProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Session Locked</CardTitle>
-          <CardDescription>
+      <div className="w-full max-w-xs space-y-6 px-6">
+        <div className="text-center">
+          <h1 className="font-display text-3xl tracking-tight">Locked</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Enter your passphrase to unlock
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PassphrasePrompt onUnlock={onUnlock} />
-        </CardContent>
-      </Card>
+          </p>
+        </div>
+        <PassphrasePrompt onUnlock={onUnlock} />
+      </div>
     </div>
   );
 }

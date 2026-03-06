@@ -29,6 +29,16 @@ Use `pnpm` for all package management and scripts.
 - ORM: Drizzle
 - Object storage: Cloudflare R2
 
+## Testing
+
+- Framework: Vitest (`pnpm test` to run, `pnpm test:watch` for dev)
+- Config: `vitest.config.ts`, setup file: `tests/setup.ts`
+- Test location: `tests/` directory mirroring source structure (`tests/lib/`, `tests/api/`)
+- DB is mocked in `tests/setup.ts` — API route tests don't hit a real database
+- **All new features must include tests.** Unit tests for pure logic (lib/), API route tests for new endpoints.
+- Run `pnpm test` before committing to ensure nothing is broken.
+- CI runs lint, type check, tests, and build on every PR.
+
 ## Important Rules
 
 - Prefer built-in Web Crypto / platform APIs where possible.

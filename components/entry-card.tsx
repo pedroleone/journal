@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { decrypt } from "@/lib/crypto";
 import { getKey } from "@/lib/key-manager";
@@ -33,28 +32,23 @@ export function EntryCard({
     const key = getKey();
     if (!key) return;
     decrypt(key, encrypted_content, iv).then((text) => {
-      setPreview(text.length > 120 ? text.slice(0, 120) + "..." : text);
+      setPreview(text.length > 140 ? text.slice(0, 140) + "..." : text);
     }).catch(() => {
       setPreview("[decryption failed]");
     });
   }, [encrypted_content, iv]);
 
-  const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
   return (
-    <Card
-      className="cursor-pointer transition-colors hover:bg-accent/50"
+    <button
       onClick={() => router.push(`/entry/${id}`)}
+      className="group w-full text-left rounded-lg border border-border/60 bg-card p-4 transition-all hover:border-border hover:shadow-sm"
     >
-      <CardHeader className="flex flex-row items-center gap-2 pb-2">
-        <Badge variant="secondary">{type}</Badge>
-        <span className="text-sm text-muted-foreground">{dateStr}</span>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          {preview ?? "Decrypting..."}
-        </p>
-      </CardContent>
-    </Card>
+      <div className="flex items-center gap-2 mb-1.5">
+        <Badge variant="secondary" className="capitalize text-[11px]">{type}</Badge>
+      </div>
+      <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
+        {preview ?? "Decrypting..."}
+      </p>
+    </button>
   );
 }

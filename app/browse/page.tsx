@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { initActivityListeners, onLock, getKey } from "@/lib/key-manager";
 import { useVisibilityLock } from "@/hooks/use-visibility-lock";
@@ -92,8 +91,8 @@ export default function BrowsePage() {
 
   if (needsPassphrase) {
     return (
-      <div className="mx-auto max-w-2xl p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Browse</h1>
+      <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
+        <h1 className="font-display text-3xl tracking-tight">Browse</h1>
         <div className="rounded-lg border p-4">
           <p className="mb-3 text-sm text-muted-foreground">
             Enter your passphrase to decrypt entries.
@@ -107,10 +106,9 @@ export default function BrowsePage() {
   const groups = groupByDate(entries);
 
   return (
-    <div className="mx-auto max-w-2xl p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Browse</h1>
+    <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
+      <h1 className="font-display text-3xl tracking-tight">Browse</h1>
 
-      {/* Type filter */}
       <div className="flex flex-wrap gap-2">
         <Badge
           variant={typeFilter === null ? "default" : "outline"}
@@ -123,7 +121,7 @@ export default function BrowsePage() {
           <Badge
             key={t}
             variant={typeFilter === t ? "default" : "outline"}
-            className="cursor-pointer"
+            className="cursor-pointer capitalize"
             onClick={() => setTypeFilter(typeFilter === t ? null : t)}
           >
             {t}
@@ -131,21 +129,19 @@ export default function BrowsePage() {
         ))}
       </div>
 
-      <Separator />
-
       {loading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
+        <div className="space-y-4">
+          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded-lg" />
         </div>
       ) : groups.length === 0 ? (
-        <p className="text-muted-foreground">No entries yet.</p>
+        <p className="py-12 text-center text-muted-foreground">No entries yet.</p>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-10">
           {groups.map((group) => (
             <div key={group.key}>
-              <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+              <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {group.label}
               </h2>
               <div className="space-y-3">

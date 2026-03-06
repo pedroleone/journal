@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -65,7 +64,7 @@ export default function WritePage() {
           const data = await res.json();
           setMessage(`Error: ${data.error || "Failed to save"}`);
         } else {
-          setMessage("Entry saved!");
+          setMessage("Saved");
           setContent("");
         }
       } catch {
@@ -91,13 +90,11 @@ export default function WritePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Write</h1>
-
-      <div className="space-y-2">
-        <Label>Type</Label>
+    <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-3xl tracking-tight">Write</h1>
         <Select value={type} onValueChange={(v) => setType(v as EntryType)}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-36 bg-card">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -109,20 +106,18 @@ export default function WritePage() {
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label>Content</Label>
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your entry..."
-          rows={10}
-        />
-      </div>
+      <Textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="What's on your mind..."
+        rows={12}
+        className="resize-none border-border/50 bg-card text-base leading-relaxed focus-visible:ring-1"
+      />
 
       {needsPassphrase && (
         <div className="rounded-lg border p-4">
           <p className="mb-3 text-sm text-muted-foreground">
-            Your session key expired. Enter your passphrase to save.
+            Session expired. Enter your passphrase to save.
           </p>
           <PassphrasePrompt
             onUnlock={handleUnlockInline}

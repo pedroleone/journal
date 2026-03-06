@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -20,27 +19,35 @@ export function Nav() {
   }
 
   return (
-    <nav className="border-b">
-      <div className="mx-auto flex h-12 max-w-2xl items-center justify-between px-6">
-        <div className="flex items-center gap-1">
-          {links.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                pathname === href
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label}
-            </Link>
-          ))}
+    <nav className="border-b border-border/60">
+      <div className="mx-auto flex h-14 max-w-2xl items-center justify-between px-6">
+        <div className="flex items-center gap-6">
+          <Link href="/write" className="font-display text-lg tracking-tight">
+            Journal
+          </Link>
+          <div className="flex items-center gap-1">
+            {links.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm transition-colors",
+                  pathname === href
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleLogout}>
-          Logout
-        </Button>
+        <button
+          onClick={handleLogout}
+          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Sign out
+        </button>
       </div>
     </nav>
   );
