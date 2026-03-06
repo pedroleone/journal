@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { initActivityListeners, onLock, getKey } from "@/lib/key-manager";
 import { useVisibilityLock } from "@/hooks/use-visibility-lock";
@@ -38,17 +38,19 @@ export default function BrowsePage() {
     return cleanup;
   }, [setIsLocked]);
 
-  const fetchDates = useCallback(async () => {
-    const res = await fetch("/api/entries/dates");
-    if (res.ok) {
-      const data = await res.json();
-      setDates(data);
-    }
-  }, []);
-
   useEffect(() => {
-    if (hasKey) fetchDates();
-  }, [hasKey, fetchDates]);
+    if (!hasKey) return;
+    let cancelled = false;
+    fetch("/api/entries/dates")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        if (!cancelled) setDates(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [hasKey]);
 
   function handleSelectDate(year: number, month: number, day: number) {
     setSelectedDate({ year, month, day });
