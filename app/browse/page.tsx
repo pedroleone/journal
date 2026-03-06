@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,12 +26,35 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 
+function formatDateHeading(year: number, month: number, day: number) {
+  return `${MONTH_NAMES[month]} ${day}, ${year}`;
+}
+
+function groupByDate(entries: Entry[]) {
+  const groups: { key: string; label: string; entries: Entry[] }[] = [];
+  const map = new Map<string, Entry[]>();
+
+  for (const entry of entries) {
+    const key = `${entry.year}-${entry.month}-${entry.day}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(entry);
+  }
+
+  for (const [key, items] of map) {
+    const first = items[0];
+    groups.push({
+      key,
+      label: formatDateHeading(first.year, first.month, first.day),
+      entries: items,
+    });
+  }
+
+  return groups;
+}
+
 export default function BrowsePage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [year, setYear] = useState<number | null>(null);
-  const [month, setMonth] = useState<number | null>(null);
-  const [day, setDay] = useState<number | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [needsPassphrase, setNeedsPassphrase] = useState(false);
   const { isLocked, setIsLocked } = useVisibilityLock();
@@ -46,16 +68,13 @@ export default function BrowsePage() {
   const fetchEntries = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (year !== null) params.set("year", String(year));
-    if (month !== null) params.set("month", String(month));
-    if (day !== null) params.set("day", String(day));
     if (typeFilter) params.set("type", typeFilter);
 
     const res = await fetch(`/api/entries?${params}`);
     const data = await res.json();
     setEntries(data);
     setLoading(false);
-  }, [year, month, day, typeFilter]);
+  }, [typeFilter]);
 
   useEffect(() => {
     fetchEntries();
@@ -79,69 +98,20 @@ export default function BrowsePage() {
           <p className="mb-3 text-sm text-muted-foreground">
             Enter your passphrase to decrypt entries.
           </p>
-          <PassphrasePrompt
-            onUnlock={() => setNeedsPassphrase(false)}
-          />
+          <PassphrasePrompt onUnlock={() => setNeedsPassphrase(false)} />
         </div>
       </div>
     );
   }
 
-  // Compute distinct values for drill-down
-  const years = [...new Set(entries.map((e) => e.year))].sort((a, b) => b - a);
-  const months = year !== null
-    ? [...new Set(entries.filter((e) => e.year === year).map((e) => e.month))].sort((a, b) => b - a)
-    : [];
-  const days = year !== null && month !== null
-    ? [...new Set(entries.filter((e) => e.year === year && e.month === month).map((e) => e.day))].sort((a, b) => b - a)
-    : [];
-
-  const filteredEntries = day !== null
-    ? entries.filter((e) => e.year === year && e.month === month && e.day === day)
-    : [];
-
-  // Breadcrumb navigation
-  function resetTo(level: "root" | "year" | "month") {
-    if (level === "root") { setYear(null); setMonth(null); setDay(null); }
-    else if (level === "year") { setMonth(null); setDay(null); }
-    else if (level === "month") { setDay(null); }
-  }
+  const groups = groupByDate(entries);
 
   return (
     <div className="mx-auto max-w-2xl p-6 space-y-6">
       <h1 className="text-2xl font-bold">Browse</h1>
 
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm">
-        <button className="text-primary hover:underline" onClick={() => resetTo("root")}>
-          All
-        </button>
-        {year !== null && (
-          <>
-            <span>/</span>
-            <button className="text-primary hover:underline" onClick={() => resetTo("year")}>
-              {year}
-            </button>
-          </>
-        )}
-        {month !== null && (
-          <>
-            <span>/</span>
-            <button className="text-primary hover:underline" onClick={() => resetTo("month")}>
-              {MONTH_NAMES[month]}
-            </button>
-          </>
-        )}
-        {day !== null && (
-          <>
-            <span>/</span>
-            <span>{day}</span>
-          </>
-        )}
-      </div>
-
       {/* Type filter */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Badge
           variant={typeFilter === null ? "default" : "outline"}
           className="cursor-pointer"
@@ -169,49 +139,21 @@ export default function BrowsePage() {
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
         </div>
-      ) : year === null ? (
-        // Year list
-        <div className="space-y-2">
-          {years.length === 0 && <p className="text-muted-foreground">No entries yet.</p>}
-          {years.map((y) => (
-            <Button key={y} variant="outline" className="w-full justify-start" onClick={() => setYear(y)}>
-              {y}
-              <span className="ml-auto text-muted-foreground">
-                {entries.filter((e) => e.year === y).length} entries
-              </span>
-            </Button>
-          ))}
-        </div>
-      ) : month === null ? (
-        // Month list
-        <div className="space-y-2">
-          {months.map((m) => (
-            <Button key={m} variant="outline" className="w-full justify-start" onClick={() => setMonth(m)}>
-              {MONTH_NAMES[m]}
-              <span className="ml-auto text-muted-foreground">
-                {entries.filter((e) => e.year === year && e.month === m).length} entries
-              </span>
-            </Button>
-          ))}
-        </div>
-      ) : day === null ? (
-        // Day list
-        <div className="space-y-2">
-          {days.map((d) => (
-            <Button key={d} variant="outline" className="w-full justify-start" onClick={() => setDay(d)}>
-              {MONTH_NAMES[month!]} {d}
-              <span className="ml-auto text-muted-foreground">
-                {entries.filter((e) => e.year === year && e.month === month && e.day === d).length} entries
-              </span>
-            </Button>
-          ))}
-        </div>
+      ) : groups.length === 0 ? (
+        <p className="text-muted-foreground">No entries yet.</p>
       ) : (
-        // Entry cards
-        <div className="space-y-3">
-          {filteredEntries.length === 0 && <p className="text-muted-foreground">No entries for this day.</p>}
-          {filteredEntries.map((entry) => (
-            <EntryCard key={entry.id} {...entry} />
+        <div className="space-y-6">
+          {groups.map((group) => (
+            <div key={group.key}>
+              <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+                {group.label}
+              </h2>
+              <div className="space-y-3">
+                {group.entries.map((entry) => (
+                  <EntryCard key={entry.id} {...entry} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
