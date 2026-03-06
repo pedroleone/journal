@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { deriveKey } from "@/lib/crypto";
+import { deriveKey, decrypt } from "@/lib/crypto";
 import { setKey } from "@/lib/key-manager";
 
 interface PassphrasePromptProps {
@@ -24,6 +24,20 @@ export function PassphrasePrompt({ onUnlock, onCancel }: PassphrasePromptProps) 
     setError("");
     try {
       const key = await deriveKey(passphrase);
+
+      // Validate passphrase against an existing entry
+      const res = await fetch("/api/entries/oldest");
+      const { entry } = await res.json();
+      if (entry) {
+        try {
+          await decrypt(key, entry.encrypted_content, entry.iv);
+        } catch {
+          setError("Incorrect passphrase — please try again");
+          setLoading(false);
+          return;
+        }
+      }
+
       setKey(key);
       onUnlock(key);
     } catch {
