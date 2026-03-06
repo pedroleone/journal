@@ -3,7 +3,6 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { decrypt, encrypt } from "@/lib/crypto";
@@ -14,7 +13,6 @@ import { PassphrasePrompt } from "@/components/passphrase-prompt";
 
 interface Entry {
   id: string;
-  type: string;
   year: number;
   month: number;
   day: number;
@@ -177,9 +175,6 @@ export default function EntryPage({
       </button>
 
       <div>
-        <div className="flex items-center gap-3 mb-2">
-          <Badge variant="secondary" className="capitalize">{entry.type}</Badge>
-        </div>
         <h1 className="font-display text-2xl tracking-tight">{dateStr}</h1>
       </div>
 

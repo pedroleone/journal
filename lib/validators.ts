@@ -5,7 +5,6 @@ export const loginSchema = z.object({
 });
 
 export const createEntrySchema = z.object({
-  type: z.enum(["journal", "food", "idea", "note"]),
   encrypted_content: z.string().min(1),
   iv: z.string().min(1),
   year: z.coerce.number().int(),
@@ -23,5 +22,4 @@ export const browseQuerySchema = z.object({
   year: z.coerce.number().int().optional(),
   month: z.coerce.number().int().optional(),
   day: z.coerce.number().int().optional(),
-  type: z.enum(["journal", "food", "idea", "note"]).optional(),
 });

@@ -1,29 +1,62 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { ArrowLeft, Check, Loader2, AlertCircle } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { encrypt } from "@/lib/crypto";
-import { getKey, initActivityListeners, onLock } from "@/lib/key-manager";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { initActivityListeners, onLock, getKey } from "@/lib/key-manager";
+import { decrypt } from "@/lib/crypto";
 import { useVisibilityLock } from "@/hooks/use-visibility-lock";
+import { useAutoSave } from "@/hooks/use-auto-save";
 import { LockScreen } from "@/components/lock-screen";
 import { PassphrasePrompt } from "@/components/passphrase-prompt";
 
-type EntryType = "journal" | "food" | "idea" | "note";
+const MONTH_NAMES = [
+  "",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+function formatWriteDate(date: Date): string {
+  return `${DAY_NAMES[date.getDay()]}, ${date.getDate()} ${MONTH_NAMES[date.getMonth() + 1]} ${date.getFullYear()}`;
+}
 
 export default function WritePage() {
-  const [type, setType] = useState<EntryType>("journal");
+  const searchParams = useSearchParams();
+  const editEntryId = searchParams.get("entry");
+
   const [content, setContent] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [needsPassphrase, setNeedsPassphrase] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [loadedEntryId, setLoadedEntryId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [hasKey, setHasKey] = useState(() => !!getKey());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const { isLocked, setIsLocked } = useVisibilityLock();
 
   useEffect(() => {
@@ -32,114 +65,172 @@ export default function WritePage() {
     return cleanup;
   }, [setIsLocked]);
 
-  const handleSave = useCallback(
-    async (key?: CryptoKey) => {
-      const cryptoKey = key ?? getKey();
-      if (!cryptoKey) {
-        setNeedsPassphrase(true);
-        return;
-      }
+  const loadEntry = useCallback(
+    async (id: string) => {
+      const key = getKey();
+      if (!key) return;
 
-      setSaving(true);
-      setMessage("");
+      setLoading(true);
       try {
-        const now = new Date();
-        const { ciphertext, iv } = await encrypt(cryptoKey, content);
-
-        const res = await fetch("/api/entries", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type,
-            encrypted_content: ciphertext,
-            iv,
-            year: now.getFullYear(),
-            month: now.getMonth() + 1,
-            day: now.getDate(),
-            hour: now.getHours(),
-          }),
-        });
-
-        if (!res.ok) {
-          const data = await res.json();
-          setMessage(`Error: ${data.error || "Failed to save"}`);
-        } else {
-          setMessage("Saved");
-          setContent("");
-        }
+        const res = await fetch(`/api/entries/${id}`);
+        if (!res.ok) return;
+        const entry = await res.json();
+        const text = await decrypt(key, entry.encrypted_content, entry.iv);
+        setContent(text);
+        setDate(new Date(entry.year, entry.month - 1, entry.day));
+        setLoadedEntryId(id);
       } catch {
-        setMessage("Error: Failed to save entry");
+        // Failed to load entry
       } finally {
-        setSaving(false);
+        setLoading(false);
       }
     },
-    [content, type],
+    [],
   );
 
-  function handleUnlockFromLock(_key: CryptoKey) {
-    setIsLocked(false);
-  }
+  const loadEntryForDate = useCallback(
+    async (targetDate: Date) => {
+      const key = getKey();
+      if (!key) return;
 
-  function handleUnlockInline(key: CryptoKey) {
-    setNeedsPassphrase(false);
-    handleSave(key);
-  }
+      const params = new URLSearchParams({
+        year: String(targetDate.getFullYear()),
+        month: String(targetDate.getMonth() + 1),
+        day: String(targetDate.getDate()),
+      });
+
+      try {
+        const res = await fetch(`/api/entries?${params}`);
+        if (!res.ok) return;
+        const entries = await res.json();
+        if (entries.length > 0) {
+          const entry = entries[0];
+          const text = await decrypt(key, entry.encrypted_content, entry.iv);
+          setContent(text);
+          setLoadedEntryId(entry.id);
+        } else {
+          setContent("");
+          setLoadedEntryId(null);
+        }
+      } catch {
+        // Failed to load
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!hasKey) return;
+    if (editEntryId) {
+      loadEntry(editEntryId);
+    } else {
+      loadEntryForDate(date);
+    }
+    // Only run on mount or when editEntryId/hasKey changes, not on every date change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasKey, editEntryId, loadEntry]);
+
+  const { status } = useAutoSave({
+    entryId: loadedEntryId,
+    content,
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate(),
+  });
 
   if (isLocked) {
-    return <LockScreen onUnlock={handleUnlockFromLock} />;
+    return <LockScreen onUnlock={() => setIsLocked(false)} />;
+  }
+
+  if (!hasKey) {
+    return (
+      <div className="animate-page mx-auto max-w-sm px-6 py-20 space-y-6">
+        <div className="text-center">
+          <h1 className="font-display text-2xl tracking-tight">Write</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enter your passphrase to start writing.
+          </p>
+        </div>
+        <PassphrasePrompt onUnlock={() => setHasKey(true)} />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
-    <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl tracking-tight">Write</h1>
-        <Select value={type} onValueChange={(v) => setType(v as EntryType)}>
-          <SelectTrigger className="w-36 bg-card">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="journal">Journal</SelectItem>
-            <SelectItem value="food">Food</SelectItem>
-            <SelectItem value="idea">Idea</SelectItem>
-            <SelectItem value="note">Note</SelectItem>
-          </SelectContent>
-        </Select>
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+      <div className="flex items-center justify-between px-6 py-4">
+        <Link
+          href="/browse"
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Link>
+
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+          <PopoverTrigger asChild>
+            <button className="font-display text-lg tracking-tight text-foreground hover:text-muted-foreground transition-colors">
+              {formatWriteDate(date)}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="center">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={(d) => {
+                if (d) {
+                  setDate(d);
+                  setCalendarOpen(false);
+                  loadEntryForDate(d);
+                }
+              }}
+            />
+          </PopoverContent>
+        </Popover>
+
+        <div className="w-16" />
       </div>
 
-      <Textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="What's on your mind..."
-        rows={12}
-        className="resize-none border-border/50 bg-card text-base leading-relaxed focus-visible:ring-1"
-      />
+      <div className="flex-1 px-6 pb-4">
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Start writing..."
+          className="h-full w-full max-w-2xl mx-auto resize-none border-0 bg-transparent text-lg leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
+          autoFocus
+        />
+      </div>
 
-      {needsPassphrase && (
-        <div className="rounded-lg border p-4">
-          <p className="mb-3 text-sm text-muted-foreground">
-            Session expired. Enter your passphrase to save.
-          </p>
-          <PassphrasePrompt
-            onUnlock={handleUnlockInline}
-            onCancel={() => setNeedsPassphrase(false)}
-          />
+      <div className="flex items-center justify-between border-t border-border/40 px-6 py-3">
+        <div />
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          {status === "saving" && (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Saving...
+            </>
+          )}
+          {status === "saved" && (
+            <>
+              <Check className="h-3 w-3" />
+              Saved
+            </>
+          )}
+          {status === "error" && (
+            <>
+              <AlertCircle className="h-3 w-3" />
+              Save failed
+            </>
+          )}
         </div>
-      )}
-
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={() => handleSave()}
-          disabled={saving || !content}
-        >
-          {saving ? "Saving..." : "Save Entry"}
-        </Button>
-        {message && (
-          <p
-            className={`text-sm ${message.startsWith("Error") ? "text-destructive" : "text-muted-foreground"}`}
-          >
-            {message}
-          </p>
-        )}
       </div>
     </div>
   );

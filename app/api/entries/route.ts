@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
 
   await db.insert(entries).values({
     id,
-    type: parsed.data.type,
     source: "web",
     year: parsed.data.year,
     month: parsed.data.month,
@@ -40,7 +39,6 @@ export async function GET(request: NextRequest) {
     year: searchParams.get("year") ?? undefined,
     month: searchParams.get("month") ?? undefined,
     day: searchParams.get("day") ?? undefined,
-    type: searchParams.get("type") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -51,7 +49,6 @@ export async function GET(request: NextRequest) {
   if (parsed.data.year !== undefined) conditions.push(eq(entries.year, parsed.data.year));
   if (parsed.data.month !== undefined) conditions.push(eq(entries.month, parsed.data.month));
   if (parsed.data.day !== undefined) conditions.push(eq(entries.day, parsed.data.day));
-  if (parsed.data.type !== undefined) conditions.push(eq(entries.type, parsed.data.type));
 
   const result = await db
     .select()

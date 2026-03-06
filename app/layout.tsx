@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Instrument_Serif, DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NavWrapper } from "@/components/nav-wrapper";
+import { ModeProvider } from "@/lib/mode-context";
 
 const heading = Instrument_Serif({
   variable: "--font-heading",
@@ -34,8 +36,12 @@ export default function RootLayout({
       <body
         className={`${heading.variable} ${body.variable} ${geistMono.variable} antialiased`}
       >
-        <NavWrapper />
-        {children}
+        <Suspense>
+          <ModeProvider>
+            <NavWrapper />
+            {children}
+          </ModeProvider>
+        </Suspense>
       </body>
     </html>
   );
