@@ -3,9 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { decrypt, encrypt } from "@/lib/crypto";
 import { getKey, initActivityListeners, onLock } from "@/lib/key-manager";
@@ -15,7 +13,6 @@ import { PassphrasePrompt } from "@/components/passphrase-prompt";
 
 interface Entry {
   id: string;
-  type: string;
   year: number;
   month: number;
   day: number;
@@ -24,6 +21,11 @@ interface Entry {
   created_at: string;
   updated_at: string;
 }
+
+const MONTH_NAMES = [
+  "", "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
 
 export default function EntryPage({
   params,
@@ -110,7 +112,6 @@ export default function EntryPage({
   function handleUnlock() {
     setIsLocked(false);
     setNeedsPassphrase(false);
-    // Re-trigger decrypt
     if (entry) {
       const key = getKey();
       if (key) {
@@ -130,16 +131,16 @@ export default function EntryPage({
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl p-6 space-y-4">
+      <div className="mx-auto max-w-2xl px-6 py-10 space-y-6">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full rounded-lg" />
       </div>
     );
   }
 
   if (!entry) {
     return (
-      <div className="mx-auto max-w-2xl p-6">
+      <div className="animate-page mx-auto max-w-2xl px-6 py-10">
         <p className="text-muted-foreground">Entry not found.</p>
         <Button variant="outline" className="mt-4" onClick={() => router.push("/browse")}>
           Back to Browse
@@ -150,8 +151,8 @@ export default function EntryPage({
 
   if (needsPassphrase) {
     return (
-      <div className="mx-auto max-w-2xl p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Entry</h1>
+      <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
+        <h1 className="font-display text-3xl tracking-tight">Entry</h1>
         <div className="rounded-lg border p-4">
           <p className="mb-3 text-sm text-muted-foreground">
             Enter your passphrase to decrypt this entry.
@@ -162,29 +163,28 @@ export default function EntryPage({
     );
   }
 
-  const dateStr = `${entry.year}-${String(entry.month).padStart(2, "0")}-${String(entry.day).padStart(2, "0")}`;
+  const dateStr = `${MONTH_NAMES[entry.month]} ${entry.day}, ${entry.year}`;
 
   return (
-    <div className="mx-auto max-w-2xl p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/browse")}>
-          &larr; Browse
-        </Button>
-      </div>
+    <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
+      <button
+        onClick={() => router.push("/browse")}
+        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        &larr; Back
+      </button>
 
-      <div className="flex items-center gap-3">
-        <Badge variant="secondary">{entry.type}</Badge>
-        <span className="text-sm text-muted-foreground">{dateStr}</span>
+      <div>
+        <h1 className="font-display text-2xl tracking-tight">{dateStr}</h1>
       </div>
-
-      <Separator />
 
       {editing ? (
         <div className="space-y-4">
           <Textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            rows={10}
+            rows={12}
+            className="resize-none border-border/50 bg-card text-base leading-relaxed focus-visible:ring-1"
           />
           <div className="flex gap-2">
             <Button onClick={handleSave} disabled={saving}>
@@ -196,13 +196,15 @@ export default function EntryPage({
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {decryptedContent === null ? (
-            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full rounded-lg" />
           ) : (
-            <div className="whitespace-pre-wrap">{decryptedContent}</div>
+            <div className="whitespace-pre-wrap text-base leading-relaxed">
+              {decryptedContent}
+            </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex gap-2 border-t pt-6">
             <Button variant="outline" onClick={() => setEditing(true)}>
               Edit
             </Button>

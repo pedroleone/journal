@@ -1,12 +1,15 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  integer,
+  index,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 export const entries = sqliteTable(
   "entries",
   {
     id: text("id").primaryKey(),
-    type: text("type", {
-      enum: ["journal", "food", "idea", "note"],
-    }).notNull(),
     source: text("source", {
       enum: ["web", "telegram"],
     }).notNull(),
@@ -23,6 +26,6 @@ export const entries = sqliteTable(
   },
   (table) => [
     index("idx_date").on(table.year, table.month, table.day),
-    index("idx_type").on(table.type),
+    uniqueIndex("idx_unique_date").on(table.year, table.month, table.day),
   ],
 );

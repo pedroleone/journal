@@ -5,13 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { deriveKey } from "@/lib/crypto";
 import { setKey, initActivityListeners } from "@/lib/key-manager";
 
@@ -53,48 +46,53 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Journal</CardTitle>
-          <CardDescription>
-            Enter your credentials to continue
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Auth password"
-                autoFocus
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="passphrase">Encryption Passphrase</Label>
-              <Input
-                id="passphrase"
-                type="password"
-                value={passphrase}
-                onChange={(e) => setPassphrase(e.target.value)}
-                placeholder="Encryption passphrase"
-              />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading || !password || !passphrase}
-            >
-              {loading ? "Unlocking..." : "Unlock"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="flex min-h-screen items-center justify-center px-6">
+      <div className="animate-page w-full max-w-xs space-y-8">
+        <div className="text-center">
+          <h1 className="font-display text-4xl tracking-tight">Journal</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your encrypted space
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-xs uppercase tracking-wider text-muted-foreground">
+              Password
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Auth password"
+              autoFocus
+              className="bg-card"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="passphrase" className="text-xs uppercase tracking-wider text-muted-foreground">
+              Encryption Passphrase
+            </Label>
+            <Input
+              id="passphrase"
+              type="password"
+              value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)}
+              placeholder="Encryption passphrase"
+              className="bg-card"
+            />
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || !password || !passphrase}
+          >
+            {loading ? "Unlocking..." : "Unlock"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

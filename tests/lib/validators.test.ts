@@ -25,7 +25,6 @@ describe("loginSchema", () => {
 
 describe("createEntrySchema", () => {
   const validEntry = {
-    type: "journal",
     encrypted_content: "base64ciphertext",
     iv: "base64iv",
     year: 2026,
@@ -44,20 +43,8 @@ describe("createEntrySchema", () => {
     if (result.success) expect(result.data.hour).toBe(14);
   });
 
-  it("accepts all entry types", () => {
-    for (const type of ["journal", "food", "idea", "note"]) {
-      const result = createEntrySchema.safeParse({ ...validEntry, type });
-      expect(result.success).toBe(true);
-    }
-  });
-
-  it("rejects invalid type", () => {
-    const result = createEntrySchema.safeParse({ ...validEntry, type: "diary" });
-    expect(result.success).toBe(false);
-  });
-
   it("rejects missing encrypted_content", () => {
-    const { encrypted_content, ...rest } = validEntry;
+    const { encrypted_content: _ec, ...rest } = validEntry;
     const result = createEntrySchema.safeParse(rest);
     expect(result.success).toBe(false);
   });
@@ -114,16 +101,6 @@ describe("browseQuerySchema", () => {
   it("accepts year filter", () => {
     const result = browseQuerySchema.safeParse({ year: 2026 });
     expect(result.success).toBe(true);
-  });
-
-  it("accepts type filter", () => {
-    const result = browseQuerySchema.safeParse({ type: "food" });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects invalid type", () => {
-    const result = browseQuerySchema.safeParse({ type: "invalid" });
-    expect(result.success).toBe(false);
   });
 
   it("coerces string year", () => {

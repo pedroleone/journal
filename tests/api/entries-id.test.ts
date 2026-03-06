@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 
-const mockDb = vi.mocked(db);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockDb = vi.mocked(db) as any;
 
 function makeParams(id: string): Promise<{ id: string }> {
   return Promise.resolve({ id });
@@ -24,8 +25,8 @@ describe("GET /api/entries/[id]", () => {
       day: 6,
     };
     mockDb.select.mockReturnThis();
-    (mockDb as any).from.mockReturnThis();
-    (mockDb as any).where.mockResolvedValue([entry]);
+    mockDb.from.mockReturnThis();
+    mockDb.where.mockResolvedValue([entry]);
 
     const { GET } = await import("@/app/api/entries/[id]/route");
     const request = new NextRequest("http://localhost/api/entries/abc123");
@@ -38,8 +39,8 @@ describe("GET /api/entries/[id]", () => {
 
   it("returns 404 when not found", async () => {
     mockDb.select.mockReturnThis();
-    (mockDb as any).from.mockReturnThis();
-    (mockDb as any).where.mockResolvedValue([]);
+    mockDb.from.mockReturnThis();
+    mockDb.where.mockResolvedValue([]);
 
     const { GET } = await import("@/app/api/entries/[id]/route");
     const request = new NextRequest("http://localhost/api/entries/nonexistent");
@@ -53,8 +54,8 @@ describe("PUT /api/entries/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDb.update.mockReturnThis();
-    (mockDb as any).set.mockReturnThis();
-    (mockDb as any).where.mockResolvedValue(undefined);
+    mockDb.set.mockReturnThis();
+    mockDb.where.mockResolvedValue(undefined);
   });
 
   it("updates entry with valid body", async () => {
@@ -87,8 +88,8 @@ describe("DELETE /api/entries/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDb.delete.mockReturnThis();
-    (mockDb as any).from.mockReturnThis();
-    (mockDb as any).where.mockResolvedValue(undefined);
+    mockDb.from.mockReturnThis();
+    mockDb.where.mockResolvedValue(undefined);
   });
 
   it("deletes entry and returns 204", async () => {

@@ -36,7 +36,9 @@ export function PassphrasePrompt({ onUnlock, onCancel }: PassphrasePromptProps) 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="passphrase">Encryption Passphrase</Label>
+        <Label htmlFor="passphrase" className="text-xs uppercase tracking-wider text-muted-foreground">
+          Passphrase
+        </Label>
         <Input
           id="passphrase"
           type="password"
@@ -44,6 +46,7 @@ export function PassphrasePrompt({ onUnlock, onCancel }: PassphrasePromptProps) 
           onChange={(e) => setPassphrase(e.target.value)}
           placeholder="Enter your passphrase"
           autoFocus
+          className="bg-card"
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}

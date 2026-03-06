@@ -1,63 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
 import { initActivityListeners, onLock, getKey } from "@/lib/key-manager";
 import { useVisibilityLock } from "@/hooks/use-visibility-lock";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { LockScreen } from "@/components/lock-screen";
 import { PassphrasePrompt } from "@/components/passphrase-prompt";
-import { EntryCard } from "@/components/entry-card";
+import { DateTree } from "@/components/journal/date-tree";
+import { EntryViewer } from "@/components/journal/entry-viewer";
+import { ExportModal } from "@/components/journal/export-modal";
+import { cn } from "@/lib/utils";
 
-interface Entry {
+interface DateEntry {
   id: string;
-  type: string;
   year: number;
   month: number;
   day: number;
-  encrypted_content: string;
-  iv: string;
-}
-
-const ENTRY_TYPES = ["journal", "food", "idea", "note"] as const;
-const MONTH_NAMES = [
-  "", "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-function formatDateHeading(year: number, month: number, day: number) {
-  return `${MONTH_NAMES[month]} ${day}, ${year}`;
-}
-
-function groupByDate(entries: Entry[]) {
-  const groups: { key: string; label: string; entries: Entry[] }[] = [];
-  const map = new Map<string, Entry[]>();
-
-  for (const entry of entries) {
-    const key = `${entry.year}-${entry.month}-${entry.day}`;
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(entry);
-  }
-
-  for (const [key, items] of map) {
-    const first = items[0];
-    groups.push({
-      key,
-      label: formatDateHeading(first.year, first.month, first.day),
-      entries: items,
-    });
-  }
-
-  return groups;
 }
 
 export default function BrowsePage() {
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [typeFilter, setTypeFilter] = useState<string | null>(null);
-  const [needsPassphrase, setNeedsPassphrase] = useState(false);
+  const [dates, setDates] = useState<DateEntry[]>([]);
+  const [selectedDate, setSelectedDate] = useState<{
+    year: number;
+    month: number;
+    day: number;
+  } | null>(null);
+  const [hasKey, setHasKey] = useState(() => !!getKey());
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [exportOpen, setExportOpen] = useState(false);
   const { isLocked, setIsLocked } = useVisibilityLock();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     const cleanup = initActivityListeners();
@@ -65,98 +38,99 @@ export default function BrowsePage() {
     return cleanup;
   }, [setIsLocked]);
 
-  const fetchEntries = useCallback(async () => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (typeFilter) params.set("type", typeFilter);
-
-    const res = await fetch(`/api/entries?${params}`);
-    const data = await res.json();
-    setEntries(data);
-    setLoading(false);
-  }, [typeFilter]);
-
   useEffect(() => {
-    fetchEntries();
-  }, [fetchEntries]);
+    if (!hasKey) return;
+    let cancelled = false;
+    fetch("/api/entries/dates")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        if (!cancelled) setDates(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [hasKey]);
 
-  useEffect(() => {
-    if (!isLocked && !getKey()) {
-      setNeedsPassphrase(true);
-    }
-  }, [isLocked]);
+  function handleSelectDate(year: number, month: number, day: number) {
+    setSelectedDate({ year, month, day });
+    if (isMobile) setSidebarOpen(false);
+  }
+
+  function handleBack() {
+    setSidebarOpen(true);
+    setSelectedDate(null);
+  }
 
   if (isLocked) {
     return <LockScreen onUnlock={() => setIsLocked(false)} />;
   }
 
-  if (needsPassphrase) {
+  if (!hasKey) {
     return (
-      <div className="mx-auto max-w-2xl p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Browse</h1>
-        <div className="rounded-lg border p-4">
-          <p className="mb-3 text-sm text-muted-foreground">
+      <div className="animate-page mx-auto max-w-sm px-6 py-20 space-y-6">
+        <div className="text-center">
+          <h1 className="font-display text-2xl tracking-tight">Browse</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Enter your passphrase to decrypt entries.
           </p>
-          <PassphrasePrompt onUnlock={() => setNeedsPassphrase(false)} />
         </div>
+        <PassphrasePrompt onUnlock={() => setHasKey(true)} />
       </div>
     );
   }
 
-  const groups = groupByDate(entries);
+  const showSidebar = isMobile ? sidebarOpen : true;
+  const showContent = isMobile ? !sidebarOpen : true;
 
   return (
-    <div className="mx-auto max-w-2xl p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Browse</h1>
-
-      {/* Type filter */}
-      <div className="flex flex-wrap gap-2">
-        <Badge
-          variant={typeFilter === null ? "default" : "outline"}
-          className="cursor-pointer"
-          onClick={() => setTypeFilter(null)}
+    <div className="flex h-[calc(100vh-3.5rem)]">
+      {showSidebar && (
+        <div
+          className={cn(
+            "shrink-0 border-r border-border/60",
+            isMobile ? "w-full" : "w-72",
+          )}
         >
-          All
-        </Badge>
-        {ENTRY_TYPES.map((t) => (
-          <Badge
-            key={t}
-            variant={typeFilter === t ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setTypeFilter(typeFilter === t ? null : t)}
-          >
-            {t}
-          </Badge>
-        ))}
-      </div>
-
-      <Separator />
-
-      {loading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </div>
-      ) : groups.length === 0 ? (
-        <p className="text-muted-foreground">No entries yet.</p>
-      ) : (
-        <div className="space-y-6">
-          {groups.map((group) => (
-            <div key={group.key}>
-              <h2 className="mb-3 text-sm font-medium text-muted-foreground">
-                {group.label}
-              </h2>
-              <div className="space-y-3">
-                {group.entries.map((entry) => (
-                  <EntryCard key={entry.id} {...entry} />
-                ))}
-              </div>
-            </div>
-          ))}
+          <DateTree
+            dates={dates}
+            selectedDate={selectedDate}
+            onSelectDate={handleSelectDate}
+            onExport={() => setExportOpen(true)}
+          />
         </div>
       )}
+
+      {showContent && (
+        <div className="flex-1 overflow-y-auto">
+          {isMobile && selectedDate && (
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-1.5 px-6 pt-4 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </button>
+          )}
+
+          {selectedDate ? (
+            <EntryViewer
+              year={selectedDate.year}
+              month={selectedDate.month}
+              day={selectedDate.day}
+            />
+          ) : (
+            !isMobile && (
+              <div className="flex h-full items-center justify-center">
+                <p className="text-sm text-muted-foreground">
+                  Select a date to view entries
+                </p>
+              </div>
+            )
+          )}
+        </div>
+      )}
+      <ExportModal open={exportOpen} onOpenChange={setExportOpen} />
     </div>
   );
 }

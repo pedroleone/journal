@@ -4,14 +4,15 @@ import { NextRequest } from "next/server";
 // Access the mocked db
 import { db } from "@/lib/db";
 
-const mockDb = vi.mocked(db);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockDb = vi.mocked(db) as any;
 
 describe("POST /api/entries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset the chain mock
     mockDb.insert.mockReturnThis();
-    (mockDb as any).values.mockResolvedValue(undefined);
+    mockDb.values.mockResolvedValue(undefined);
   });
 
   async function postEntry(body: Record<string, unknown>) {
@@ -25,7 +26,6 @@ describe("POST /api/entries", () => {
   }
 
   const validBody = {
-    type: "journal",
     encrypted_content: "base64ciphertext",
     iv: "base64iv",
     year: 2026,
@@ -48,19 +48,8 @@ describe("POST /api/entries", () => {
     expect(mockDb.insert).toHaveBeenCalled();
   });
 
-  it("returns 400 on missing type", async () => {
-    const { type, ...rest } = validBody;
-    const res = await postEntry(rest);
-    expect(res.status).toBe(400);
-  });
-
-  it("returns 400 on invalid type", async () => {
-    const res = await postEntry({ ...validBody, type: "diary" });
-    expect(res.status).toBe(400);
-  });
-
   it("returns 400 on missing encrypted_content", async () => {
-    const { encrypted_content, ...rest } = validBody;
+    const { encrypted_content: _ec, ...rest } = validBody;
     const res = await postEntry(rest);
     expect(res.status).toBe(400);
   });
@@ -81,15 +70,15 @@ describe("GET /api/entries", () => {
 
   it("returns 200 with array", async () => {
     const mockEntries = [
-      { id: "1", type: "journal", year: 2026, month: 3, day: 6 },
+      { id: "1", year: 2026, month: 3, day: 6 },
     ];
     // Mock the chain to return entries
     const mockResult = mockEntries;
     mockResult.reverse = vi.fn().mockReturnValue(mockEntries);
     mockDb.select.mockReturnThis();
-    (mockDb as any).from.mockReturnThis();
-    (mockDb as any).where.mockReturnThis();
-    (mockDb as any).orderBy.mockReturnValue(mockResult);
+    mockDb.from.mockReturnThis();
+    mockDb.where.mockReturnThis();
+    mockDb.orderBy.mockReturnValue(mockResult);
 
     const res = await getEntries();
     expect(res.status).toBe(200);
@@ -98,20 +87,15 @@ describe("GET /api/entries", () => {
     expect(Array.isArray(data)).toBe(true);
   });
 
-  it("passes type filter to query", async () => {
-    const mockResult: any[] = [];
-    mockResult.reverse = vi.fn().mockReturnValue([]);
+  it("passes year filter to query", async () => {
+    const mockResult: unknown[] = [];
+    (mockResult as unknown as Record<string, unknown>).reverse = vi.fn().mockReturnValue([]);
     mockDb.select.mockReturnThis();
-    (mockDb as any).from.mockReturnThis();
-    (mockDb as any).where.mockReturnThis();
-    (mockDb as any).orderBy.mockReturnValue(mockResult);
+    mockDb.from.mockReturnThis();
+    mockDb.where.mockReturnThis();
+    mockDb.orderBy.mockReturnValue(mockResult);
 
-    const res = await getEntries({ type: "food" });
+    const res = await getEntries({ year: "2026" });
     expect(res.status).toBe(200);
-  });
-
-  it("returns 400 on invalid type filter", async () => {
-    const res = await getEntries({ type: "invalid" });
-    expect(res.status).toBe(400);
   });
 });
