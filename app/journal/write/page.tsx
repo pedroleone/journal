@@ -113,19 +113,21 @@ export default function WritePage() {
     [],
   );
 
+  // Load a specific entry by ID (edit mode)
   useEffect(() => {
-    if (!hasKey) return;
-    if (!isOnline) return;
-    if (editEntryId) {
-      setReadyForEditing(false);
-      void loadEntry(editEntryId).finally(() => {
-        setReadyForEditing(true);
-      });
-    } else {
+    if (!hasKey || !isOnline || !editEntryId) return;
+    setReadyForEditing(false);
+    void loadEntry(editEntryId).finally(() => {
       setReadyForEditing(true);
-      void loadEntryForDate(date);
-    }
-  }, [date, editEntryId, hasKey, isOnline, loadEntry, loadEntryForDate]);
+    });
+  }, [editEntryId, hasKey, isOnline, loadEntry]);
+
+  // Load entry for selected date (new entry mode)
+  useEffect(() => {
+    if (!hasKey || !isOnline || editEntryId) return;
+    setReadyForEditing(true);
+    void loadEntryForDate(date);
+  }, [date, editEntryId, hasKey, isOnline, loadEntryForDate]);
 
   const { status } = useAutoSave({
     entryId: loadedEntryId,
