@@ -102,7 +102,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
         month: String(month),
         day: String(day),
       });
-      const res = await fetch(`/api/journal?${params}`);
+      const res = await fetch(`/api/entries?${params}`);
       if (!res.ok) throw new Error("Failed to fetch entries");
 
       const raw: RawEntry[] = await res.json();

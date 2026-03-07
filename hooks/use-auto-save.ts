@@ -70,7 +70,7 @@ export function useAutoSave({
       const { ciphertext, iv } = await encrypt(key, currentContent);
 
       if (entryIdRef.current) {
-        const res = await fetch(`/api/journal/${entryIdRef.current}`, {
+        const res = await fetch(`/api/entries/${entryIdRef.current}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ encrypted_content: ciphertext, iv }),
@@ -78,7 +78,7 @@ export function useAutoSave({
         if (!res.ok) throw new Error("Failed to update");
       } else {
         const now = new Date();
-        const res = await fetch("/api/journal", {
+        const res = await fetch("/api/entries", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

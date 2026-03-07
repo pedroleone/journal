@@ -27,8 +27,8 @@ describe("GET /api/journal/[id]", () => {
   it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValueOnce(null);
 
-    const { GET } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/abc123");
+    const { GET } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123");
     const res = await GET(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(401);
@@ -49,8 +49,8 @@ describe("GET /api/journal/[id]", () => {
     mockDb.from.mockReturnThis();
     mockDb.where.mockResolvedValue([entry]);
 
-    const { GET } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/abc123");
+    const { GET } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123");
     const res = await GET(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(200);
@@ -64,8 +64,8 @@ describe("GET /api/journal/[id]", () => {
     mockDb.from.mockReturnThis();
     mockDb.where.mockResolvedValue([]);
 
-    const { GET } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/nonexistent");
+    const { GET } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/nonexistent");
     const res = await GET(request, { params: makeParams("nonexistent") });
 
     expect(res.status).toBe(404);
@@ -88,8 +88,8 @@ describe("PUT /api/journal/[id]", () => {
   it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValueOnce(null);
 
-    const { PUT } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/abc123", {
+    const { PUT } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "PUT",
       body: JSON.stringify({ encrypted_content: "newcipher", iv: "newiv" }),
       headers: { "Content-Type": "application/json" },
@@ -101,8 +101,8 @@ describe("PUT /api/journal/[id]", () => {
   });
 
   it("updates entry with valid body", async () => {
-    const { PUT } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/abc123", {
+    const { PUT } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "PUT",
       body: JSON.stringify({ encrypted_content: "newcipher", iv: "newiv" }),
       headers: { "Content-Type": "application/json" },
@@ -117,8 +117,8 @@ describe("PUT /api/journal/[id]", () => {
   it("returns 404 when the entry is not owned by the current user", async () => {
     mockDb.where.mockResolvedValueOnce({ rowsAffected: 0 });
 
-    const { PUT } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/abc123", {
+    const { PUT } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "PUT",
       body: JSON.stringify({ encrypted_content: "newcipher", iv: "newiv" }),
       headers: { "Content-Type": "application/json" },
@@ -130,8 +130,8 @@ describe("PUT /api/journal/[id]", () => {
   });
 
   it("returns 400 on invalid body", async () => {
-    const { PUT } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/abc123", {
+    const { PUT } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "PUT",
       body: JSON.stringify({ encrypted_content: "" }),
       headers: { "Content-Type": "application/json" },
@@ -158,8 +158,8 @@ describe("DELETE /api/journal/[id]", () => {
   it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValueOnce(null);
 
-    const { DELETE } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/abc123", {
+    const { DELETE } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "DELETE",
     });
     const res = await DELETE(request, { params: makeParams("abc123") });
@@ -169,8 +169,8 @@ describe("DELETE /api/journal/[id]", () => {
   });
 
   it("deletes entry and returns 204", async () => {
-    const { DELETE } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/abc123", {
+    const { DELETE } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "DELETE",
     });
     const res = await DELETE(request, { params: makeParams("abc123") });
@@ -183,8 +183,8 @@ describe("DELETE /api/journal/[id]", () => {
   it("returns 404 when deleting an entry owned by another user", async () => {
     mockDb.where.mockResolvedValueOnce({ rowsAffected: 0 });
 
-    const { DELETE } = await import("@/app/api/journal/[id]/route");
-    const request = new NextRequest("http://localhost/api/journal/abc123", {
+    const { DELETE } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "DELETE",
     });
     const res = await DELETE(request, { params: makeParams("abc123") });

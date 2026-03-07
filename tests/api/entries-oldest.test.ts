@@ -31,7 +31,7 @@ describe("GET /api/entries/oldest", () => {
   it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValueOnce(null);
 
-    const { GET } = await import("@/app/api/journal/oldest/route");
+    const { GET } = await import("@/app/api/entries/oldest/route");
     const res = await GET();
 
     expect(res.status).toBe(401);
@@ -43,7 +43,7 @@ describe("GET /api/entries/oldest", () => {
       { encrypted_content: "ciphertext", iv: "entry-iv" },
     ]);
 
-    const { GET } = await import("@/app/api/journal/oldest/route");
+    const { GET } = await import("@/app/api/entries/oldest/route");
     const res = await GET();
 
     expect(res.status).toBe(200);

@@ -26,8 +26,8 @@ describe("POST /api/journal", () => {
   });
 
   async function postEntry(body: Record<string, unknown>) {
-    const { POST } = await import("@/app/api/journal/route");
-    const request = new NextRequest("http://localhost/api/journal", {
+    const { POST } = await import("@/app/api/entries/route");
+    const request = new NextRequest("http://localhost/api/entries", {
       method: "POST",
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },
@@ -91,8 +91,8 @@ describe("GET /api/journal", () => {
   });
 
   async function getEntries(params: Record<string, string> = {}) {
-    const { GET } = await import("@/app/api/journal/route");
-    const url = new URL("http://localhost/api/journal");
+    const { GET } = await import("@/app/api/entries/route");
+    const url = new URL("http://localhost/api/entries");
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
     const request = new NextRequest(url);
     return GET(request);

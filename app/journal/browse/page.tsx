@@ -33,7 +33,7 @@ export default function BrowsePage() {
   useEffect(() => {
     if (!hasKey || !isOnline) return;
     let cancelled = false;
-    fetch("/api/journal/dates")
+    fetch("/api/entries/dates")
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
         if (!cancelled) setDates(data);

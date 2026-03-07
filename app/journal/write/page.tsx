@@ -66,7 +66,7 @@ export default function WritePage() {
 
       setLoading(true);
       try {
-        const res = await fetch(`/api/journal/${id}`);
+        const res = await fetch(`/api/entries/${id}`);
         if (!res.ok) return;
         const entry = await res.json();
         const text = await decrypt(key, entry.encrypted_content, entry.iv);
@@ -94,7 +94,7 @@ export default function WritePage() {
       });
 
       try {
-        const res = await fetch(`/api/journal?${params}`);
+        const res = await fetch(`/api/entries?${params}`);
         if (!res.ok) return;
         const entries = await res.json();
         if (entries.length > 0) {
