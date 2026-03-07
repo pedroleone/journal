@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Plus, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { InstallAppButton } from "@/components/pwa/install-app-button";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -54,6 +55,7 @@ export function AppNav() {
           </div>
 
           <div className="flex items-center gap-2">
+            <InstallAppButton />
             <Button
               variant="outline"
               size="sm"

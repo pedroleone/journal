@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { jsonNoStore } from "@/lib/http";
 import { entries } from "@/lib/schema";
 
 export async function GET() {
@@ -21,5 +21,5 @@ export async function GET() {
 
   result.reverse();
 
-  return NextResponse.json(result);
+  return jsonNoStore(result);
 }

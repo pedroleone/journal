@@ -3,7 +3,12 @@ import Google from "next-auth/providers/google";
 import { NextResponse } from "next/server";
 import { upsertGoogleUser } from "@/lib/auth/user";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/manifest.webmanifest",
+  "/sw.js",
+  "/offline.html",
+];
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -27,6 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (
         PUBLIC_PATHS.includes(pathname) ||
+        pathname.startsWith("/icons/") ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/_next") ||
         pathname === "/favicon.ico"

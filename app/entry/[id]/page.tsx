@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { decrypt, encrypt } from "@/lib/crypto";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { getKey } from "@/lib/key-manager";
 import { useRequireUnlock } from "@/hooks/use-require-unlock";
 
@@ -38,10 +39,12 @@ export default function EntryPage({
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [readyForViewing, setReadyForViewing] = useState(false);
   const hasKey = useRequireUnlock();
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
-    if (!hasKey) return;
+    if (!hasKey || !isOnline) return;
 
     fetch(`/api/entries/${id}`)
       .then((res) => {
@@ -54,8 +57,11 @@ export default function EntryPage({
       })
       .catch(() => {
         setLoading(false);
+      })
+      .finally(() => {
+        setReadyForViewing(true);
       });
-  }, [hasKey, id]);
+  }, [hasKey, id, isOnline]);
 
   useEffect(() => {
     if (!hasKey) return;
@@ -74,7 +80,7 @@ export default function EntryPage({
 
   async function handleSave() {
     const key = getKey();
-    if (!key || !entry) return;
+    if (!key || !entry || !isOnline) return;
     setSaving(true);
     try {
       const { ciphertext, iv } = await encrypt(key, editContent);
@@ -94,12 +100,26 @@ export default function EntryPage({
   }
 
   async function handleDelete() {
+    if (!isOnline) return;
     if (!confirm("Delete this entry?")) return;
     await fetch(`/api/entries/${id}`, { method: "DELETE" });
     router.push("/browse");
   }
 
   if (!hasKey) return null;
+
+  if (!isOnline && !readyForViewing) {
+    return (
+      <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-md items-center justify-center px-6">
+        <div className="space-y-2 text-center">
+          <h1 className="font-display text-2xl tracking-tight">Connection required</h1>
+          <p className="text-sm text-muted-foreground">
+            The installed app opens offline, but loading or changing an entry still requires a connection.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -125,6 +145,11 @@ export default function EntryPage({
 
   return (
     <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
+      {!isOnline && (
+        <div className="rounded-lg border border-border/60 bg-secondary/60 px-4 py-3 text-sm text-muted-foreground">
+          You are offline. This entry stays visible, but edits and deletes are unavailable until you reconnect.
+        </div>
+      )}
       <button
         onClick={() => router.push("/browse")}
         className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -145,7 +170,7 @@ export default function EntryPage({
             className="resize-none border-border/50 bg-card text-base leading-relaxed focus-visible:ring-1"
           />
           <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSave} disabled={saving || !isOnline}>
               {saving ? "Saving..." : "Save"}
             </Button>
             <Button variant="outline" onClick={() => { setEditing(false); setEditContent(decryptedContent ?? ""); }}>
@@ -163,10 +188,14 @@ export default function EntryPage({
             </div>
           )}
           <div className="flex gap-2 border-t pt-6">
-            <Button variant="outline" onClick={() => setEditing(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setEditing(true)}
+              disabled={!isOnline}
+            >
               Edit
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button variant="destructive" onClick={handleDelete} disabled={!isOnline}>
               Delete
             </Button>
           </div>

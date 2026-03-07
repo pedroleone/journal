@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
 import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { jsonNoStore } from "@/lib/http";
 import { entries } from "@/lib/schema";
 import { createEntrySchema, browseQuerySchema } from "@/lib/validators";
 
@@ -13,7 +14,10 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const parsed = createEntrySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input", details: parsed.error.issues }, { status: 400 });
+    return jsonNoStore(
+      { error: "Invalid input", details: parsed.error.issues },
+      { status: 400 },
+    );
   }
 
   const now = new Date().toISOString();
@@ -35,7 +39,7 @@ export async function POST(request: NextRequest) {
     updated_at: now,
   });
 
-  return NextResponse.json({ id }, { status: 201 });
+  return jsonNoStore({ id }, { status: 201 });
 }
 
 export async function GET(request: NextRequest) {
@@ -50,7 +54,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid query" }, { status: 400 });
+    return jsonNoStore({ error: "Invalid query" }, { status: 400 });
   }
 
   const conditions = [eq(entries.userId, userId)];
@@ -67,5 +71,5 @@ export async function GET(request: NextRequest) {
   // Reverse for desc order
   result.reverse();
 
-  return NextResponse.json(result);
+  return jsonNoStore(result);
 }

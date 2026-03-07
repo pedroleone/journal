@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { decrypt } from "@/lib/crypto";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { getKey } from "@/lib/key-manager";
 
 interface RawEntry {
@@ -76,10 +77,17 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
   const [entries, setEntries] = useState<DecryptedEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isOnline = useOnlineStatus();
 
   const loadAndDecrypt = useCallback(async () => {
     setLoading(true);
     setError(null);
+
+    if (!isOnline) {
+      setError("Reconnect to load entries for this date");
+      setLoading(false);
+      return;
+    }
 
     const key = getKey();
     if (!key) {
@@ -125,7 +133,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
     } finally {
       setLoading(false);
     }
-  }, [year, month, day]);
+  }, [day, isOnline, month, year]);
 
   useEffect(() => {
     loadAndDecrypt();

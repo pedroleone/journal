@@ -12,10 +12,9 @@ const mockDb = vi.mocked(db) as unknown as {
   from: ReturnType<typeof vi.fn>;
   where: ReturnType<typeof vi.fn>;
   orderBy: ReturnType<typeof vi.fn>;
-  limit: ReturnType<typeof vi.fn>;
 };
 
-describe("GET /api/entries/oldest", () => {
+describe("GET /api/entries/dates", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockReset();
@@ -25,31 +24,27 @@ describe("GET /api/entries/oldest", () => {
     mockDb.select.mockReturnThis();
     mockDb.from.mockReturnThis();
     mockDb.where.mockReturnThis();
-    mockDb.orderBy.mockReturnThis();
   });
 
   it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValueOnce(null);
 
-    const { GET } = await import("@/app/api/entries/oldest/route");
+    const { GET } = await import("@/app/api/entries/dates/route");
     const res = await GET();
 
     expect(res.status).toBe(401);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
-  it("returns the oldest entry for the current user", async () => {
-    mockDb.limit.mockResolvedValueOnce([
-      { encrypted_content: "ciphertext", iv: "entry-iv" },
+  it("returns dates with no-store caching", async () => {
+    mockDb.orderBy.mockResolvedValueOnce([
+      { id: "1", year: 2026, month: 3, day: 7 },
     ]);
 
-    const { GET } = await import("@/app/api/entries/oldest/route");
+    const { GET } = await import("@/app/api/entries/dates/route");
     const res = await GET();
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
-    await expect(res.json()).resolves.toEqual({
-      entry: { encrypted_content: "ciphertext", iv: "entry-iv" },
-    });
   });
 });

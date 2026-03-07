@@ -32,6 +32,7 @@ describe("GET /api/entries/[id]", () => {
     const res = await GET(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(401);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("returns entry when found", async () => {
@@ -53,6 +54,7 @@ describe("GET /api/entries/[id]", () => {
     const res = await GET(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
     const data = await res.json();
     expect(data.id).toBe("abc123");
   });
@@ -67,6 +69,7 @@ describe("GET /api/entries/[id]", () => {
     const res = await GET(request, { params: makeParams("nonexistent") });
 
     expect(res.status).toBe(404);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 });
 
@@ -94,6 +97,7 @@ describe("PUT /api/entries/[id]", () => {
     const res = await PUT(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(401);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("updates entry with valid body", async () => {
@@ -106,6 +110,7 @@ describe("PUT /api/entries/[id]", () => {
     const res = await PUT(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
     expect(mockDb.update).toHaveBeenCalled();
   });
 
@@ -121,6 +126,7 @@ describe("PUT /api/entries/[id]", () => {
     const res = await PUT(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(404);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("returns 400 on invalid body", async () => {
@@ -133,6 +139,7 @@ describe("PUT /api/entries/[id]", () => {
     const res = await PUT(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(400);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 });
 
@@ -158,6 +165,7 @@ describe("DELETE /api/entries/[id]", () => {
     const res = await DELETE(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(401);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("deletes entry and returns 204", async () => {
@@ -168,6 +176,7 @@ describe("DELETE /api/entries/[id]", () => {
     const res = await DELETE(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(204);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
     expect(mockDb.delete).toHaveBeenCalled();
   });
 
@@ -181,5 +190,6 @@ describe("DELETE /api/entries/[id]", () => {
     const res = await DELETE(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(404);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 });

@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PassphrasePrompt, type PassphrasePromptMode, type ValidationEntry } from "@/components/passphrase-prompt";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { normalizeUnlockNext } from "@/lib/unlock";
 
 export default function UnlockPage() {
@@ -12,12 +13,19 @@ export default function UnlockPage() {
   const [mode, setMode] = useState<PassphrasePromptMode | null>(null);
   const [entry, setEntry] = useState<ValidationEntry | null>(null);
   const [error, setError] = useState("");
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadUnlockState() {
+      if (!isOnline) {
+        setError("Connection required to verify your journal before unlock.");
+        return;
+      }
+
       try {
+        setError("");
         const res = await fetch("/api/entries/oldest");
         if (!res.ok) throw new Error("Failed to load unlock state");
 
@@ -38,7 +46,7 @@ export default function UnlockPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isOnline]);
 
   function handleUnlock() {
     const nextPath = normalizeUnlockNext(searchParams.get("next"));

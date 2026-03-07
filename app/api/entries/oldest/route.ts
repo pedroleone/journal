@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { jsonNoStore } from "@/lib/http";
 import { entries } from "@/lib/schema";
 
 export async function GET() {
@@ -18,5 +18,5 @@ export async function GET() {
     .orderBy(asc(entries.created_at))
     .limit(1);
 
-  return NextResponse.json({ entry: oldest ?? null });
+  return jsonNoStore({ entry: oldest ?? null });
 }

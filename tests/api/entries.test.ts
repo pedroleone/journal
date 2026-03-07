@@ -49,11 +49,13 @@ describe("POST /api/entries", () => {
 
     const res = await postEntry(validBody);
     expect(res.status).toBe(401);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("returns 201 with id on valid input", async () => {
     const res = await postEntry(validBody);
     expect(res.status).toBe(201);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
 
     const data = await res.json();
     expect(data.id).toBeDefined();
@@ -75,6 +77,7 @@ describe("POST /api/entries", () => {
     delete (rest as Partial<typeof validBody>).encrypted_content;
     const res = await postEntry(rest);
     expect(res.status).toBe(400);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 });
 
@@ -100,6 +103,7 @@ describe("GET /api/entries", () => {
 
     const res = await getEntries();
     expect(res.status).toBe(401);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("returns 200 with array", async () => {
@@ -116,6 +120,7 @@ describe("GET /api/entries", () => {
 
     const res = await getEntries();
     expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
 
     const data = await res.json();
     expect(Array.isArray(data)).toBe(true);
@@ -131,5 +136,6 @@ describe("GET /api/entries", () => {
 
     const res = await getEntries({ year: "2026" });
     expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 });
