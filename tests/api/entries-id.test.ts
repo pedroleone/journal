@@ -15,7 +15,7 @@ function makeParams(id: string): Promise<{ id: string }> {
   return Promise.resolve({ id });
 }
 
-describe("GET /api/journal/[id]", () => {
+describe("GET /api/entries/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockReset();
@@ -73,7 +73,7 @@ describe("GET /api/journal/[id]", () => {
   });
 });
 
-describe("PUT /api/journal/[id]", () => {
+describe("PUT /api/entries/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockReset();
@@ -143,7 +143,7 @@ describe("PUT /api/journal/[id]", () => {
   });
 });
 
-describe("DELETE /api/journal/[id]", () => {
+describe("DELETE /api/entries/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockReset();

@@ -26,7 +26,6 @@ export function usePwaInstall() {
   const [isInstalled, setIsInstalled] = useState(() => isStandaloneMode());
 
   useEffect(() => {
-
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setPromptEvent(event as BeforeInstallPromptEvent);

@@ -13,7 +13,7 @@ const mockAuth = auth as unknown as {
   mockResolvedValueOnce: (value: unknown) => void;
 };
 
-describe("POST /api/journal", () => {
+describe("POST /api/entries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockReset();
@@ -81,7 +81,7 @@ describe("POST /api/journal", () => {
   });
 });
 
-describe("GET /api/journal", () => {
+describe("GET /api/entries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockReset();
