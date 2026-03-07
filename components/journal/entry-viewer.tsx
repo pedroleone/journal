@@ -174,7 +174,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
         </h2>
         <Button variant="ghost" size="sm" className="gap-1.5" asChild>
           <Link
-            href={`/write?entry=${entries[0].id}`}
+            href={`/journal/write?entry=${entries[0].id}`}
           >
             <Pencil className="h-3.5 w-3.5" />
             Edit

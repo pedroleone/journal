@@ -113,19 +113,21 @@ export default function WritePage() {
     [],
   );
 
+  // Load a specific entry by ID (edit mode)
   useEffect(() => {
-    if (!hasKey) return;
-    if (!isOnline) return;
-    if (editEntryId) {
-      setReadyForEditing(false);
-      void loadEntry(editEntryId).finally(() => {
-        setReadyForEditing(true);
-      });
-    } else {
+    if (!hasKey || !isOnline || !editEntryId) return;
+    setReadyForEditing(false);
+    void loadEntry(editEntryId).finally(() => {
       setReadyForEditing(true);
-      void loadEntryForDate(date);
-    }
-  }, [date, editEntryId, hasKey, isOnline, loadEntry, loadEntryForDate]);
+    });
+  }, [editEntryId, hasKey, isOnline, loadEntry]);
+
+  // Load entry for selected date (new entry mode)
+  useEffect(() => {
+    if (!hasKey || !isOnline || editEntryId) return;
+    setReadyForEditing(true);
+    void loadEntryForDate(date);
+  }, [date, editEntryId, hasKey, isOnline, loadEntryForDate]);
 
   const { status } = useAutoSave({
     entryId: loadedEntryId,
@@ -167,7 +169,7 @@ export default function WritePage() {
       )}
       <div className="flex items-center justify-between px-6 py-4">
         <Link
-          href="/browse"
+          href="/journal/browse"
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
