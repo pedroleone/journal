@@ -34,13 +34,27 @@ export default function BrowsePage() {
     fetch("/api/entries/dates")
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
-        if (!cancelled) setDates(data);
+        if (cancelled) return;
+
+        setDates(data);
+        setSelectedDate((current) => {
+          if (current || data.length === 0) return current;
+
+          const [latestEntry] = data;
+          if (isMobile) setSidebarOpen(false);
+
+          return {
+            year: latestEntry.year,
+            month: latestEntry.month,
+            day: latestEntry.day,
+          };
+        });
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [isOnline]);
+  }, [isMobile, isOnline]);
 
   function handleSelectDate(year: number, month: number, day: number) {
     setSelectedDate({ year, month, day });

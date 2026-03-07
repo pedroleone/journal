@@ -253,130 +253,132 @@ export default function WritePage() {
           You are offline. Changes stay visible here but are not being saved.
         </div>
       )}
-      <div className="flex items-center justify-between px-6 py-4">
-        <Link
-          href="/journal/browse"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Link>
-
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger asChild>
-            <button className="font-display text-lg tracking-tight text-foreground transition-colors hover:text-muted-foreground">
-              {formatWriteDate(date)}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="center">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(d) => {
-                if (d) {
-                  setDate(d);
-                  setCalendarOpen(false);
-                }
-              }}
-            />
-          </PopoverContent>
-        </Popover>
-
-        <div className="w-16" />
-      </div>
-
-      {entryError ? (
-        <div className="px-6 pb-2 text-sm text-destructive">{entryError}</div>
-      ) : null}
-
-      <div className="flex-1 overflow-y-auto px-6 pb-4">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Start writing..."
-          className="mx-auto h-full w-full max-w-2xl resize-none border-0 bg-transparent text-lg leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
-          autoFocus
-        />
-
-        {images.length > 0 ? (
-          <div className="mx-auto mt-6 grid max-w-2xl gap-4 sm:grid-cols-2">
-            {images.map((image) => (
-              <div
-                key={image.key}
-                className="relative overflow-hidden rounded-lg border border-border/50 bg-card/20"
-              >
-                {/* Blob URLs back these previews, so Next/Image is not a good fit here. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={image.url} alt="" className="h-48 w-full object-cover" />
-                <button
-                  onClick={() => handleRemoveImage(image.key)}
-                  className="absolute right-2 top-2 rounded-full bg-background/90 p-1 text-foreground shadow-sm"
-                  aria-label="Remove image"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="flex items-center justify-between border-t border-border/40 px-6 py-3">
-        <div className="flex items-center gap-3">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(event) => {
-              void handleImageSelection(event.target.files);
-            }}
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-            disabled={!isOnline || uploadingImages}
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6">
+        <div className="flex items-center justify-between py-4">
+          <Link
+            href="/journal/browse"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            {uploadingImages ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Paperclip className="h-3 w-3" />
-            )}
-            Image
-          </button>
-          {imageKeys.length > 0 ? (
-            <span className="text-xs text-muted-foreground">
-              {imageKeys.length} attached
-            </span>
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Link>
+
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <button className="font-display text-lg tracking-tight text-foreground transition-colors hover:text-muted-foreground">
+                {formatWriteDate(date)}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(d) => {
+                  if (d) {
+                    setDate(d);
+                    setCalendarOpen(false);
+                  }
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <div className="w-16" />
+        </div>
+
+        {entryError ? (
+          <div className="pb-2 text-sm text-destructive">{entryError}</div>
+        ) : null}
+
+        <div className="flex-1 overflow-y-auto pb-4">
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Start writing..."
+            className="h-full w-full resize-none border-0 bg-transparent text-lg leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
+            autoFocus
+          />
+
+          {images.length > 0 ? (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              {images.map((image) => (
+                <div
+                  key={image.key}
+                  className="relative overflow-hidden rounded-lg border border-border/50 bg-card/20"
+                >
+                  {/* Blob URLs back these previews, so Next/Image is not a good fit here. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={image.url} alt="" className="h-48 w-full object-cover" />
+                  <button
+                    onClick={() => handleRemoveImage(image.key)}
+                    className="absolute right-2 top-2 rounded-full bg-background/90 p-1 text-foreground shadow-sm"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           ) : null}
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          {status === "saving" && (
-            <>
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Saving...
-            </>
-          )}
-          {status === "saved" && (
-            <>
-              <Check className="h-3 w-3" />
-              Saved
-            </>
-          )}
-          {status === "error" && (
-            <>
-              <AlertCircle className="h-3 w-3" />
-              Save failed
-            </>
-          )}
-          {status === "offline" && (
-            <>
-              <AlertCircle className="h-3 w-3" />
-              Offline
-            </>
-          )}
+        <div className="flex items-center justify-between border-t border-border/40 py-3">
+          <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(event) => {
+                void handleImageSelection(event.target.files);
+              }}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              disabled={!isOnline || uploadingImages}
+            >
+              {uploadingImages ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Paperclip className="h-3 w-3" />
+              )}
+              Image
+            </button>
+            {imageKeys.length > 0 ? (
+              <span className="text-xs text-muted-foreground">
+                {imageKeys.length} attached
+              </span>
+            ) : null}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {status === "saving" && (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Saving...
+              </>
+            )}
+            {status === "saved" && (
+              <>
+                <Check className="h-3 w-3" />
+                Saved
+              </>
+            )}
+            {status === "error" && (
+              <>
+                <AlertCircle className="h-3 w-3" />
+                Save failed
+              </>
+            )}
+            {status === "offline" && (
+              <>
+                <AlertCircle className="h-3 w-3" />
+                Offline
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

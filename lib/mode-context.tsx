@@ -3,13 +3,12 @@
 import {
   createContext,
   useContext,
-  useState,
   useCallback,
   type ReactNode,
 } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
-type Mode = "journal" | "food";
+export type Mode = "journal" | "food";
 
 interface ModeContextValue {
   mode: Mode;
@@ -18,24 +17,21 @@ interface ModeContextValue {
 
 const ModeContext = createContext<ModeContextValue | null>(null);
 
+export function getModeFromPathname(pathname: string): Mode {
+  return pathname.startsWith("/food") ? "food" : "journal";
+}
+
 export function ModeProvider({ children }: { children: ReactNode }) {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-
-  const paramMode = searchParams.get("mode");
-  const [mode, setModeState] = useState<Mode>(
-    paramMode === "food" ? "food" : "journal",
-  );
+  const mode = getModeFromPathname(pathname);
 
   const setMode = useCallback(
     (newMode: Mode) => {
-      setModeState(newMode);
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("mode", newMode);
-      router.replace(`${pathname}?${params.toString()}`);
+      if (newMode === mode) return;
+      router.push(newMode === "food" ? "/food/browse" : "/journal/browse");
     },
-    [searchParams, router, pathname],
+    [mode, router],
   );
 
   return (

@@ -100,7 +100,7 @@ export default function FoodPage() {
     <div className="animate-page mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-10">
       <div className="flex justify-end">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/food/browse?mode=food">Browse & Organize</Link>
+          <Link href="/food/browse">Browse & Organize</Link>
         </Button>
       </div>
 
