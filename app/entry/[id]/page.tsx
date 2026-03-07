@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { decrypt, encrypt } from "@/lib/crypto";
-import { getKey, initActivityListeners, onLock } from "@/lib/key-manager";
-import { useVisibilityLock } from "@/hooks/use-visibility-lock";
-import { LockScreen } from "@/components/lock-screen";
-import { PassphrasePrompt } from "@/components/passphrase-prompt";
+import { getKey } from "@/lib/key-manager";
+import { useRequireUnlock } from "@/hooks/use-require-unlock";
 
 interface Entry {
   id: string;
@@ -40,19 +38,11 @@ export default function EntryPage({
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [needsPassphrase, setNeedsPassphrase] = useState(false);
-  const { isLocked, setIsLocked } = useVisibilityLock();
+  const hasKey = useRequireUnlock();
 
   useEffect(() => {
-    const cleanup = initActivityListeners();
-    onLock(() => {
-      setIsLocked(true);
-      setDecryptedContent(null);
-    });
-    return cleanup;
-  }, [setIsLocked]);
+    if (!hasKey) return;
 
-  useEffect(() => {
     fetch(`/api/entries/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Not found");
@@ -65,13 +55,13 @@ export default function EntryPage({
       .catch(() => {
         setLoading(false);
       });
-  }, [id]);
+  }, [hasKey, id]);
 
   useEffect(() => {
+    if (!hasKey) return;
     if (!entry) return;
     const key = getKey();
     if (!key) {
-      setNeedsPassphrase(true);
       return;
     }
     decrypt(key, entry.encrypted_content, entry.iv)
@@ -80,7 +70,7 @@ export default function EntryPage({
         setEditContent(text);
       })
       .catch(() => setDecryptedContent("[decryption failed]"));
-  }, [entry, isLocked]);
+  }, [entry, hasKey]);
 
   async function handleSave() {
     const key = getKey();
@@ -109,25 +99,7 @@ export default function EntryPage({
     router.push("/browse");
   }
 
-  function handleUnlock() {
-    setIsLocked(false);
-    setNeedsPassphrase(false);
-    if (entry) {
-      const key = getKey();
-      if (key) {
-        decrypt(key, entry.encrypted_content, entry.iv)
-          .then((text) => {
-            setDecryptedContent(text);
-            setEditContent(text);
-          })
-          .catch(() => setDecryptedContent("[decryption failed]"));
-      }
-    }
-  }
-
-  if (isLocked) {
-    return <LockScreen onUnlock={handleUnlock} />;
-  }
+  if (!hasKey) return null;
 
   if (loading) {
     return (
@@ -145,20 +117,6 @@ export default function EntryPage({
         <Button variant="outline" className="mt-4" onClick={() => router.push("/browse")}>
           Back to Browse
         </Button>
-      </div>
-    );
-  }
-
-  if (needsPassphrase) {
-    return (
-      <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
-        <h1 className="font-display text-3xl tracking-tight">Entry</h1>
-        <div className="rounded-lg border p-4">
-          <p className="mb-3 text-sm text-muted-foreground">
-            Enter your passphrase to decrypt this entry.
-          </p>
-          <PassphrasePrompt onUnlock={handleUnlock} />
-        </div>
       </div>
     );
   }

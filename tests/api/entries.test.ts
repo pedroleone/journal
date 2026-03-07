@@ -1,15 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { auth } from "@/auth";
 
 // Access the mocked db
 import { db } from "@/lib/db";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
+const mockAuth = auth as unknown as {
+  mockReset: () => void;
+  mockResolvedValue: (value: unknown) => void;
+  mockResolvedValueOnce: (value: unknown) => void;
+};
 
 describe("POST /api/entries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", email: "user@example.com" },
+    });
     // Reset the chain mock
     mockDb.insert.mockReturnThis();
     mockDb.values.mockResolvedValue(undefined);
@@ -34,6 +44,13 @@ describe("POST /api/entries", () => {
     hour: 14,
   };
 
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const res = await postEntry(validBody);
+    expect(res.status).toBe(401);
+  });
+
   it("returns 201 with id on valid input", async () => {
     const res = await postEntry(validBody);
     expect(res.status).toBe(201);
@@ -46,10 +63,16 @@ describe("POST /api/entries", () => {
   it("calls db.insert with correct values", async () => {
     await postEntry(validBody);
     expect(mockDb.insert).toHaveBeenCalled();
+    expect(mockDb.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+      }),
+    );
   });
 
   it("returns 400 on missing encrypted_content", async () => {
-    const { encrypted_content: _ec, ...rest } = validBody;
+    const rest = { ...validBody };
+    delete (rest as Partial<typeof validBody>).encrypted_content;
     const res = await postEntry(rest);
     expect(res.status).toBe(400);
   });
@@ -58,6 +81,10 @@ describe("POST /api/entries", () => {
 describe("GET /api/entries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", email: "user@example.com" },
+    });
   });
 
   async function getEntries(params: Record<string, string> = {}) {
@@ -67,6 +94,13 @@ describe("GET /api/entries", () => {
     const request = new NextRequest(url);
     return GET(request);
   }
+
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const res = await getEntries();
+    expect(res.status).toBe(401);
+  });
 
   it("returns 200 with array", async () => {
     const mockEntries = [

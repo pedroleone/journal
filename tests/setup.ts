@@ -2,10 +2,13 @@ import { vi } from "vitest";
 
 // Set test env vars
 process.env.NEXT_PUBLIC_PBKDF2_SALT = btoa("test-salt-16bytes");
-process.env.SESSION_SECRET = "test-session-secret-that-is-long-enough-for-hs256";
-// bcrypt hash of "testpassword" with 4 rounds for speed
-process.env.PASSWORD_HASH =
-  "$2a$04$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+process.env.AUTH_SECRET = "test-auth-secret";
+process.env.AUTH_GOOGLE_ID = "test-google-id";
+process.env.AUTH_GOOGLE_SECRET = "test-google-secret";
+
+vi.mock("@/auth", () => ({
+  auth: vi.fn(),
+}));
 
 // Mock db module for API route tests
 vi.mock("@/lib/db", () => ({
@@ -19,6 +22,7 @@ vi.mock("@/lib/db", () => ({
     set: vi.fn().mockReturnThis(),
     values: vi.fn().mockResolvedValue(undefined),
     orderBy: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue([]),
     reverse: vi.fn().mockReturnValue([]),
   },
 }));

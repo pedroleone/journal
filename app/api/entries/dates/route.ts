@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { entries } from "@/lib/schema";
 
 export async function GET() {
+  const userId = await getRequiredUserId();
+  if (!userId) return unauthorizedResponse();
+
   const result = await db
     .select({
       id: entries.id,
@@ -11,6 +16,7 @@ export async function GET() {
       day: entries.day,
     })
     .from(entries)
+    .where(eq(entries.userId, userId))
     .orderBy(entries.year, entries.month, entries.day);
 
   result.reverse();

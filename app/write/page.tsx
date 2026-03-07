@@ -10,12 +10,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { initActivityListeners, onLock, getKey } from "@/lib/key-manager";
+import { getKey } from "@/lib/key-manager";
 import { decrypt } from "@/lib/crypto";
-import { useVisibilityLock } from "@/hooks/use-visibility-lock";
 import { useAutoSave } from "@/hooks/use-auto-save";
-import { LockScreen } from "@/components/lock-screen";
-import { PassphrasePrompt } from "@/components/passphrase-prompt";
+import { useRequireUnlock } from "@/hooks/use-require-unlock";
 
 const MONTH_NAMES = [
   "",
@@ -55,15 +53,8 @@ export default function WritePage() {
   const [date, setDate] = useState(new Date());
   const [loadedEntryId, setLoadedEntryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [hasKey, setHasKey] = useState(() => !!getKey());
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const { isLocked, setIsLocked } = useVisibilityLock();
-
-  useEffect(() => {
-    const cleanup = initActivityListeners();
-    onLock(() => setIsLocked(true));
-    return cleanup;
-  }, [setIsLocked]);
+  const hasKey = useRequireUnlock();
 
   const loadEntry = useCallback(
     async (id: string) => {
@@ -138,23 +129,7 @@ export default function WritePage() {
     day: date.getDate(),
   });
 
-  if (isLocked) {
-    return <LockScreen onUnlock={() => setIsLocked(false)} />;
-  }
-
-  if (!hasKey) {
-    return (
-      <div className="animate-page mx-auto max-w-sm px-6 py-20 space-y-6">
-        <div className="text-center">
-          <h1 className="font-display text-2xl tracking-tight">Write</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enter your passphrase to start writing.
-          </p>
-        </div>
-        <PassphrasePrompt onUnlock={() => setHasKey(true)} />
-      </div>
-    );
-  }
+  if (!hasKey) return null;
 
   if (loading) {
     return (

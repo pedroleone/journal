@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
-import { initActivityListeners, onLock, getKey } from "@/lib/key-manager";
-import { useVisibilityLock } from "@/hooks/use-visibility-lock";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { LockScreen } from "@/components/lock-screen";
-import { PassphrasePrompt } from "@/components/passphrase-prompt";
+import { useRequireUnlock } from "@/hooks/use-require-unlock";
 import { DateTree } from "@/components/journal/date-tree";
 import { EntryViewer } from "@/components/journal/entry-viewer";
 import { ExportModal } from "@/components/journal/export-modal";
@@ -26,17 +23,10 @@ export default function BrowsePage() {
     month: number;
     day: number;
   } | null>(null);
-  const [hasKey, setHasKey] = useState(() => !!getKey());
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [exportOpen, setExportOpen] = useState(false);
-  const { isLocked, setIsLocked } = useVisibilityLock();
   const isMobile = useMediaQuery("(max-width: 768px)");
-
-  useEffect(() => {
-    const cleanup = initActivityListeners();
-    onLock(() => setIsLocked(true));
-    return cleanup;
-  }, [setIsLocked]);
+  const hasKey = useRequireUnlock();
 
   useEffect(() => {
     if (!hasKey) return;
@@ -62,23 +52,7 @@ export default function BrowsePage() {
     setSelectedDate(null);
   }
 
-  if (isLocked) {
-    return <LockScreen onUnlock={() => setIsLocked(false)} />;
-  }
-
-  if (!hasKey) {
-    return (
-      <div className="animate-page mx-auto max-w-sm px-6 py-20 space-y-6">
-        <div className="text-center">
-          <h1 className="font-display text-2xl tracking-tight">Browse</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enter your passphrase to decrypt entries.
-          </p>
-        </div>
-        <PassphrasePrompt onUnlock={() => setHasKey(true)} />
-      </div>
-    );
-  }
+  if (!hasKey) return null;
 
   const showSidebar = isMobile ? sidebarOpen : true;
   const showContent = isMobile ? !sidebarOpen : true;

@@ -6,10 +6,28 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+export const users = sqliteTable(
+  "users",
+  {
+    id: text("id").primaryKey(),
+    googleSub: text("google_sub").notNull(),
+    email: text("email").notNull(),
+    created_at: text("created_at").notNull(),
+    updated_at: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_users_google_sub").on(table.googleSub),
+    uniqueIndex("idx_users_email").on(table.email),
+  ],
+);
+
 export const entries = sqliteTable(
   "entries",
   {
     id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     source: text("source", {
       enum: ["web", "telegram"],
     }).notNull(),
@@ -25,7 +43,17 @@ export const entries = sqliteTable(
     updated_at: text("updated_at").notNull(),
   },
   (table) => [
-    index("idx_date").on(table.year, table.month, table.day),
-    uniqueIndex("idx_unique_date").on(table.year, table.month, table.day),
+    index("idx_entries_user_date").on(
+      table.userId,
+      table.year,
+      table.month,
+      table.day,
+    ),
+    uniqueIndex("idx_entries_unique_user_date").on(
+      table.userId,
+      table.year,
+      table.month,
+      table.day,
+    ),
   ],
 );

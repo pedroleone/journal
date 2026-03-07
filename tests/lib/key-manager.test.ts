@@ -35,6 +35,15 @@ describe("key-manager", () => {
     expect(cb).toHaveBeenCalledOnce();
   });
 
+  it("onLock cleanup unregisters the callback", () => {
+    const cb = vi.fn();
+    const cleanup = keyManager.onLock(cb);
+    cleanup();
+    keyManager.setKey({ type: "secret" } as CryptoKey);
+    keyManager.wipeKey();
+    expect(cb).not.toHaveBeenCalled();
+  });
+
   it("key is wiped after 5 minutes of inactivity", () => {
     const cb = vi.fn();
     keyManager.onLock(cb);

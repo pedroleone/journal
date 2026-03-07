@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
+import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { entries } from "@/lib/schema";
 import { createEntrySchema, browseQuerySchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
+  const userId = await getRequiredUserId();
+  if (!userId) return unauthorizedResponse();
+
   const body = await request.json();
   const parsed = createEntrySchema.safeParse(body);
   if (!parsed.success) {
@@ -17,6 +21,7 @@ export async function POST(request: NextRequest) {
 
   await db.insert(entries).values({
     id,
+    userId,
     source: "web",
     year: parsed.data.year,
     month: parsed.data.month,
@@ -34,6 +39,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const userId = await getRequiredUserId();
+  if (!userId) return unauthorizedResponse();
+
   const { searchParams } = request.nextUrl;
   const parsed = browseQuerySchema.safeParse({
     year: searchParams.get("year") ?? undefined,
@@ -45,7 +53,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid query" }, { status: 400 });
   }
 
-  const conditions = [];
+  const conditions = [eq(entries.userId, userId)];
   if (parsed.data.year !== undefined) conditions.push(eq(entries.year, parsed.data.year));
   if (parsed.data.month !== undefined) conditions.push(eq(entries.month, parsed.data.month));
   if (parsed.data.day !== undefined) conditions.push(eq(entries.day, parsed.data.day));
