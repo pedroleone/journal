@@ -1,12 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
+const mockAuth = auth as unknown as {
+  mockReset: () => void;
+  mockResolvedValue: (value: unknown) => void;
+  mockResolvedValueOnce: (value: unknown) => void;
+};
 
 describe("GET /api/food/dates", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", email: "user@example.com" },
+    });
+  });
+
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const { GET } = await import("@/app/api/food/dates/route");
+    const res = await GET();
+    expect(res.status).toBe(401);
   });
 
   it("returns grouped date counts", async () => {
@@ -17,6 +35,7 @@ describe("GET /api/food/dates", () => {
 
     mockDb.select.mockReturnThis();
     mockDb.from.mockReturnThis();
+    mockDb.where.mockReturnThis();
     mockDb.groupBy.mockReturnThis();
     mockDb.orderBy.mockResolvedValue(rows);
 

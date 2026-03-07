@@ -1,16 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 import { and, desc, eq, isNull } from "drizzle-orm";
+import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { jsonNoStore } from "@/lib/http";
 import { foodEntries } from "@/lib/schema";
 import { createFoodEntrySchema, foodListQuerySchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
+  const userId = await getRequiredUserId();
+  if (!userId) return unauthorizedResponse();
+
   const body = await request.json();
   const parsed = createFoodEntrySchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
+    return jsonNoStore(
       { error: "Invalid input", details: parsed.error.issues },
       { status: 400 },
     );
@@ -22,6 +27,7 @@ export async function POST(request: NextRequest) {
 
   await db.insert(foodEntries).values({
     id,
+    userId,
     source: "web",
     year: now.getFullYear(),
     month: now.getMonth() + 1,
@@ -38,10 +44,13 @@ export async function POST(request: NextRequest) {
     updated_at: nowIso,
   });
 
-  return NextResponse.json({ id }, { status: 201 });
+  return jsonNoStore({ id }, { status: 201 });
 }
 
 export async function GET(request: NextRequest) {
+  const userId = await getRequiredUserId();
+  if (!userId) return unauthorizedResponse();
+
   const { searchParams } = request.nextUrl;
   const parsed = foodListQuerySchema.safeParse({
     uncategorized: searchParams.get("uncategorized") ?? undefined,
@@ -53,10 +62,10 @@ export async function GET(request: NextRequest) {
   });
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid query" }, { status: 400 });
+    return jsonNoStore({ error: "Invalid query" }, { status: 400 });
   }
 
-  const conditions = [];
+  const conditions = [eq(foodEntries.userId, userId)];
   if (parsed.data.uncategorized === true) {
     conditions.push(isNull(foodEntries.assigned_at));
   }
@@ -76,7 +85,7 @@ export async function GET(request: NextRequest) {
   const baseQuery = db
     .select()
     .from(foodEntries)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(desc(foodEntries.logged_at));
 
   const result =
@@ -84,5 +93,5 @@ export async function GET(request: NextRequest) {
       ? await baseQuery.limit(parsed.data.limit)
       : await baseQuery;
 
-  return NextResponse.json(result);
+  return jsonNoStore(result);
 }

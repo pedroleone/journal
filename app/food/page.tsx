@@ -5,11 +5,9 @@ import Link from "next/link";
 import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { initActivityListeners, onLock, getKey } from "@/lib/key-manager";
+import { getKey } from "@/lib/key-manager";
 import { decrypt, encrypt } from "@/lib/crypto";
-import { useVisibilityLock } from "@/hooks/use-visibility-lock";
-import { LockScreen } from "@/components/lock-screen";
-import { PassphrasePrompt } from "@/components/passphrase-prompt";
+import { useRequireUnlock } from "@/hooks/use-require-unlock";
 
 interface FoodEntry {
   id: string;
@@ -37,15 +35,8 @@ export default function FoodPage() {
   const [content, setContent] = useState("");
   const [logging, setLogging] = useState(false);
   const [recent, setRecent] = useState<RecentEntry[]>([]);
-  const [hasKey, setHasKey] = useState(() => !!getKey());
   const [savedFlash, setSavedFlash] = useState(false);
-  const { isLocked, setIsLocked } = useVisibilityLock();
-
-  useEffect(() => {
-    const cleanup = initActivityListeners();
-    onLock(() => setIsLocked(true));
-    return cleanup;
-  }, [setIsLocked]);
+  const hasKey = useRequireUnlock();
 
   const loadRecent = useCallback(async () => {
     const key = getKey();
@@ -82,10 +73,7 @@ export default function FoodPage() {
     if (!content.trim()) return;
 
     const key = getKey();
-    if (!key) {
-      setHasKey(false);
-      return;
-    }
+    if (!key) return;
 
     setLogging(true);
     try {
@@ -108,23 +96,7 @@ export default function FoodPage() {
     }
   }
 
-  if (isLocked) {
-    return <LockScreen onUnlock={() => setIsLocked(false)} />;
-  }
-
-  if (!hasKey) {
-    return (
-      <div className="animate-page mx-auto max-w-sm px-6 py-20 space-y-6">
-        <div className="text-center">
-          <h1 className="font-display text-2xl tracking-tight">Food</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enter your passphrase to log food entries.
-          </p>
-        </div>
-        <PassphrasePrompt onUnlock={() => setHasKey(true)} />
-      </div>
-    );
-  }
+  if (!hasKey) return null;
 
   return (
     <div className="animate-page mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-10">

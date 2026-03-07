@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
+const mockAuth = auth as unknown as {
+  mockReset: () => void;
+  mockResolvedValue: (value: unknown) => void;
+  mockResolvedValueOnce: (value: unknown) => void;
+};
 
 function makeParams(id: string): Promise<{ id: string }> {
   return Promise.resolve({ id });
@@ -12,10 +18,28 @@ function makeParams(id: string): Promise<{ id: string }> {
 describe("PATCH /api/food/[id]/assign", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", email: "user@example.com" },
+    });
     mockDb.select.mockReturnThis();
     mockDb.from.mockReturnThis();
     mockDb.update.mockReturnThis();
     mockDb.set.mockReturnThis();
+  });
+
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const { PATCH } = await import("@/app/api/food/[id]/assign/route");
+    const req = new NextRequest("http://localhost/api/food/food1/assign", {
+      method: "PATCH",
+      body: JSON.stringify({ year: 2026, month: 3, day: 6, meal_slot: "lunch" }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const res = await PATCH(req, { params: makeParams("food1") });
+    expect(res.status).toBe(401);
   });
 
   it("assigns a food entry when found", async () => {

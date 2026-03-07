@@ -21,12 +21,10 @@ import {
 } from "@/components/ui/select";
 import { decrypt } from "@/lib/crypto";
 import { MealSlot, getMonthDays, suggestMealSlot } from "@/lib/food";
-import { getKey, initActivityListeners, onLock } from "@/lib/key-manager";
+import { getKey } from "@/lib/key-manager";
 import { cn } from "@/lib/utils";
-import { useVisibilityLock } from "@/hooks/use-visibility-lock";
+import { useRequireUnlock } from "@/hooks/use-require-unlock";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { LockScreen } from "@/components/lock-screen";
-import { PassphrasePrompt } from "@/components/passphrase-prompt";
 
 type SelectedState =
   | { kind: "uncategorized" }
@@ -146,7 +144,7 @@ function getTree(dates: DateCount[]) {
 }
 
 export default function FoodBrowsePage() {
-  const [hasKey, setHasKey] = useState(() => !!getKey());
+  const hasKey = useRequireUnlock();
   const [selected, setSelected] = useState<SelectedState>({ kind: "uncategorized" });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dates, setDates] = useState<DateCount[]>([]);
@@ -156,17 +154,10 @@ export default function FoodBrowsePage() {
   const [loadingPane, setLoadingPane] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [assigningAll, setAssigningAll] = useState(false);
-  const { isLocked, setIsLocked } = useVisibilityLock();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const tree = useMemo(() => getTree(dates), [dates]);
   const now = new Date();
-
-  useEffect(() => {
-    const cleanup = initActivityListeners();
-    onLock(() => setIsLocked(true));
-    return cleanup;
-  }, [setIsLocked]);
 
   const decryptEntries = useCallback(async (raw: RawFoodEntry[]) => {
     const key = getKey();
@@ -333,23 +324,7 @@ export default function FoodBrowsePage() {
     }
   }
 
-  if (isLocked) {
-    return <LockScreen onUnlock={() => setIsLocked(false)} />;
-  }
-
-  if (!hasKey) {
-    return (
-      <div className="animate-page mx-auto max-w-sm px-6 py-20 space-y-6">
-        <div className="text-center">
-          <h1 className="font-display text-2xl tracking-tight">Food Browse</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enter your passphrase to decrypt food entries.
-          </p>
-        </div>
-        <PassphrasePrompt onUnlock={() => setHasKey(true)} />
-      </div>
-    );
-  }
+  if (!hasKey) return null;
 
   const showSidebar = isMobile ? sidebarOpen : true;
   const showContent = isMobile ? !sidebarOpen : true;
@@ -382,7 +357,7 @@ export default function FoodBrowsePage() {
                       : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
                   )}
                 >
-                  ⚑ Uncategorized ({uncategorized.length})
+                  Uncategorized ({uncategorized.length})
                 </button>
 
                 {tree.map((yearGroup) => (

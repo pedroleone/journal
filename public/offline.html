@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Journal Offline</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f8f7f2;
+        --fg: #2f2a24;
+        --muted: #736b60;
+        --card: rgba(255, 255, 255, 0.72);
+        --border: rgba(115, 107, 96, 0.18);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1f1d19;
+          --fg: #ebe7dc;
+          --muted: #b8b0a3;
+          --card: rgba(47, 42, 36, 0.78);
+          --border: rgba(235, 231, 220, 0.12);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at top, rgba(181, 160, 119, 0.16), transparent 32%),
+          linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 88%, #d7ceb7));
+        color: var(--fg);
+        font-family: "DM Sans", system-ui, sans-serif;
+      }
+
+      main {
+        width: min(100%, 420px);
+        padding: 32px 28px;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: var(--card);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 20px 60px rgba(24, 20, 16, 0.12);
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(2rem, 4vw, 2.5rem);
+        line-height: 1;
+        font-family: "Instrument Serif", Georgia, serif;
+        font-weight: 400;
+        letter-spacing: -0.04em;
+      }
+
+      p {
+        margin: 0;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 18px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(181, 160, 119, 0.16);
+        color: var(--fg);
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">Offline</div>
+      <h1>Journal</h1>
+      <p>
+        The installed app shell is available offline. Reconnect to unlock your
+        journal, load entries, or save changes. Your passphrase and decrypted
+        content are never cached here.
+      </p>
+    </main>
+  </body>
+</html>

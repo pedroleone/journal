@@ -1,13 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
+const mockAuth = auth as unknown as {
+  mockReset: () => void;
+  mockResolvedValue: (value: unknown) => void;
+  mockResolvedValueOnce: (value: unknown) => void;
+};
 
 describe("POST /api/food", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", email: "user@example.com" },
+    });
     mockDb.insert.mockReturnThis();
     mockDb.values.mockResolvedValue(undefined);
   });
@@ -21,6 +31,12 @@ describe("POST /api/food", () => {
     });
     return POST(request);
   }
+
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+    const res = await postFood({ encrypted_content: "cipher", iv: "iv" });
+    expect(res.status).toBe(401);
+  });
 
   it("returns 201 with id on valid input", async () => {
     const res = await postFood({
@@ -45,6 +61,10 @@ describe("POST /api/food", () => {
 describe("GET /api/food", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", email: "user@example.com" },
+    });
   });
 
   async function getFood(params: Record<string, string> = {}) {
@@ -55,6 +75,12 @@ describe("GET /api/food", () => {
     }
     return GET(new NextRequest(url));
   }
+
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+    const res = await getFood();
+    expect(res.status).toBe(401);
+  });
 
   it("returns 200 with uncategorized list", async () => {
     const rows = [

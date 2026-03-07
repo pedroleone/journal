@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server";
-import { eq, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
+import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { jsonNoStore } from "@/lib/http";
 import { foodEntries } from "@/lib/schema";
 import { suggestMealSlot } from "@/lib/food";
 
 export async function POST() {
+  const userId = await getRequiredUserId();
+  if (!userId) return unauthorizedResponse();
+
   const pending = await db
     .select({
       id: foodEntries.id,
@@ -12,7 +16,7 @@ export async function POST() {
       hour: foodEntries.hour,
     })
     .from(foodEntries)
-    .where(isNull(foodEntries.assigned_at));
+    .where(and(isNull(foodEntries.assigned_at), eq(foodEntries.userId, userId)));
 
   const nowIso = new Date().toISOString();
 
@@ -31,8 +35,8 @@ export async function POST() {
         assigned_at: nowIso,
         updated_at: nowIso,
       })
-      .where(eq(foodEntries.id, entry.id));
+      .where(and(eq(foodEntries.id, entry.id), eq(foodEntries.userId, userId)));
   }
 
-  return NextResponse.json({ updated: pending.length });
+  return jsonNoStore({ updated: pending.length });
 }

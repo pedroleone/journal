@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { encrypt } from "@/lib/crypto";
 import { getKey } from "@/lib/key-manager";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 
-type Status = "idle" | "saving" | "saved" | "error";
+type Status = "idle" | "saving" | "saved" | "error" | "offline";
 
 interface UseAutoSaveOptions {
   entryId: string | null;
@@ -29,6 +30,7 @@ export function useAutoSave({
   day,
   delayMs = 1500,
 }: UseAutoSaveOptions): UseAutoSaveReturn {
+  const isOnline = useOnlineStatus();
   const [status, setStatus] = useState<Status>("idle");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [entryId, setEntryId] = useState<string | null>(initialEntryId);
@@ -50,6 +52,10 @@ export function useAutoSave({
   const save = useCallback(async () => {
     const currentContent = contentRef.current;
     if (!currentContent.trim() || savingRef.current) return;
+    if (!isOnline) {
+      setStatus("offline");
+      return;
+    }
 
     const key = getKey();
     if (!key) {
@@ -97,11 +103,17 @@ export function useAutoSave({
     } finally {
       savingRef.current = false;
     }
-  }, [year, month, day]);
+  }, [day, isOnline, month, year]);
 
   useEffect(() => {
     if (!content.trim()) {
       setStatus("idle");
+      return;
+    }
+
+    if (!isOnline) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setStatus("offline");
       return;
     }
 
@@ -111,7 +123,7 @@ export function useAutoSave({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [content, save, delayMs]);
+  }, [content, delayMs, isOnline, save]);
 
   return { status, lastSaved, entryId };
 }

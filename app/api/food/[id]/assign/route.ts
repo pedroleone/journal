@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { NextRequest } from "next/server";
+import { and, eq } from "drizzle-orm";
+import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { jsonNoStore } from "@/lib/http";
 import { foodEntries } from "@/lib/schema";
 import { assignFoodEntrySchema } from "@/lib/validators";
 
@@ -8,21 +10,24 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const userId = await getRequiredUserId();
+  if (!userId) return unauthorizedResponse();
+
   const { id } = await params;
   const body = await request.json();
   const parsed = assignFoodEntrySchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    return jsonNoStore({ error: "Invalid input" }, { status: 400 });
   }
 
   const existing = await db
     .select({ id: foodEntries.id })
     .from(foodEntries)
-    .where(eq(foodEntries.id, id));
+    .where(and(eq(foodEntries.id, id), eq(foodEntries.userId, userId)));
 
   if (existing.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return jsonNoStore({ error: "Not found" }, { status: 404 });
   }
 
   const now = new Date().toISOString();
@@ -49,7 +54,10 @@ export async function PATCH(
     updateData.meal_slot = parsed.data.meal_slot;
   }
 
-  await db.update(foodEntries).set(updateData).where(eq(foodEntries.id, id));
+  await db
+    .update(foodEntries)
+    .set(updateData)
+    .where(and(eq(foodEntries.id, id), eq(foodEntries.userId, userId)));
 
-  return NextResponse.json({ ok: true });
+  return jsonNoStore({ ok: true });
 }

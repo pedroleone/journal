@@ -1,16 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
+const mockAuth = auth as unknown as {
+  mockReset: () => void;
+  mockResolvedValue: (value: unknown) => void;
+  mockResolvedValueOnce: (value: unknown) => void;
+};
 
 describe("POST /api/food/assign-all", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", email: "user@example.com" },
+    });
     mockDb.select.mockReturnThis();
     mockDb.from.mockReturnThis();
     mockDb.update.mockReturnThis();
     mockDb.set.mockReturnThis();
+  });
+
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const { POST } = await import("@/app/api/food/assign-all/route");
+    const res = await POST();
+    expect(res.status).toBe(401);
   });
 
   it("assigns all uncategorized entries", async () => {

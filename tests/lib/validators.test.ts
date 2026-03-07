@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  loginSchema,
   createEntrySchema,
   updateEntrySchema,
   browseQuerySchema,
@@ -8,23 +7,6 @@ import {
   foodListQuerySchema,
   assignFoodEntrySchema,
 } from "@/lib/validators";
-
-describe("loginSchema", () => {
-  it("accepts valid input", () => {
-    const result = loginSchema.safeParse({ password: "mypassword" });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects empty password", () => {
-    const result = loginSchema.safeParse({ password: "" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects missing password", () => {
-    const result = loginSchema.safeParse({});
-    expect(result.success).toBe(false);
-  });
-});
 
 describe("createEntrySchema", () => {
   const validEntry = {
@@ -48,7 +30,7 @@ describe("createEntrySchema", () => {
 
   it("rejects missing encrypted_content", () => {
     const rest = { ...validEntry };
-    delete (rest as { encrypted_content?: string }).encrypted_content;
+    delete (rest as Partial<typeof validEntry>).encrypted_content;
     const result = createEntrySchema.safeParse(rest);
     expect(result.success).toBe(false);
   });

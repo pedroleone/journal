@@ -7,13 +7,28 @@ import { Label } from "@/components/ui/label";
 import { deriveKey, decrypt } from "@/lib/crypto";
 import { setKey } from "@/lib/key-manager";
 
+export type PassphrasePromptMode = "existing-user" | "first-user";
+
+export interface ValidationEntry {
+  encrypted_content: string;
+  iv: string;
+}
+
 interface PassphrasePromptProps {
+  mode: PassphrasePromptMode;
+  validationEntry?: ValidationEntry | null;
   onUnlock: (key: CryptoKey) => void;
   onCancel?: () => void;
 }
 
-export function PassphrasePrompt({ onUnlock, onCancel }: PassphrasePromptProps) {
+export function PassphrasePrompt({
+  mode,
+  validationEntry = null,
+  onUnlock,
+  onCancel,
+}: PassphrasePromptProps) {
   const [passphrase, setPassphrase] = useState("");
+  const [confirmPassphrase, setConfirmPassphrase] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -23,14 +38,21 @@ export function PassphrasePrompt({ onUnlock, onCancel }: PassphrasePromptProps) 
     setLoading(true);
     setError("");
     try {
+      if (mode === "first-user" && passphrase !== confirmPassphrase) {
+        setError("Passphrases do not match");
+        setLoading(false);
+        return;
+      }
+
       const key = await deriveKey(passphrase);
 
-      // Validate passphrase against an existing entry
-      const res = await fetch("/api/journal/oldest");
-      const { entry } = await res.json();
-      if (entry) {
+      if (mode === "existing-user" && validationEntry) {
         try {
-          await decrypt(key, entry.encrypted_content, entry.iv);
+          await decrypt(
+            key,
+            validationEntry.encrypted_content,
+            validationEntry.iv,
+          );
         } catch {
           setError("Incorrect passphrase — please try again");
           setLoading(false);
@@ -63,9 +85,34 @@ export function PassphrasePrompt({ onUnlock, onCancel }: PassphrasePromptProps) 
           className="bg-card"
         />
       </div>
+      {mode === "first-user" && (
+        <div className="space-y-2">
+          <Label
+            htmlFor="confirm-passphrase"
+            className="text-xs uppercase tracking-wider text-muted-foreground"
+          >
+            Confirm Passphrase
+          </Label>
+          <Input
+            id="confirm-passphrase"
+            type="password"
+            value={confirmPassphrase}
+            onChange={(e) => setConfirmPassphrase(e.target.value)}
+            placeholder="Confirm your passphrase"
+            className="bg-card"
+          />
+        </div>
+      )}
       {error && <p className="text-sm text-destructive">{error}</p>}
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading || !passphrase}>
+        <Button
+          type="submit"
+          disabled={
+            loading ||
+            !passphrase ||
+            (mode === "first-user" && !confirmPassphrase)
+          }
+        >
           {loading ? "Unlocking..." : "Unlock"}
         </Button>
         {onCancel && (

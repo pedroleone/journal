@@ -24,6 +24,11 @@ export function wipeKey() {
 
 export function onLock(cb: () => void) {
   lockCallback = cb;
+  return () => {
+    if (lockCallback === cb) {
+      lockCallback = null;
+    }
+  };
 }
 
 function resetTimer() {

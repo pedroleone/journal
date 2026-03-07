@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus, LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { InstallAppButton } from "@/components/pwa/install-app-button";
 import { Button } from "@/components/ui/button";
+import { wipeKey } from "@/lib/key-manager";
 import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
@@ -13,8 +16,8 @@ export function AppNav() {
   const pathname = usePathname();
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    wipeKey();
+    await signOut({ redirectTo: "/login" });
   }
 
   function handleSelectJournal() {
@@ -62,6 +65,7 @@ export function AppNav() {
         </div>
 
         <div className="flex items-center gap-2">
+          <InstallAppButton />
           <Button
             variant="outline"
             size="sm"
@@ -76,6 +80,7 @@ export function AppNav() {
           <button
             onClick={handleLogout}
             className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Sign out"
           >
             <LogOut className="h-4 w-4" />
           </button>

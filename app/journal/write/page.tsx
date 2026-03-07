@@ -10,12 +10,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { initActivityListeners, onLock, getKey } from "@/lib/key-manager";
+import { getKey } from "@/lib/key-manager";
 import { decrypt } from "@/lib/crypto";
-import { useVisibilityLock } from "@/hooks/use-visibility-lock";
 import { useAutoSave } from "@/hooks/use-auto-save";
-import { LockScreen } from "@/components/lock-screen";
-import { PassphrasePrompt } from "@/components/passphrase-prompt";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { useRequireUnlock } from "@/hooks/use-require-unlock";
 
 const MONTH_NAMES = [
   "",
@@ -55,15 +54,10 @@ export default function WritePage() {
   const [date, setDate] = useState(new Date());
   const [loadedEntryId, setLoadedEntryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [hasKey, setHasKey] = useState(() => !!getKey());
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const { isLocked, setIsLocked } = useVisibilityLock();
-
-  useEffect(() => {
-    const cleanup = initActivityListeners();
-    onLock(() => setIsLocked(true));
-    return cleanup;
-  }, [setIsLocked]);
+  const [readyForEditing, setReadyForEditing] = useState(false);
+  const hasKey = useRequireUnlock();
+  const isOnline = useOnlineStatus();
 
   const loadEntry = useCallback(
     async (id: string) => {
@@ -121,14 +115,17 @@ export default function WritePage() {
 
   useEffect(() => {
     if (!hasKey) return;
+    if (!isOnline) return;
     if (editEntryId) {
-      loadEntry(editEntryId);
+      setReadyForEditing(false);
+      void loadEntry(editEntryId).finally(() => {
+        setReadyForEditing(true);
+      });
     } else {
-      loadEntryForDate(date);
+      setReadyForEditing(true);
+      void loadEntryForDate(date);
     }
-    // Only run on mount or when editEntryId/hasKey changes, not on every date change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasKey, editEntryId, loadEntry]);
+  }, [date, editEntryId, hasKey, isOnline, loadEntry, loadEntryForDate]);
 
   const { status } = useAutoSave({
     entryId: loadedEntryId,
@@ -138,20 +135,17 @@ export default function WritePage() {
     day: date.getDate(),
   });
 
-  if (isLocked) {
-    return <LockScreen onUnlock={() => setIsLocked(false)} />;
-  }
+  if (!hasKey) return null;
 
-  if (!hasKey) {
+  if (!isOnline && !readyForEditing) {
     return (
-      <div className="animate-page mx-auto max-w-sm px-6 py-20 space-y-6">
-        <div className="text-center">
-          <h1 className="font-display text-2xl tracking-tight">Write</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enter your passphrase to start writing.
+      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center px-6">
+        <div className="max-w-md space-y-2 text-center">
+          <h1 className="font-display text-2xl tracking-tight">Connection required</h1>
+          <p className="text-sm text-muted-foreground">
+            Install keeps the app shell available offline, but loading and saving journal entries still requires a connection.
           </p>
         </div>
-        <PassphrasePrompt onUnlock={() => setHasKey(true)} />
       </div>
     );
   }
@@ -166,6 +160,11 @@ export default function WritePage() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+      {!isOnline && (
+        <div className="border-b border-border/60 bg-secondary/60 px-6 py-2 text-center text-sm text-muted-foreground">
+          You are offline. Changes stay visible here but are not being saved.
+        </div>
+      )}
       <div className="flex items-center justify-between px-6 py-4">
         <Link
           href="/journal/browse"
@@ -189,7 +188,6 @@ export default function WritePage() {
                 if (d) {
                   setDate(d);
                   setCalendarOpen(false);
-                  loadEntryForDate(d);
                 }
               }}
             />
@@ -228,6 +226,12 @@ export default function WritePage() {
             <>
               <AlertCircle className="h-3 w-3" />
               Save failed
+            </>
+          )}
+          {status === "offline" && (
+            <>
+              <AlertCircle className="h-3 w-3" />
+              Offline
             </>
           )}
         </div>
