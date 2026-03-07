@@ -24,6 +24,7 @@ export function getR2Client() {
     client = new S3Client({
       region: "auto",
       endpoint: getEnv("R2_ENDPOINT"),
+      forcePathStyle: process.env.R2_FORCE_PATH_STYLE === "true",
       credentials: {
         accessKeyId: getEnv("R2_ACCESS_KEY"),
         secretAccessKey: getEnv("R2_SECRET_KEY"),
