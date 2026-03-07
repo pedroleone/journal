@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     logged_at: nowIso,
     encrypted_content: parsed.data.encrypted_content,
     iv: parsed.data.iv,
-    images: null,
+    images: parsed.data.images ?? null,
     tags: null,
     created_at: nowIso,
     updated_at: nowIso,

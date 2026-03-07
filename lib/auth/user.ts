@@ -56,3 +56,15 @@ export async function upsertGoogleUser({
 
   return { id, email };
 }
+
+export async function getPrimaryUser() {
+  const [user] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+    })
+    .from(users)
+    .limit(1);
+
+  return user ?? null;
+}

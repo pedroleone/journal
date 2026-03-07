@@ -3,15 +3,18 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { decrypt, encrypt } from "@/lib/crypto";
+import { decryptEntryContent } from "@/lib/client-entry";
+import { encrypt } from "@/lib/crypto";
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { getKey } from "@/lib/key-manager";
+import { getUserKey } from "@/lib/key-manager";
 import { useRequireUnlock } from "@/hooks/use-require-unlock";
 
 interface Entry {
   id: string;
+  source: "web" | "telegram";
   year: number;
   month: number;
   day: number;
@@ -19,6 +22,7 @@ interface Entry {
   iv: string;
   created_at: string;
   updated_at: string;
+  images: string[] | null;
 }
 
 const MONTH_NAMES = [
@@ -66,11 +70,7 @@ export default function EntryPage({
   useEffect(() => {
     if (!hasKey) return;
     if (!entry) return;
-    const key = getKey();
-    if (!key) {
-      return;
-    }
-    decrypt(key, entry.encrypted_content, entry.iv)
+    decryptEntryContent(entry)
       .then((text) => {
         setDecryptedContent(text);
         setEditContent(text);
@@ -79,8 +79,8 @@ export default function EntryPage({
   }, [entry, hasKey]);
 
   async function handleSave() {
-    const key = getKey();
-    if (!key || !entry || !isOnline) return;
+    const key = getUserKey();
+    if (!key || !entry || !isOnline || entry.source !== "web") return;
     setSaving(true);
     try {
       const { ciphertext, iv } = await encrypt(key, editContent);
@@ -187,11 +187,14 @@ export default function EntryPage({
               {decryptedContent}
             </div>
           )}
+          {entry.images?.length ? (
+            <EncryptedImageGallery imageKeys={entry.images} source={entry.source} />
+          ) : null}
           <div className="flex gap-2 border-t pt-6">
             <Button
               variant="outline"
               onClick={() => setEditing(true)}
-              disabled={!isOnline}
+              disabled={!isOnline || entry.source !== "web"}
             >
               Edit
             </Button>

@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
+import {
+  decrypt,
+  decryptBuffer,
+  deriveKey,
+  deriveServerKey,
+  encrypt,
+  encryptBuffer,
+} from "@/lib/crypto";
 
 describe("crypto", () => {
   it("deriveKey returns a CryptoKey", async () => {
@@ -67,5 +74,20 @@ describe("crypto", () => {
     const { ciphertext, iv } = await encrypt(key, plaintext);
     const decrypted = await decrypt(key, ciphertext, iv);
     expect(decrypted).toBe(plaintext);
+  });
+
+  it("encryptBuffer/decryptBuffer roundtrip", async () => {
+    const key = await deriveKey("buffer-test");
+    const bytes = new Uint8Array([1, 2, 3, 4, 5]);
+    const { ciphertext, iv } = await encryptBuffer(key, bytes);
+    const decrypted = await decryptBuffer(key, ciphertext, iv);
+    expect([...decrypted]).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it("deriveServerKey is stable for the same secret", async () => {
+    const key1 = await deriveServerKey("same-secret");
+    const key2 = await deriveServerKey("same-secret");
+    const { ciphertext, iv } = await encrypt(key1, "telegram");
+    await expect(decrypt(key2, ciphertext, iv)).resolves.toBe("telegram");
   });
 });

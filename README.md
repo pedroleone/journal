@@ -18,9 +18,17 @@ AUTH_SECRET="replace-me"
 AUTH_GOOGLE_ID="replace-me"
 AUTH_GOOGLE_SECRET="replace-me"
 NEXT_PUBLIC_PBKDF2_SALT="base64-random-salt"
+SERVER_ENCRYPTION_SECRET="replace-me"
 TURSO_DATABASE_URL="file:local.db"
 # Required when using a remote Turso database:
 TURSO_AUTH_TOKEN="replace-me"
+R2_ENDPOINT="https://<account>.r2.cloudflarestorage.com"
+R2_ACCESS_KEY="replace-me"
+R2_SECRET_KEY="replace-me"
+R2_BUCKET="journal-images"
+TELEGRAM_BOT_TOKEN="replace-me"
+TELEGRAM_CHAT_ID="replace-me"
+TELEGRAM_WEBHOOK_SECRET="replace-me"
 ```
 
 Configure Google OAuth redirect URIs:
@@ -57,5 +65,5 @@ pnpm build
 ## Notes
 
 - Entries are user-scoped in the database.
-- The app keeps one entry per day per user.
+- `SERVER_ENCRYPTION_SECRET` is required for unlock because the browser also derives the Telegram food-entry decryption key from it.
 - Because the encryption key only lives in memory, refreshes and inactivity locks send the user back to `/unlock` instead of requiring a new Google login while the server session is still valid.

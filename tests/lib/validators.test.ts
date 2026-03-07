@@ -35,6 +35,16 @@ describe("createEntrySchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts image-only entry when images are present", () => {
+    const result = createEntrySchema.safeParse({
+      ...validEntry,
+      encrypted_content: "",
+      iv: "",
+      images: ["image.enc"],
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects month out of range", () => {
     expect(createEntrySchema.safeParse({ ...validEntry, month: 0 }).success).toBe(false);
     expect(createEntrySchema.safeParse({ ...validEntry, month: 13 }).success).toBe(false);
@@ -76,6 +86,15 @@ describe("updateEntrySchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts image-only update", () => {
+    const result = updateEntrySchema.safeParse({
+      encrypted_content: "",
+      iv: "",
+      images: ["image.enc"],
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("browseQuerySchema", () => {
@@ -111,6 +130,15 @@ describe("createFoodEntrySchema", () => {
       iv: "",
     });
     expect(result.success).toBe(false);
+  });
+
+  it("accepts image-only food payload", () => {
+    const result = createFoodEntrySchema.safeParse({
+      encrypted_content: "",
+      iv: "",
+      images: ["food.enc"],
+    });
+    expect(result.success).toBe(true);
   });
 });
 

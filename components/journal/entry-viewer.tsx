@@ -4,14 +4,15 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import { Skeleton } from "@/components/ui/skeleton";
-import { decrypt } from "@/lib/crypto";
+import { decryptEntryContent } from "@/lib/client-entry";
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { getKey } from "@/lib/key-manager";
+import type { EntrySource } from "@/lib/types";
 
 interface RawEntry {
   id: string;
-  type: string;
+  source: EntrySource;
   year: number;
   month: number;
   day: number;
@@ -19,13 +20,16 @@ interface RawEntry {
   encrypted_content: string;
   iv: string;
   created_at: string;
+  images: string[] | null;
 }
 
 interface DecryptedEntry {
   id: string;
+  source: EntrySource;
   content: string;
   hour: number | null;
   created_at: string;
+  images: string[] | null;
 }
 
 const MONTH_NAMES = [
@@ -89,13 +93,6 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
       return;
     }
 
-    const key = getKey();
-    if (!key) {
-      setError("No encryption key available");
-      setLoading(false);
-      return;
-    }
-
     try {
       const params = new URLSearchParams({
         year: String(year),
@@ -110,19 +107,23 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
 
       for (const entry of raw) {
         try {
-          const content = await decrypt(key, entry.encrypted_content, entry.iv);
+          const content = await decryptEntryContent(entry);
           decrypted.push({
             id: entry.id,
+            source: entry.source,
             content,
             hour: entry.hour,
             created_at: entry.created_at,
+            images: entry.images,
           });
         } catch {
           decrypted.push({
             id: entry.id,
+            source: entry.source,
             content: "[decryption failed]",
             hour: entry.hour,
             created_at: entry.created_at,
+            images: entry.images,
           });
         }
       }
@@ -166,20 +167,22 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
     );
   }
 
+  const editableEntry = entries.find((entry) => entry.source === "web") ?? null;
+
   return (
     <div className="animate-page p-8 max-w-2xl">
       <div className="flex items-start justify-between">
         <h2 className="font-display text-2xl tracking-tight">
           {formatFullDate(year, month, day)}
         </h2>
-        <Button variant="ghost" size="sm" className="gap-1.5" asChild>
-          <Link
-            href={`/journal/write?entry=${entries[0].id}`}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit
-          </Link>
-        </Button>
+        {editableEntry ? (
+          <Button variant="ghost" size="sm" className="gap-1.5" asChild>
+            <Link href={`/journal/write?entry=${editableEntry.id}`}>
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </Link>
+          </Button>
+        ) : null}
       </div>
 
       <div className="mt-8 space-y-8">
@@ -193,6 +196,13 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
             <div className="whitespace-pre-wrap text-base leading-relaxed">
               {entry.content}
             </div>
+            {entry.images?.length ? (
+              <EncryptedImageGallery
+                imageKeys={entry.images}
+                source={entry.source}
+                className="mt-4"
+              />
+            ) : null}
             {i < entries.length - 1 && (
               <div className="mt-8 border-b border-border/40" />
             )}

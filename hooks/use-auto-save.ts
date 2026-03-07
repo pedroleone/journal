@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { encrypt } from "@/lib/crypto";
-import { getKey } from "@/lib/key-manager";
+import { getUserKey } from "@/lib/key-manager";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 
 type Status = "idle" | "saving" | "saved" | "error" | "offline";
@@ -57,7 +57,7 @@ export function useAutoSave({
       return;
     }
 
-    const key = getKey();
+    const key = getUserKey();
     if (!key) {
       setStatus("error");
       return;

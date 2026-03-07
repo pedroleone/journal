@@ -34,6 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         PUBLIC_PATHS.includes(pathname) ||
         pathname.startsWith("/icons/") ||
         pathname.startsWith("/api/auth") ||
+        pathname === "/api/telegram/webhook" ||
         pathname.startsWith("/_next") ||
         pathname === "/favicon.ico"
       ) {

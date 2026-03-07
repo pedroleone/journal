@@ -20,6 +20,28 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const existing = await db
+    .select({ id: entries.id })
+    .from(entries)
+    .where(
+      and(
+        eq(entries.userId, userId),
+        eq(entries.year, parsed.data.year),
+        eq(entries.month, parsed.data.month),
+        eq(entries.day, parsed.data.day),
+      ),
+    );
+
+  if (existing.length > 0) {
+    return jsonNoStore(
+      {
+        error: "A journal entry already exists for this date",
+        id: existing[0].id,
+      },
+      { status: 409 },
+    );
+  }
+
   const now = new Date().toISOString();
   const id = nanoid();
 
@@ -33,7 +55,7 @@ export async function POST(request: NextRequest) {
     hour: parsed.data.hour ?? null,
     encrypted_content: parsed.data.encrypted_content,
     iv: parsed.data.iv,
-    images: null,
+    images: parsed.data.images ?? null,
     tags: null,
     created_at: now,
     updated_at: now,

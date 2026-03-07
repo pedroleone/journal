@@ -5,6 +5,14 @@ process.env.NEXT_PUBLIC_PBKDF2_SALT = btoa("test-salt-16bytes");
 process.env.AUTH_SECRET = "test-auth-secret";
 process.env.AUTH_GOOGLE_ID = "test-google-id";
 process.env.AUTH_GOOGLE_SECRET = "test-google-secret";
+process.env.SERVER_ENCRYPTION_SECRET = "server-test-secret";
+process.env.TELEGRAM_BOT_TOKEN = "telegram-token";
+process.env.TELEGRAM_CHAT_ID = "123456";
+process.env.TELEGRAM_WEBHOOK_SECRET = "telegram-secret";
+process.env.R2_ENDPOINT = "https://example.r2.cloudflarestorage.com";
+process.env.R2_ACCESS_KEY = "test-r2-access";
+process.env.R2_SECRET_KEY = "test-r2-secret";
+process.env.R2_BUCKET = "journal-images";
 
 vi.mock("@/auth", () => ({
   auth: vi.fn(),

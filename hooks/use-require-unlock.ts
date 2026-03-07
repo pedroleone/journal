@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { buildUnlockHref } from "@/lib/unlock";
-import { getKey, initActivityListeners, onLock } from "@/lib/key-manager";
+import {
+  hasUnlockedKeys,
+  initActivityListeners,
+  onLock,
+} from "@/lib/key-manager";
 
 export function useRequireUnlock() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [hasKey, setHasKey] = useState(() => !!getKey());
+  const [hasKey, setHasKey] = useState(() => hasUnlockedKeys());
 
   const nextPath = `${pathname}${searchParams.toString() ? `?${searchParams}` : ""}`;
 
@@ -22,7 +26,7 @@ export function useRequireUnlock() {
     const cleanupActivityListeners = initActivityListeners();
     const cleanupLock = onLock(redirectToUnlock);
 
-    if (!getKey()) {
+    if (!hasUnlockedKeys()) {
       redirectToUnlock();
     }
 

@@ -9,7 +9,7 @@ vi.mock("@/lib/crypto", () => ({
 }));
 
 vi.mock("@/lib/key-manager", () => ({
-  getKey: vi.fn(),
+  getUserKey: vi.fn(),
 }));
 
 function StatusProbe() {
@@ -36,8 +36,8 @@ describe("useAutoSave", () => {
   });
 
   it("reports offline and skips network writes while disconnected", async () => {
-    const { getKey } = await import("@/lib/key-manager");
-    vi.mocked(getKey).mockReturnValue({ type: "secret" } as CryptoKey);
+    const { getUserKey } = await import("@/lib/key-manager");
+    vi.mocked(getUserKey).mockReturnValue({ type: "secret" } as CryptoKey);
 
     render(<StatusProbe />);
 

@@ -1,4 +1,4 @@
-const DEFAULT_UNLOCK_REDIRECT = "/browse";
+const DEFAULT_UNLOCK_REDIRECT = "/journal/browse";
 
 export function normalizeUnlockNext(nextPath: string | null | undefined) {
   if (!nextPath || !nextPath.startsWith("/")) {

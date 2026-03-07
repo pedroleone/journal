@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, LogOut } from "lucide-react";
+import { Plus, LogOut, Settings } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-app-button";
 import { Button } from "@/components/ui/button";
-import { wipeKey } from "@/lib/key-manager";
+import { wipeKeys } from "@/lib/key-manager";
 import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ export function AppNav() {
   const pathname = usePathname();
 
   async function handleLogout() {
-    wipeKey();
+    wipeKeys();
     await signOut({ redirectTo: "/login" });
   }
 
@@ -34,7 +34,41 @@ export function AppNav() {
     }
   }
 
-  const newHref = mode === "food" ? "/food?mode=food" : "/journal/write?mode=journal";
+  async function handleNew() {
+    if (mode === "food") {
+      router.push("/food?mode=food");
+      return;
+    }
+
+    const today = new Date();
+    const params = new URLSearchParams({
+      year: String(today.getFullYear()),
+      month: String(today.getMonth() + 1),
+      day: String(today.getDate()),
+    });
+
+    try {
+      const response = await fetch(`/api/entries?${params.toString()}`);
+      if (response.ok) {
+        const entries = await response.json();
+        if (entries.length > 0) {
+          const shouldContinueWriting = window.confirm(
+            "An entry for today already exists. Press OK to continue writing, or Cancel to view it.",
+          );
+          if (shouldContinueWriting) {
+            router.push(`/journal/write?entry=${entries[0].id}&mode=journal`);
+          } else {
+            router.push("/journal/browse?mode=journal");
+          }
+          return;
+        }
+      }
+    } catch {
+      // Fall back to write mode.
+    }
+
+    router.push("/journal/write?mode=journal");
+  }
 
   return (
     <nav className="border-b border-border/60">
@@ -66,17 +100,17 @@ export function AppNav() {
 
         <div className="flex items-center gap-2">
           <InstallAppButton />
-          <Button
-            variant="outline"
-            size="sm"
-            asChild
-            className="gap-1.5"
-          >
-            <Link href={newHref}>
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New</span>
-            </Link>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleNew}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">New</span>
           </Button>
+          <button
+            onClick={() => router.push("/settings")}
+            className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
           <button
             onClick={handleLogout}
             className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"

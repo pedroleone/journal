@@ -1,18 +1,41 @@
 import { z } from "zod";
 
-export const createEntrySchema = z.object({
-  encrypted_content: z.string().min(1),
-  iv: z.string().min(1),
-  year: z.coerce.number().int(),
-  month: z.coerce.number().int().min(1).max(12),
-  day: z.coerce.number().int().min(1).max(31),
-  hour: z.coerce.number().int().min(0).max(23).optional(),
-});
+const encryptedPayloadFields = {
+  encrypted_content: z.string(),
+  iv: z.string(),
+  images: z.array(z.string().min(1)).nullable().optional(),
+};
 
-export const updateEntrySchema = z.object({
-  encrypted_content: z.string().min(1),
-  iv: z.string().min(1),
-});
+function hasContentOrImages(value: {
+  encrypted_content: string;
+  iv: string;
+  images?: string[] | null;
+}) {
+  const hasImages = (value.images?.length ?? 0) > 0;
+  const hasText = value.encrypted_content.length > 0;
+  const hasIv = value.iv.length > 0;
+  return hasImages || (hasText && hasIv);
+}
+
+export const createEntrySchema = z
+  .object({
+    ...encryptedPayloadFields,
+    year: z.coerce.number().int(),
+    month: z.coerce.number().int().min(1).max(12),
+    day: z.coerce.number().int().min(1).max(31),
+    hour: z.coerce.number().int().min(0).max(23).optional(),
+  })
+  .refine(hasContentOrImages, {
+    message: "Entry must include encrypted text or at least one image",
+  });
+
+export const updateEntrySchema = z
+  .object({
+    ...encryptedPayloadFields,
+  })
+  .refine(hasContentOrImages, {
+    message: "Entry must include encrypted text or at least one image",
+  });
 
 export const browseQuerySchema = z.object({
   year: z.coerce.number().int().optional(),
@@ -26,10 +49,13 @@ const boolFromString = z.preprocess((value) => {
   return value;
 }, z.boolean().optional());
 
-export const createFoodEntrySchema = z.object({
-  encrypted_content: z.string().min(1),
-  iv: z.string().min(1),
-});
+export const createFoodEntrySchema = z
+  .object({
+    ...encryptedPayloadFields,
+  })
+  .refine(hasContentOrImages, {
+    message: "Food entry must include encrypted text or at least one image",
+  });
 
 export const foodListQuerySchema = z.object({
   uncategorized: boolFromString,
@@ -46,4 +72,56 @@ export const assignFoodEntrySchema = z.object({
   day: z.coerce.number().int().min(1).max(31),
   hour: z.coerce.number().int().min(0).max(23).optional(),
   meal_slot: z.enum(["breakfast", "lunch", "dinner", "snack"]).nullable().optional(),
+});
+
+export const imageOwnerKindSchema = z.enum(["journal", "food"]);
+
+const backupImageBlobSchema = z.object({
+  key: z.string().min(1),
+  iv: z.string().min(1),
+  content_type: z.string().min(1),
+  data: z.string().min(1),
+});
+
+const backupJournalEntrySchema = z.object({
+  id: z.string().min(1),
+  userId: z.string().min(1),
+  source: z.enum(["web", "telegram"]),
+  year: z.number().int(),
+  month: z.number().int().min(1).max(12),
+  day: z.number().int().min(1).max(31),
+  hour: z.number().int().min(0).max(23).nullable(),
+  encrypted_content: z.string(),
+  iv: z.string(),
+  images: z.array(z.string()).nullable(),
+  tags: z.array(z.string()).nullable(),
+  created_at: z.string().min(1),
+  updated_at: z.string().min(1),
+});
+
+const backupFoodEntrySchema = z.object({
+  id: z.string().min(1),
+  userId: z.string().min(1),
+  source: z.enum(["web", "telegram"]),
+  year: z.number().int(),
+  month: z.number().int().min(1).max(12),
+  day: z.number().int().min(1).max(31),
+  hour: z.number().int().min(0).max(23).nullable(),
+  meal_slot: z.enum(["breakfast", "lunch", "dinner", "snack"]).nullable(),
+  assigned_at: z.string().nullable(),
+  logged_at: z.string().min(1),
+  encrypted_content: z.string(),
+  iv: z.string(),
+  images: z.array(z.string()).nullable(),
+  tags: z.array(z.string()).nullable(),
+  created_at: z.string().min(1),
+  updated_at: z.string().min(1),
+});
+
+export const backupPayloadSchema = z.object({
+  version: z.literal(1),
+  exported_at: z.string().min(1),
+  journal_entries: z.array(backupJournalEntrySchema),
+  food_entries: z.array(backupFoodEntrySchema),
+  image_blobs: z.array(backupImageBlobSchema),
 });

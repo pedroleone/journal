@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import {
   Collapsible,
   CollapsibleContent,
@@ -19,9 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { decrypt } from "@/lib/crypto";
+import { decryptEntryContent } from "@/lib/client-entry";
 import { MealSlot, getMonthDays, suggestMealSlot } from "@/lib/food";
-import { getKey } from "@/lib/key-manager";
 import { cn } from "@/lib/utils";
 import { useRequireUnlock } from "@/hooks/use-require-unlock";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -39,6 +39,7 @@ interface DateCount {
 
 interface RawFoodEntry {
   id: string;
+  source: "web" | "telegram";
   year: number;
   month: number;
   day: number;
@@ -47,10 +48,12 @@ interface RawFoodEntry {
   encrypted_content: string;
   iv: string;
   logged_at: string;
+  images: string[] | null;
 }
 
 interface FoodEntryView {
   id: string;
+  source: "web" | "telegram";
   year: number;
   month: number;
   day: number;
@@ -58,6 +61,7 @@ interface FoodEntryView {
   meal_slot: MealSlot | null;
   content: string;
   logged_at: string;
+  images: string[] | null;
 }
 
 interface AssignDraft {
@@ -160,14 +164,12 @@ export default function FoodBrowsePage() {
   const now = new Date();
 
   const decryptEntries = useCallback(async (raw: RawFoodEntry[]) => {
-    const key = getKey();
-    if (!key) return [];
-
     const decrypted = await Promise.all(
       raw.map(async (entry) => {
-        const content = await decrypt(key, entry.encrypted_content, entry.iv);
+        const content = await decryptEntryContent(entry);
         return {
           id: entry.id,
+          source: entry.source,
           year: entry.year,
           month: entry.month,
           day: entry.day,
@@ -175,6 +177,7 @@ export default function FoodBrowsePage() {
           meal_slot: entry.meal_slot,
           content,
           logged_at: entry.logged_at,
+          images: entry.images,
         };
       }),
     );
@@ -455,7 +458,18 @@ export default function FoodBrowsePage() {
               ) : (
                 uncategorized.map((entry) => (
                   <div key={entry.id} className="rounded-lg border border-border/60 p-4 space-y-3">
-                    <p className="text-sm leading-relaxed">{entry.content}</p>
+                    {entry.content ? (
+                      <p className="text-sm leading-relaxed">{entry.content}</p>
+                    ) : (
+                      <p className="text-sm italic text-muted-foreground">Photo entry</p>
+                    )}
+                    {entry.images?.length ? (
+                      <EncryptedImageGallery
+                        imageKeys={entry.images}
+                        source={entry.source}
+                        imageClassName="h-32"
+                      />
+                    ) : null}
                     <p className="text-xs text-muted-foreground">{formatLoggedAt(entry.logged_at)}</p>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -529,7 +543,19 @@ export default function FoodBrowsePage() {
                           key={entry.id}
                           className="rounded-lg border border-border/50 bg-card/20 px-3 py-2"
                         >
-                          <p className="text-sm leading-relaxed">{entry.content}</p>
+                          {entry.content ? (
+                            <p className="text-sm leading-relaxed">{entry.content}</p>
+                          ) : (
+                            <p className="text-sm italic text-muted-foreground">Photo entry</p>
+                          )}
+                          {entry.images?.length ? (
+                            <EncryptedImageGallery
+                              imageKeys={entry.images}
+                              source={entry.source}
+                              className="mt-3"
+                              imageClassName="h-32"
+                            />
+                          ) : null}
                           <p className="mt-1 text-xs text-muted-foreground">
                             {formatTime(entry.logged_at, entry.hour)}
                           </p>
@@ -549,7 +575,19 @@ export default function FoodBrowsePage() {
                         key={entry.id}
                         className="rounded-lg border border-border/50 bg-card/20 px-3 py-2"
                       >
-                        <p className="text-sm leading-relaxed">{entry.content}</p>
+                        {entry.content ? (
+                          <p className="text-sm leading-relaxed">{entry.content}</p>
+                        ) : (
+                          <p className="text-sm italic text-muted-foreground">Photo entry</p>
+                        )}
+                        {entry.images?.length ? (
+                          <EncryptedImageGallery
+                            imageKeys={entry.images}
+                            source={entry.source}
+                            className="mt-3"
+                            imageClassName="h-32"
+                          />
+                        ) : null}
                         <p className="mt-1 text-xs text-muted-foreground">
                           {formatTime(entry.logged_at, entry.hour)}
                         </p>

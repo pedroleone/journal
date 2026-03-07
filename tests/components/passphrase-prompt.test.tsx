@@ -3,21 +3,27 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PassphrasePrompt } from "@/components/passphrase-prompt";
-import { deriveKey, decrypt } from "@/lib/crypto";
-import { setKey } from "@/lib/key-manager";
+import { decrypt, deriveKey, deriveServerKey } from "@/lib/crypto";
+import { setServerKey, setUserKey } from "@/lib/key-manager";
 
 vi.mock("@/lib/crypto", () => ({
   deriveKey: vi.fn(),
   decrypt: vi.fn(),
+  deriveServerKey: vi.fn(),
 }));
 
 vi.mock("@/lib/key-manager", () => ({
-  setKey: vi.fn(),
+  setUserKey: vi.fn(),
+  setServerKey: vi.fn(),
 }));
 
 describe("PassphrasePrompt", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ secret: "server-secret" }),
+    } as unknown as Response);
   });
 
   it("requires matching confirmation for first-time users", async () => {
@@ -39,8 +45,10 @@ describe("PassphrasePrompt", () => {
 
   it("validates an existing user's passphrase against the oldest entry", async () => {
     const fakeKey = { type: "secret" } as CryptoKey;
+    const fakeServerKey = { type: "secret" } as CryptoKey;
     vi.mocked(deriveKey).mockResolvedValue(fakeKey);
     vi.mocked(decrypt).mockResolvedValue("decrypted");
+    vi.mocked(deriveServerKey).mockResolvedValue(fakeServerKey);
 
     const onUnlock = vi.fn();
     render(
@@ -58,8 +66,10 @@ describe("PassphrasePrompt", () => {
 
     await waitFor(() => {
       expect(decrypt).toHaveBeenCalledWith(fakeKey, "ciphertext", "entry-iv");
-      expect(setKey).toHaveBeenCalledWith(fakeKey);
-      expect(onUnlock).toHaveBeenCalledWith(fakeKey);
+      expect(deriveServerKey).toHaveBeenCalledWith("server-secret");
+      expect(setUserKey).toHaveBeenCalledWith(fakeKey);
+      expect(setServerKey).toHaveBeenCalledWith(fakeServerKey);
+      expect(onUnlock).toHaveBeenCalledWith();
     });
   });
 });

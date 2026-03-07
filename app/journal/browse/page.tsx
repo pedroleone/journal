@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useRequireUnlock } from "@/hooks/use-require-unlock";
 import { DateTree } from "@/components/journal/date-tree";
 import { EntryViewer } from "@/components/journal/entry-viewer";
-import { ExportModal } from "@/components/journal/export-modal";
 import { cn } from "@/lib/utils";
 
 interface DateEntry {
@@ -25,7 +25,7 @@ export default function BrowsePage() {
     day: number;
   } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [exportOpen, setExportOpen] = useState(false);
+  const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const hasKey = useRequireUnlock();
   const isOnline = useOnlineStatus();
@@ -72,7 +72,7 @@ export default function BrowsePage() {
             dates={dates}
             selectedDate={selectedDate}
             onSelectDate={handleSelectDate}
-            onExport={() => setExportOpen(true)}
+            onExport={() => router.push("/export")}
           />
         </div>
       )}
@@ -113,7 +113,6 @@ export default function BrowsePage() {
           )}
         </div>
       )}
-      <ExportModal open={exportOpen} onOpenChange={setExportOpen} />
     </div>
   );
 }

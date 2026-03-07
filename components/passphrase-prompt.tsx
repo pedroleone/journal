@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { deriveKey, decrypt } from "@/lib/crypto";
-import { setKey } from "@/lib/key-manager";
+import { decrypt, deriveKey, deriveServerKey } from "@/lib/crypto";
+import { setServerKey, setUserKey } from "@/lib/key-manager";
 
 export type PassphrasePromptMode = "existing-user" | "first-user";
 
@@ -17,7 +17,7 @@ export interface ValidationEntry {
 interface PassphrasePromptProps {
   mode: PassphrasePromptMode;
   validationEntry?: ValidationEntry | null;
-  onUnlock: (key: CryptoKey) => void;
+  onUnlock: () => void;
   onCancel?: () => void;
 }
 
@@ -60,8 +60,26 @@ export function PassphrasePrompt({
         }
       }
 
-      setKey(key);
-      onUnlock(key);
+      const response = await fetch("/api/auth/server-key");
+      if (!response.ok) {
+        const payload = await response
+          .json()
+          .catch(() => ({ error: "Failed to load server key" }));
+        setError(
+          typeof payload?.error === "string"
+            ? payload.error
+            : "Failed to load server key",
+        );
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      const serverKey = await deriveServerKey(data.secret);
+
+      setUserKey(key);
+      setServerKey(serverKey);
+      onUnlock();
     } catch {
       setError("Failed to derive key");
     } finally {

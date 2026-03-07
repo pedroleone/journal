@@ -1,20 +1,30 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, Loader2, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Loader2,
+  AlertCircle,
+  Paperclip,
+  X,
+} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { getKey } from "@/lib/key-manager";
-import { decrypt } from "@/lib/crypto";
+import { useDecryptedImages } from "@/hooks/use-decrypted-images";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useRequireUnlock } from "@/hooks/use-require-unlock";
+import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
+import { decryptEntryContent } from "@/lib/client-entry";
+import { encrypt } from "@/lib/crypto";
+import { getUserKey } from "@/lib/key-manager";
 
 const MONTH_NAMES = [
   "",
@@ -46,9 +56,21 @@ function formatWriteDate(date: Date): string {
   return `${DAY_NAMES[date.getDay()]}, ${date.getDate()} ${MONTH_NAMES[date.getMonth() + 1]} ${date.getFullYear()}`;
 }
 
+interface JournalEntryResponse {
+  id: string;
+  source: "web" | "telegram";
+  year: number;
+  month: number;
+  day: number;
+  encrypted_content: string;
+  iv: string;
+  images: string[] | null;
+}
+
 export default function WritePage() {
   const searchParams = useSearchParams();
   const editEntryId = searchParams.get("entry");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [content, setContent] = useState("");
   const [date, setDate] = useState(new Date());
@@ -56,64 +78,103 @@ export default function WritePage() {
   const [loading, setLoading] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [readyForEditing, setReadyForEditing] = useState(false);
+  const [imageKeys, setImageKeys] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [entryError, setEntryError] = useState("");
   const hasKey = useRequireUnlock();
   const isOnline = useOnlineStatus();
+  const { images } = useDecryptedImages(imageKeys, "web");
 
-  const loadEntry = useCallback(
-    async (id: string) => {
-      const key = getKey();
-      if (!key) return;
+  const createEmptyEntry = useCallback(async (targetDate: Date) => {
+    const key = getUserKey();
+    if (!key) throw new Error("No user key");
 
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/entries/${id}`);
-        if (!res.ok) return;
-        const entry = await res.json();
-        const text = await decrypt(key, entry.encrypted_content, entry.iv);
+    const payload = await encrypt(key, "");
+    const response = await fetch("/api/entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        encrypted_content: payload.ciphertext,
+        iv: payload.iv,
+        year: targetDate.getFullYear(),
+        month: targetDate.getMonth() + 1,
+        day: targetDate.getDate(),
+        hour: new Date().getHours(),
+        images: [],
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create entry");
+    }
+
+    const data = await response.json();
+    setLoadedEntryId(data.id);
+    return data.id as string;
+  }, []);
+
+  const ensureEntryId = useCallback(async () => {
+    if (loadedEntryId) return loadedEntryId;
+    return createEmptyEntry(date);
+  }, [createEmptyEntry, date, loadedEntryId]);
+
+  const loadEntry = useCallback(async (id: string) => {
+    setEntryError("");
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/entries/${id}`);
+      if (!res.ok) throw new Error("Failed to load entry");
+
+      const entry: JournalEntryResponse = await res.json();
+      if (entry.source !== "web") {
+        setEntryError("Telegram entries cannot be edited from write mode.");
+        setContent("");
+        setImageKeys(entry.images ?? []);
+        setLoadedEntryId(null);
+        return;
+      }
+
+      const text = await decryptEntryContent(entry);
+      setContent(text);
+      setDate(new Date(entry.year, entry.month - 1, entry.day));
+      setLoadedEntryId(id);
+      setImageKeys(entry.images ?? []);
+    } catch {
+      setEntryError("Failed to load entry");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadEntryForDate = useCallback(async (targetDate: Date) => {
+    setEntryError("");
+    const params = new URLSearchParams({
+      year: String(targetDate.getFullYear()),
+      month: String(targetDate.getMonth() + 1),
+      day: String(targetDate.getDate()),
+    });
+
+    try {
+      const res = await fetch(`/api/entries?${params}`);
+      if (!res.ok) return;
+      const entries: JournalEntryResponse[] = await res.json();
+      const webEntry = entries.find((entry) => entry.source === "web");
+
+      if (webEntry) {
+        const text = await decryptEntryContent(webEntry);
         setContent(text);
-        setDate(new Date(entry.year, entry.month - 1, entry.day));
-        setLoadedEntryId(id);
-      } catch {
-        // Failed to load entry
-      } finally {
-        setLoading(false);
+        setLoadedEntryId(webEntry.id);
+        setImageKeys(webEntry.images ?? []);
+      } else {
+        setContent("");
+        setLoadedEntryId(null);
+        setImageKeys([]);
       }
-    },
-    [],
-  );
+    } catch {
+      setEntryError("Failed to load journal entry");
+    }
+  }, []);
 
-  const loadEntryForDate = useCallback(
-    async (targetDate: Date) => {
-      const key = getKey();
-      if (!key) return;
-
-      const params = new URLSearchParams({
-        year: String(targetDate.getFullYear()),
-        month: String(targetDate.getMonth() + 1),
-        day: String(targetDate.getDate()),
-      });
-
-      try {
-        const res = await fetch(`/api/entries?${params}`);
-        if (!res.ok) return;
-        const entries = await res.json();
-        if (entries.length > 0) {
-          const entry = entries[0];
-          const text = await decrypt(key, entry.encrypted_content, entry.iv);
-          setContent(text);
-          setLoadedEntryId(entry.id);
-        } else {
-          setContent("");
-          setLoadedEntryId(null);
-        }
-      } catch {
-        // Failed to load
-      }
-    },
-    [],
-  );
-
-  // Load a specific entry by ID (edit mode)
   useEffect(() => {
     if (!hasKey || !isOnline || !editEntryId) return;
     setReadyForEditing(false);
@@ -122,7 +183,6 @@ export default function WritePage() {
     });
   }, [editEntryId, hasKey, isOnline, loadEntry]);
 
-  // Load entry for selected date (new entry mode)
   useEffect(() => {
     if (!hasKey || !isOnline || editEntryId) return;
     setReadyForEditing(true);
@@ -136,6 +196,46 @@ export default function WritePage() {
     month: date.getMonth() + 1,
     day: date.getDate(),
   });
+
+  async function handleImageSelection(files: FileList | null) {
+    if (!files?.length || !isOnline) return;
+
+    setUploadingImages(true);
+    try {
+      const ownerId = await ensureEntryId();
+
+      for (const file of Array.from(files)) {
+        const result = await uploadEncryptedImage({
+          file,
+          ownerKind: "journal",
+          ownerId,
+        });
+        setImageKeys(result.images);
+      }
+    } catch {
+      setEntryError("Failed to upload image");
+    } finally {
+      setUploadingImages(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }
+
+  async function handleRemoveImage(imageKey: string) {
+    if (!loadedEntryId) return;
+
+    try {
+      const result = await deleteEncryptedImage({
+        imageKey,
+        ownerKind: "journal",
+        ownerId: loadedEntryId,
+      });
+      setImageKeys(result.images);
+    } catch {
+      setEntryError("Failed to remove image");
+    }
+  }
 
   if (!hasKey) return null;
 
@@ -170,7 +270,7 @@ export default function WritePage() {
       <div className="flex items-center justify-between px-6 py-4">
         <Link
           href="/journal/browse"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -178,7 +278,7 @@ export default function WritePage() {
 
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
-            <button className="font-display text-lg tracking-tight text-foreground hover:text-muted-foreground transition-colors">
+            <button className="font-display text-lg tracking-tight text-foreground transition-colors hover:text-muted-foreground">
               {formatWriteDate(date)}
             </button>
           </PopoverTrigger>
@@ -199,18 +299,71 @@ export default function WritePage() {
         <div className="w-16" />
       </div>
 
-      <div className="flex-1 px-6 pb-4">
+      {entryError ? (
+        <div className="px-6 pb-2 text-sm text-destructive">{entryError}</div>
+      ) : null}
+
+      <div className="flex-1 overflow-y-auto px-6 pb-4">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Start writing..."
-          className="h-full w-full max-w-2xl mx-auto resize-none border-0 bg-transparent text-lg leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
+          className="mx-auto h-full w-full max-w-2xl resize-none border-0 bg-transparent text-lg leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
           autoFocus
         />
+
+        {images.length > 0 ? (
+          <div className="mx-auto mt-6 grid max-w-2xl gap-4 sm:grid-cols-2">
+            {images.map((image) => (
+              <div
+                key={image.key}
+                className="relative overflow-hidden rounded-lg border border-border/50 bg-card/20"
+              >
+                <img src={image.url} alt="" className="h-48 w-full object-cover" />
+                <button
+                  onClick={() => handleRemoveImage(image.key)}
+                  className="absolute right-2 top-2 rounded-full bg-background/90 p-1 text-foreground shadow-sm"
+                  aria-label="Remove image"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center justify-between border-t border-border/40 px-6 py-3">
-        <div />
+        <div className="flex items-center gap-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              void handleImageSelection(event.target.files);
+            }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            disabled={!isOnline || uploadingImages}
+          >
+            {uploadingImages ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Paperclip className="h-3 w-3" />
+            )}
+            Image
+          </button>
+          {imageKeys.length > 0 ? (
+            <span className="text-xs text-muted-foreground">
+              {imageKeys.length} attached
+            </span>
+          ) : null}
+        </div>
+
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           {status === "saving" && (
             <>

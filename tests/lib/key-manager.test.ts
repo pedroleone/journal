@@ -10,28 +10,33 @@ beforeEach(async () => {
 });
 
 describe("key-manager", () => {
-  it("getKey returns null initially", () => {
-    expect(keyManager.getKey()).toBeNull();
+  it("keys return null initially", () => {
+    expect(keyManager.getUserKey()).toBeNull();
+    expect(keyManager.getServerKey()).toBeNull();
   });
 
-  it("setKey stores key, getKey retrieves it", () => {
-    const fakeKey = { type: "secret" } as CryptoKey;
-    keyManager.setKey(fakeKey);
-    expect(keyManager.getKey()).toBe(fakeKey);
+  it("stores and retrieves both keys", () => {
+    const fakeUserKey = { type: "secret" } as CryptoKey;
+    const fakeServerKey = { type: "secret" } as CryptoKey;
+    keyManager.setUserKey(fakeUserKey);
+    keyManager.setServerKey(fakeServerKey);
+    expect(keyManager.getUserKey()).toBe(fakeUserKey);
+    expect(keyManager.getServerKey()).toBe(fakeServerKey);
   });
 
-  it("wipeKey clears the key", () => {
-    const fakeKey = { type: "secret" } as CryptoKey;
-    keyManager.setKey(fakeKey);
-    keyManager.wipeKey();
-    expect(keyManager.getKey()).toBeNull();
+  it("wipeKeys clears both keys", () => {
+    keyManager.setUserKey({ type: "secret" } as CryptoKey);
+    keyManager.setServerKey({ type: "secret" } as CryptoKey);
+    keyManager.wipeKeys();
+    expect(keyManager.getUserKey()).toBeNull();
+    expect(keyManager.getServerKey()).toBeNull();
   });
 
-  it("wipeKey triggers lock callback", () => {
+  it("wipeKeys triggers lock callback", () => {
     const cb = vi.fn();
     keyManager.onLock(cb);
-    keyManager.setKey({ type: "secret" } as CryptoKey);
-    keyManager.wipeKey();
+    keyManager.setUserKey({ type: "secret" } as CryptoKey);
+    keyManager.wipeKeys();
     expect(cb).toHaveBeenCalledOnce();
   });
 
@@ -39,24 +44,37 @@ describe("key-manager", () => {
     const cb = vi.fn();
     const cleanup = keyManager.onLock(cb);
     cleanup();
-    keyManager.setKey({ type: "secret" } as CryptoKey);
-    keyManager.wipeKey();
+    keyManager.setUserKey({ type: "secret" } as CryptoKey);
+    keyManager.wipeKeys();
     expect(cb).not.toHaveBeenCalled();
   });
 
-  it("key is wiped after 5 minutes of inactivity", () => {
+  it("keys are wiped after 5 minutes of inactivity", () => {
     const cb = vi.fn();
     keyManager.onLock(cb);
-    keyManager.setKey({ type: "secret" } as CryptoKey);
+    keyManager.setUserKey({ type: "secret" } as CryptoKey);
+    keyManager.setServerKey({ type: "secret" } as CryptoKey);
 
     // Advance 4 minutes — key should still be there
     vi.advanceTimersByTime(4 * 60 * 1000);
-    expect(keyManager.getKey()).not.toBeNull();
+    expect(keyManager.getUserKey()).not.toBeNull();
+    expect(keyManager.getServerKey()).not.toBeNull();
 
     // Advance 1 more minute — key should be wiped
     vi.advanceTimersByTime(1 * 60 * 1000);
-    expect(keyManager.getKey()).toBeNull();
+    expect(keyManager.getUserKey()).toBeNull();
+    expect(keyManager.getServerKey()).toBeNull();
     expect(cb).toHaveBeenCalledOnce();
+  });
+
+  it("returns the correct key for each source", () => {
+    const fakeUserKey = { type: "secret" } as CryptoKey;
+    const fakeServerKey = { type: "secret" } as CryptoKey;
+    keyManager.setUserKey(fakeUserKey);
+    keyManager.setServerKey(fakeServerKey);
+
+    expect(keyManager.getKeyForSource("web")).toBe(fakeUserKey);
+    expect(keyManager.getKeyForSource("telegram")).toBe(fakeServerKey);
   });
 
   it("initActivityListeners returns a cleanup function", async () => {

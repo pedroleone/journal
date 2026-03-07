@@ -42,13 +42,24 @@ export async function PUT(
   }
 
   const now = new Date().toISOString();
+  const updateData: {
+    encrypted_content: string;
+    iv: string;
+    updated_at: string;
+    images?: string[] | null;
+  } = {
+    encrypted_content: parsed.data.encrypted_content,
+    iv: parsed.data.iv,
+    updated_at: now,
+  };
+
+  if ("images" in parsed.data) {
+    updateData.images = parsed.data.images ?? null;
+  }
+
   const result = await db
     .update(entries)
-    .set({
-      encrypted_content: parsed.data.encrypted_content,
-      iv: parsed.data.iv,
-      updated_at: now,
-    })
+    .set(updateData)
     .where(and(eq(entries.id, id), eq(entries.userId, userId)));
 
   if (result.rowsAffected === 0) {
