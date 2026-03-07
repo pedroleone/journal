@@ -94,7 +94,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
         month: String(month),
         day: String(day),
       });
-      const res = await fetch(`/api/entries?${params}`);
+      const res = await fetch(`/api/journal?${params}`);
       if (!res.ok) throw new Error("Failed to fetch entries");
 
       const raw: RawEntry[] = await res.json();
@@ -166,7 +166,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
         </h2>
         <Button variant="ghost" size="sm" className="gap-1.5" asChild>
           <Link
-            href={`/write?entry=${entries[0].id}`}
+            href={`/journal/write?entry=${entries[0].id}`}
           >
             <Pencil className="h-3.5 w-3.5" />
             Edit

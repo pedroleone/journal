@@ -53,7 +53,7 @@ export default function EntryPage({
   }, [setIsLocked]);
 
   useEffect(() => {
-    fetch(`/api/entries/${id}`)
+    fetch(`/api/journal/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Not found");
         return res.json();
@@ -88,7 +88,7 @@ export default function EntryPage({
     setSaving(true);
     try {
       const { ciphertext, iv } = await encrypt(key, editContent);
-      const res = await fetch(`/api/entries/${id}`, {
+      const res = await fetch(`/api/journal/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ encrypted_content: ciphertext, iv }),
@@ -105,8 +105,8 @@ export default function EntryPage({
 
   async function handleDelete() {
     if (!confirm("Delete this entry?")) return;
-    await fetch(`/api/entries/${id}`, { method: "DELETE" });
-    router.push("/browse");
+    await fetch(`/api/journal/${id}`, { method: "DELETE" });
+    router.push("/journal/browse");
   }
 
   function handleUnlock() {
@@ -142,7 +142,7 @@ export default function EntryPage({
     return (
       <div className="animate-page mx-auto max-w-2xl px-6 py-10">
         <p className="text-muted-foreground">Entry not found.</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push("/browse")}>
+        <Button variant="outline" className="mt-4" onClick={() => router.push("/journal/browse")}>
           Back to Browse
         </Button>
       </div>
@@ -168,7 +168,7 @@ export default function EntryPage({
   return (
     <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
       <button
-        onClick={() => router.push("/browse")}
+        onClick={() => router.push("/journal/browse")}
         className="text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         &larr; Back

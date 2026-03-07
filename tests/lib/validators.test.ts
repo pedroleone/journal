@@ -4,6 +4,9 @@ import {
   createEntrySchema,
   updateEntrySchema,
   browseQuerySchema,
+  createFoodEntrySchema,
+  foodListQuerySchema,
+  assignFoodEntrySchema,
 } from "@/lib/validators";
 
 describe("loginSchema", () => {
@@ -44,7 +47,8 @@ describe("createEntrySchema", () => {
   });
 
   it("rejects missing encrypted_content", () => {
-    const { encrypted_content: _ec, ...rest } = validEntry;
+    const rest = { ...validEntry };
+    delete (rest as { encrypted_content?: string }).encrypted_content;
     const result = createEntrySchema.safeParse(rest);
     expect(result.success).toBe(false);
   });
@@ -107,5 +111,80 @@ describe("browseQuerySchema", () => {
     const result = browseQuerySchema.safeParse({ year: "2026" });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.year).toBe(2026);
+  });
+});
+
+describe("createFoodEntrySchema", () => {
+  it("accepts valid food payload", () => {
+    const result = createFoodEntrySchema.safeParse({
+      encrypted_content: "base64ciphertext",
+      iv: "base64iv",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty iv", () => {
+    const result = createFoodEntrySchema.safeParse({
+      encrypted_content: "base64ciphertext",
+      iv: "",
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("foodListQuerySchema", () => {
+  it("coerces boolean and numeric values", () => {
+    const result = foodListQuerySchema.safeParse({
+      uncategorized: "true",
+      year: "2026",
+      month: "3",
+      day: "6",
+      meal_slot: "lunch",
+      limit: "5",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.uncategorized).toBe(true);
+      expect(result.data.limit).toBe(5);
+      expect(result.data.meal_slot).toBe("lunch");
+    }
+  });
+
+  it("rejects invalid month", () => {
+    const result = foodListQuerySchema.safeParse({ month: 13 });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("assignFoodEntrySchema", () => {
+  it("accepts assign payload", () => {
+    const result = assignFoodEntrySchema.safeParse({
+      year: 2026,
+      month: 3,
+      day: 6,
+      hour: 9,
+      meal_slot: "breakfast",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts nullable meal slot", () => {
+    const result = assignFoodEntrySchema.safeParse({
+      year: 2026,
+      month: 3,
+      day: 6,
+      meal_slot: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid meal slot", () => {
+    const result = assignFoodEntrySchema.safeParse({
+      year: 2026,
+      month: 3,
+      day: 6,
+      meal_slot: "brunch",
+    });
+    expect(result.success).toBe(false);
   });
 });

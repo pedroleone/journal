@@ -9,7 +9,7 @@ function makeParams(id: string): Promise<{ id: string }> {
   return Promise.resolve({ id });
 }
 
-describe("GET /api/entries/[id]", () => {
+describe("GET /api/journal/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -28,8 +28,8 @@ describe("GET /api/entries/[id]", () => {
     mockDb.from.mockReturnThis();
     mockDb.where.mockResolvedValue([entry]);
 
-    const { GET } = await import("@/app/api/entries/[id]/route");
-    const request = new NextRequest("http://localhost/api/entries/abc123");
+    const { GET } = await import("@/app/api/journal/[id]/route");
+    const request = new NextRequest("http://localhost/api/journal/abc123");
     const res = await GET(request, { params: makeParams("abc123") });
 
     expect(res.status).toBe(200);
@@ -42,15 +42,15 @@ describe("GET /api/entries/[id]", () => {
     mockDb.from.mockReturnThis();
     mockDb.where.mockResolvedValue([]);
 
-    const { GET } = await import("@/app/api/entries/[id]/route");
-    const request = new NextRequest("http://localhost/api/entries/nonexistent");
+    const { GET } = await import("@/app/api/journal/[id]/route");
+    const request = new NextRequest("http://localhost/api/journal/nonexistent");
     const res = await GET(request, { params: makeParams("nonexistent") });
 
     expect(res.status).toBe(404);
   });
 });
 
-describe("PUT /api/entries/[id]", () => {
+describe("PUT /api/journal/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDb.update.mockReturnThis();
@@ -59,8 +59,8 @@ describe("PUT /api/entries/[id]", () => {
   });
 
   it("updates entry with valid body", async () => {
-    const { PUT } = await import("@/app/api/entries/[id]/route");
-    const request = new NextRequest("http://localhost/api/entries/abc123", {
+    const { PUT } = await import("@/app/api/journal/[id]/route");
+    const request = new NextRequest("http://localhost/api/journal/abc123", {
       method: "PUT",
       body: JSON.stringify({ encrypted_content: "newcipher", iv: "newiv" }),
       headers: { "Content-Type": "application/json" },
@@ -72,8 +72,8 @@ describe("PUT /api/entries/[id]", () => {
   });
 
   it("returns 400 on invalid body", async () => {
-    const { PUT } = await import("@/app/api/entries/[id]/route");
-    const request = new NextRequest("http://localhost/api/entries/abc123", {
+    const { PUT } = await import("@/app/api/journal/[id]/route");
+    const request = new NextRequest("http://localhost/api/journal/abc123", {
       method: "PUT",
       body: JSON.stringify({ encrypted_content: "" }),
       headers: { "Content-Type": "application/json" },
@@ -84,7 +84,7 @@ describe("PUT /api/entries/[id]", () => {
   });
 });
 
-describe("DELETE /api/entries/[id]", () => {
+describe("DELETE /api/journal/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDb.delete.mockReturnThis();
@@ -93,8 +93,8 @@ describe("DELETE /api/entries/[id]", () => {
   });
 
   it("deletes entry and returns 204", async () => {
-    const { DELETE } = await import("@/app/api/entries/[id]/route");
-    const request = new NextRequest("http://localhost/api/entries/abc123", {
+    const { DELETE } = await import("@/app/api/journal/[id]/route");
+    const request = new NextRequest("http://localhost/api/journal/abc123", {
       method: "DELETE",
     });
     const res = await DELETE(request, { params: makeParams("abc123") });

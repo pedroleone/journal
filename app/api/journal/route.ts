@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { entries } from "@/lib/schema";
+import { journalEntries } from "@/lib/schema";
 import { createEntrySchema, browseQuerySchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString();
   const id = nanoid();
 
-  await db.insert(entries).values({
+  await db.insert(journalEntries).values({
     id,
     source: "web",
     year: parsed.data.year,
@@ -46,15 +46,15 @@ export async function GET(request: NextRequest) {
   }
 
   const conditions = [];
-  if (parsed.data.year !== undefined) conditions.push(eq(entries.year, parsed.data.year));
-  if (parsed.data.month !== undefined) conditions.push(eq(entries.month, parsed.data.month));
-  if (parsed.data.day !== undefined) conditions.push(eq(entries.day, parsed.data.day));
+  if (parsed.data.year !== undefined) conditions.push(eq(journalEntries.year, parsed.data.year));
+  if (parsed.data.month !== undefined) conditions.push(eq(journalEntries.month, parsed.data.month));
+  if (parsed.data.day !== undefined) conditions.push(eq(journalEntries.day, parsed.data.day));
 
   const result = await db
     .select()
-    .from(entries)
+    .from(journalEntries)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(entries.year, entries.month, entries.day);
+    .orderBy(journalEntries.year, journalEntries.month, journalEntries.day);
 
   // Reverse for desc order
   result.reverse();

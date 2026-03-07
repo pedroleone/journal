@@ -37,7 +37,7 @@ export default function LoginPage() {
       const key = await deriveKey(passphrase);
       setKey(key);
       initActivityListeners();
-      router.push("/write");
+      router.push("/journal/write");
     } catch {
       setError("Something went wrong");
     } finally {

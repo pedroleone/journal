@@ -41,7 +41,7 @@ export default function BrowsePage() {
   useEffect(() => {
     if (!hasKey) return;
     let cancelled = false;
-    fetch("/api/entries/dates")
+    fetch("/api/journal/dates")
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
         if (!cancelled) setDates(data);

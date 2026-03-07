@@ -26,7 +26,7 @@ export function PassphrasePrompt({ onUnlock, onCancel }: PassphrasePromptProps) 
       const key = await deriveKey(passphrase);
 
       // Validate passphrase against an existing entry
-      const res = await fetch("/api/entries/oldest");
+      const res = await fetch("/api/journal/oldest");
       const { entry } = await res.json();
       if (entry) {
         try {

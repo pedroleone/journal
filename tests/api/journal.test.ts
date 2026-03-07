@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
 
-describe("POST /api/entries", () => {
+describe("POST /api/journal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset the chain mock
@@ -16,8 +16,8 @@ describe("POST /api/entries", () => {
   });
 
   async function postEntry(body: Record<string, unknown>) {
-    const { POST } = await import("@/app/api/entries/route");
-    const request = new NextRequest("http://localhost/api/entries", {
+    const { POST } = await import("@/app/api/journal/route");
+    const request = new NextRequest("http://localhost/api/journal", {
       method: "POST",
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },
@@ -49,20 +49,21 @@ describe("POST /api/entries", () => {
   });
 
   it("returns 400 on missing encrypted_content", async () => {
-    const { encrypted_content: _ec, ...rest } = validBody;
+    const rest = { ...validBody };
+    delete (rest as { encrypted_content?: string }).encrypted_content;
     const res = await postEntry(rest);
     expect(res.status).toBe(400);
   });
 });
 
-describe("GET /api/entries", () => {
+describe("GET /api/journal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   async function getEntries(params: Record<string, string> = {}) {
-    const { GET } = await import("@/app/api/entries/route");
-    const url = new URL("http://localhost/api/entries");
+    const { GET } = await import("@/app/api/journal/route");
+    const url = new URL("http://localhost/api/journal");
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
     const request = new NextRequest(url);
     return GET(request);

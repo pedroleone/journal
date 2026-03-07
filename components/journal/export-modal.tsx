@@ -103,7 +103,7 @@ export function ExportModal({ open, onOpenChange }: ExportModalProps) {
         params.set("year", String(now.getFullYear()));
       }
 
-      const res = await fetch(`/api/entries?${params}`);
+      const res = await fetch(`/api/journal?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
 
       let entries: RawEntry[] = await res.json();

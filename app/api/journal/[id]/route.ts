@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { entries } from "@/lib/schema";
+import { journalEntries } from "@/lib/schema";
 import { updateEntrySchema } from "@/lib/validators";
 
 export async function GET(
@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const result = await db.select().from(entries).where(eq(entries.id, id));
+  const result = await db.select().from(journalEntries).where(eq(journalEntries.id, id));
 
   if (result.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -32,13 +32,13 @@ export async function PUT(
 
   const now = new Date().toISOString();
   await db
-    .update(entries)
+    .update(journalEntries)
     .set({
       encrypted_content: parsed.data.encrypted_content,
       iv: parsed.data.iv,
       updated_at: now,
     })
-    .where(eq(entries.id, id));
+    .where(eq(journalEntries.id, id));
 
   return NextResponse.json({ ok: true });
 }
@@ -48,6 +48,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  await db.delete(entries).where(eq(entries.id, id));
+  await db.delete(journalEntries).where(eq(journalEntries.id, id));
   return new NextResponse(null, { status: 204 });
 }

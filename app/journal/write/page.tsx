@@ -72,7 +72,7 @@ export default function WritePage() {
 
       setLoading(true);
       try {
-        const res = await fetch(`/api/entries/${id}`);
+        const res = await fetch(`/api/journal/${id}`);
         if (!res.ok) return;
         const entry = await res.json();
         const text = await decrypt(key, entry.encrypted_content, entry.iv);
@@ -100,7 +100,7 @@ export default function WritePage() {
       });
 
       try {
-        const res = await fetch(`/api/entries?${params}`);
+        const res = await fetch(`/api/journal?${params}`);
         if (!res.ok) return;
         const entries = await res.json();
         if (entries.length > 0) {
@@ -168,7 +168,7 @@ export default function WritePage() {
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
       <div className="flex items-center justify-between px-6 py-4">
         <Link
-          href="/browse"
+          href="/journal/browse"
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
