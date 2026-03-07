@@ -441,6 +441,9 @@ export default function FoodBrowsePage() {
                     <p className="text-xs text-muted-foreground">{formatLoggedAt(entry.logged_at)}</p>
 
                     <div className="flex flex-wrap items-center gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/food/entry/${entry.id}`}>Open</Link>
+                      </Button>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" size="sm">
@@ -523,9 +526,14 @@ export default function FoodBrowsePage() {
                               imageClassName="h-32"
                             />
                           ) : null}
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {formatTime(entry.logged_at, entry.hour)}
-                          </p>
+                          <div className="mt-1 flex items-center justify-between gap-3">
+                            <p className="text-xs text-muted-foreground">
+                              {formatTime(entry.logged_at, entry.hour)}
+                            </p>
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/food/entry/${entry.id}`}>Open</Link>
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -554,9 +562,14 @@ export default function FoodBrowsePage() {
                             imageClassName="h-32"
                           />
                         ) : null}
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {formatTime(entry.logged_at, entry.hour)}
-                        </p>
+                        <div className="mt-1 flex items-center justify-between gap-3">
+                          <p className="text-xs text-muted-foreground">
+                            {formatTime(entry.logged_at, entry.hour)}
+                          </p>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/food/entry/${entry.id}`}>Open</Link>
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>

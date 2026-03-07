@@ -1,0 +1,258 @@
+"use client";
+
+import { use, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, Paperclip, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useImages } from "@/hooks/use-images";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
+
+interface FoodEntry {
+  id: string;
+  source: "web" | "telegram";
+  year: number;
+  month: number;
+  day: number;
+  hour: number | null;
+  meal_slot: "breakfast" | "lunch" | "dinner" | "snack" | null;
+  logged_at: string;
+  content: string;
+  images: string[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function formatLoggedAt(iso: string) {
+  return new Date(iso).toLocaleString([], {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export default function FoodEntryPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [entry, setEntry] = useState<FoodEntry | null>(null);
+  const [imageKeys, setImageKeys] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [readyForViewing, setReadyForViewing] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [deletingEntry, setDeletingEntry] = useState(false);
+  const [error, setError] = useState("");
+  const isOnline = useOnlineStatus();
+  const { images } = useImages(imageKeys);
+
+  useEffect(() => {
+    if (!isOnline) return;
+
+    fetch(`/api/food/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Not found");
+        return res.json();
+      })
+      .then((data: FoodEntry) => {
+        setEntry(data);
+        setImageKeys(data.images ?? []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+        setError("Failed to load food entry");
+      })
+      .finally(() => {
+        setReadyForViewing(true);
+      });
+  }, [id, isOnline]);
+
+  async function handleImageSelection(files: FileList | null) {
+    if (!files?.length || !entry || !isOnline) return;
+
+    setUploadingImages(true);
+    setError("");
+    try {
+      for (const file of Array.from(files)) {
+        const result = await uploadEncryptedImage({
+          file,
+          ownerKind: "food",
+          ownerId: entry.id,
+        });
+        setImageKeys(result.images);
+      }
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Failed to upload image");
+    } finally {
+      setUploadingImages(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }
+
+  async function handleRemoveImage(imageKey: string) {
+    if (!entry || !isOnline) return;
+
+    try {
+      const result = await deleteEncryptedImage({
+        imageKey,
+        ownerKind: "food",
+        ownerId: entry.id,
+      });
+      setImageKeys(result.images);
+    } catch {
+      setError("Failed to remove image");
+    }
+  }
+
+  async function handleDelete() {
+    if (!entry || !isOnline) return;
+    if (!confirm("Delete this food entry?")) return;
+
+    setDeletingEntry(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/food/${entry.id}`, { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error("Failed to delete entry");
+      }
+
+      router.push("/food/browse?mode=food");
+    } catch {
+      setError("Failed to delete food entry");
+    } finally {
+      setDeletingEntry(false);
+    }
+  }
+
+  if (!isOnline && !readyForViewing) {
+    return (
+      <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-md items-center justify-center px-6">
+        <div className="space-y-2 text-center">
+          <h1 className="font-display text-2xl tracking-tight">Connection required</h1>
+          <p className="text-sm text-muted-foreground">
+            The installed app opens offline, but loading or changing a food entry still requires a connection.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6 px-6 py-10">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full rounded-lg" />
+      </div>
+    );
+  }
+
+  if (!entry) {
+    return (
+      <div className="animate-page mx-auto max-w-2xl px-6 py-10">
+        <p className="text-muted-foreground">Food entry not found.</p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => router.push("/food/browse?mode=food")}
+        >
+          Back to Browse
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-page mx-auto max-w-2xl space-y-8 px-6 py-10">
+      {!isOnline && (
+        <div className="rounded-lg border border-border/60 bg-secondary/60 px-4 py-3 text-sm text-muted-foreground">
+          You are offline. This entry stays visible, but image changes and deletes are unavailable until you reconnect.
+        </div>
+      )}
+
+      <button
+        onClick={() => router.push("/food/browse?mode=food")}
+        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        &larr; Back
+      </button>
+
+      <div className="space-y-2">
+        <h1 className="font-display text-2xl tracking-tight">Food Entry</h1>
+        <p className="text-sm text-muted-foreground">{formatLoggedAt(entry.logged_at)}</p>
+      </div>
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+      {entry.content ? (
+        <div className="whitespace-pre-wrap text-base leading-relaxed">{entry.content}</div>
+      ) : null}
+
+      {images.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {images.map((image) => (
+            <div
+              key={image.key}
+              className="relative overflow-hidden rounded-lg border border-border/50 bg-card/20"
+            >
+              {/* Blob URLs back these previews, so Next/Image is not a good fit here. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={image.url} alt="" className="h-48 w-full object-cover" />
+              <button
+                onClick={() => handleRemoveImage(image.key)}
+                className="absolute right-2 top-2 rounded-full bg-background/90 p-1 text-foreground shadow-sm"
+                aria-label="Remove image"
+                disabled={!isOnline}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-6">
+        <div className="flex items-center gap-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              void handleImageSelection(event.target.files);
+            }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            disabled={!isOnline || uploadingImages}
+          >
+            {uploadingImages ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Paperclip className="h-3 w-3" />
+            )}
+            Add images
+          </button>
+          {imageKeys.length > 0 ? (
+            <span className="text-xs text-muted-foreground">{imageKeys.length} attached</span>
+          ) : null}
+        </div>
+
+        <Button variant="destructive" onClick={handleDelete} disabled={!isOnline || deletingEntry}>
+          {deletingEntry ? "Deleting..." : "Delete"}
+        </Button>
+      </div>
+    </div>
+  );
+}

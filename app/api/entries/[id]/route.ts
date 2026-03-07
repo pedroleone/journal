@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { deleteOwnerEntryAndImages } from "@/lib/entry-images";
 import { NO_STORE_HEADERS, jsonNoStore } from "@/lib/http";
 import { entries } from "@/lib/schema";
 import { decryptServerText, encryptServerText } from "@/lib/server-crypto";
@@ -82,12 +83,14 @@ export async function DELETE(
   if (!userId) return unauthorizedResponse();
 
   const { id } = await params;
-  const result = await db
-    .delete(entries)
-    .where(and(eq(entries.id, id), eq(entries.userId, userId)));
+  const result = await deleteOwnerEntryAndImages(userId, "journal", id);
 
-  if (result.rowsAffected === 0) {
+  if (!result.ok && result.reason === "not_found") {
     return jsonNoStore({ error: "Not found" }, { status: 404 });
+  }
+
+  if (!result.ok) {
+    return jsonNoStore({ error: "Failed to delete entry images" }, { status: 500 });
   }
 
   return new NextResponse(null, { status: 204, headers: NO_STORE_HEADERS });

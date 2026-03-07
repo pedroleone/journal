@@ -1,66 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
 import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { deleteEncryptedObject, getEncryptedObject } from "@/lib/r2";
-import { db } from "@/lib/db";
+import { getOwnerImageRecord, setOwnerImages } from "@/lib/entry-images";
 import { NO_STORE_HEADERS, jsonNoStore } from "@/lib/http";
-import { entries, foodEntries } from "@/lib/schema";
 import { decryptServerBuffer } from "@/lib/server-crypto";
 import { imageOwnerKindSchema } from "@/lib/validators";
-
-async function ownerHasImage(
-  userId: string,
-  ownerKind: "journal" | "food",
-  ownerId: string,
-  key: string,
-) {
-  if (ownerKind === "journal") {
-    const [record] = await db
-      .select({ images: entries.images })
-      .from(entries)
-      .where(and(eq(entries.userId, userId), eq(entries.id, ownerId)));
-    return record?.images?.includes(key) ?? false;
-  }
-
-  const [record] = await db
-    .select({ images: foodEntries.images })
-    .from(foodEntries)
-    .where(and(eq(foodEntries.userId, userId), eq(foodEntries.id, ownerId)));
-  return record?.images?.includes(key) ?? false;
-}
-
-async function updateOwnerImages(
-  userId: string,
-  ownerKind: "journal" | "food",
-  ownerId: string,
-  key: string,
-) {
-  const now = new Date().toISOString();
-
-  if (ownerKind === "journal") {
-    const [record] = await db
-      .select({ images: entries.images })
-      .from(entries)
-      .where(and(eq(entries.userId, userId), eq(entries.id, ownerId)));
-    const images = (record?.images ?? []).filter((imageKey) => imageKey !== key);
-    await db
-      .update(entries)
-      .set({ images, updated_at: now })
-      .where(and(eq(entries.userId, userId), eq(entries.id, ownerId)));
-    return images;
-  }
-
-  const [record] = await db
-    .select({ images: foodEntries.images })
-    .from(foodEntries)
-    .where(and(eq(foodEntries.userId, userId), eq(foodEntries.id, ownerId)));
-  const images = (record?.images ?? []).filter((imageKey) => imageKey !== key);
-  await db
-    .update(foodEntries)
-    .set({ images, updated_at: now })
-    .where(and(eq(foodEntries.userId, userId), eq(foodEntries.id, ownerId)));
-  return images;
-}
 
 function decodeKey(encodedKey: string) {
   return decodeURIComponent(encodedKey);
@@ -86,8 +30,8 @@ export async function GET(
     return jsonNoStore({ error: "Not found" }, { status: 404 });
   }
 
-  const allowed = await ownerHasImage(userId, parsedOwnerKind.data, ownerId, key);
-  if (!allowed) {
+  const ownerRecord = await getOwnerImageRecord(userId, parsedOwnerKind.data, ownerId);
+  if (!ownerRecord?.images?.includes(key)) {
     return jsonNoStore({ error: "Not found" }, { status: 404 });
   }
 
@@ -124,13 +68,24 @@ export async function DELETE(
     return jsonNoStore({ error: "Invalid owner_kind" }, { status: 400 });
   }
 
-  const allowed = await ownerHasImage(userId, parsedOwnerKind.data, ownerId, key);
-  if (!allowed) {
+  const ownerRecord = await getOwnerImageRecord(userId, parsedOwnerKind.data, ownerId);
+  if (!ownerRecord?.images?.includes(key)) {
     return jsonNoStore({ error: "Not found" }, { status: 404 });
   }
 
-  const images = await updateOwnerImages(userId, parsedOwnerKind.data, ownerId, key);
-  await deleteEncryptedObject(key);
+  const currentImages = ownerRecord.images ?? [];
+  const images = currentImages.filter((imageKey) => imageKey !== key);
+
+  await setOwnerImages(userId, parsedOwnerKind.data, ownerId, images);
+
+  try {
+    await deleteEncryptedObject(key);
+  } catch {
+    await setOwnerImages(userId, parsedOwnerKind.data, ownerId, currentImages).catch(
+      () => undefined,
+    );
+    return jsonNoStore({ error: "Failed to delete image" }, { status: 500 });
+  }
 
   return jsonNoStore({ ok: true, images });
 }

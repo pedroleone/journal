@@ -122,9 +122,9 @@ export default function FoodPage() {
               >
                 {file.name}
                 <button
-                  onClick={() => {
-                    setUploadError("");
-                    setSelectedFiles((current) =>
+              onClick={() => {
+                setUploadError("");
+                setSelectedFiles((current) =>
                       current.filter((_, currentIndex) => currentIndex !== index),
                     );
                   }}
@@ -149,7 +149,11 @@ export default function FoodPage() {
               className="hidden"
               onChange={(event) => {
                 setUploadError("");
-                setSelectedFiles(Array.from(event.target.files ?? []));
+                setSelectedFiles((current) => [
+                  ...current,
+                  ...Array.from(event.target.files ?? []),
+                ]);
+                event.target.value = "";
               }}
             />
             <button
@@ -211,9 +215,14 @@ export default function FoodPage() {
                     imageClassName="h-32"
                   />
                 ) : null}
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {formatLoggedAt(entry.logged_at)}
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    {formatLoggedAt(entry.logged_at)}
+                  </p>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/food/entry/${entry.id}`}>Open</Link>
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

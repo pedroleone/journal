@@ -4,6 +4,12 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import * as serverCrypto from "@/lib/server-crypto";
 
+vi.mock("@/lib/r2", () => ({
+  getEncryptedObject: vi.fn(),
+  deleteEncryptedObject: vi.fn(),
+  putEncryptedObject: vi.fn(),
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
 const mockServerCrypto = vi.mocked(serverCrypto);
@@ -159,8 +165,11 @@ describe("DELETE /api/entries/[id]", () => {
     mockAuth.mockResolvedValue({
       user: { id: "user-1", email: "user@example.com" },
     });
+    mockDb.select.mockReturnThis();
     mockDb.delete.mockReturnThis();
+    mockDb.insert.mockReturnThis();
     mockDb.from.mockReturnThis();
+    mockDb.values.mockResolvedValue(undefined);
     mockDb.where.mockResolvedValue({ rowsAffected: 1 });
   });
 
@@ -178,6 +187,32 @@ describe("DELETE /api/entries/[id]", () => {
   });
 
   it("deletes entry and returns 204", async () => {
+    const { getEncryptedObject, deleteEncryptedObject } = await import("@/lib/r2");
+    mockDb.where
+      .mockResolvedValueOnce([
+        {
+          id: "abc123",
+          userId: "user-1",
+          source: "web",
+          year: 2026,
+          month: 3,
+          day: 6,
+          hour: 8,
+          encrypted_content: "cipher",
+          iv: "iv",
+          images: ["user-1/journal/abc123/photo.enc"],
+          tags: null,
+          created_at: "2026-03-06T08:00:00.000Z",
+          updated_at: "2026-03-06T08:00:00.000Z",
+        },
+      ])
+      .mockResolvedValueOnce({ rowsAffected: 1 });
+    vi.mocked(getEncryptedObject).mockResolvedValue({
+      body: new Uint8Array([1, 2, 3]),
+      iv: "image-iv",
+      contentType: "image/jpeg",
+    });
+
     const { DELETE } = await import("@/app/api/entries/[id]/route");
     const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "DELETE",
@@ -187,10 +222,11 @@ describe("DELETE /api/entries/[id]", () => {
     expect(res.status).toBe(204);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
     expect(mockDb.delete).toHaveBeenCalled();
+    expect(deleteEncryptedObject).toHaveBeenCalledWith("user-1/journal/abc123/photo.enc");
   });
 
   it("returns 404 when deleting an entry owned by another user", async () => {
-    mockDb.where.mockResolvedValueOnce({ rowsAffected: 0 });
+    mockDb.where.mockResolvedValueOnce([]);
 
     const { DELETE } = await import("@/app/api/entries/[id]/route");
     const request = new NextRequest("http://localhost/api/entries/abc123", {
@@ -200,5 +236,61 @@ describe("DELETE /api/entries/[id]", () => {
 
     expect(res.status).toBe(404);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("restores the entry and deleted blobs when image cleanup fails", async () => {
+    const { getEncryptedObject, deleteEncryptedObject, putEncryptedObject } =
+      await import("@/lib/r2");
+    const entry = {
+      id: "abc123",
+      userId: "user-1",
+      source: "web",
+      year: 2026,
+      month: 3,
+      day: 6,
+      hour: 8,
+      encrypted_content: "cipher",
+      iv: "iv",
+      images: [
+        "user-1/journal/abc123/photo-1.enc",
+        "user-1/journal/abc123/photo-2.enc",
+      ],
+      tags: null,
+      created_at: "2026-03-06T08:00:00.000Z",
+      updated_at: "2026-03-06T08:00:00.000Z",
+    };
+    mockDb.where
+      .mockResolvedValueOnce([entry])
+      .mockResolvedValueOnce({ rowsAffected: 1 });
+    vi.mocked(getEncryptedObject)
+      .mockResolvedValueOnce({
+        body: new Uint8Array([1, 2, 3]),
+        iv: "iv-1",
+        contentType: "image/jpeg",
+      })
+      .mockResolvedValueOnce({
+        body: new Uint8Array([4, 5, 6]),
+        iv: "iv-2",
+        contentType: "image/png",
+      });
+    vi.mocked(deleteEncryptedObject)
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("boom"));
+
+    const { DELETE } = await import("@/app/api/entries/[id]/route");
+    const request = new NextRequest("http://localhost/api/entries/abc123", {
+      method: "DELETE",
+    });
+    const res = await DELETE(request, { params: makeParams("abc123") });
+
+    expect(res.status).toBe(500);
+    expect(mockDb.insert).toHaveBeenCalled();
+    expect(mockDb.values).toHaveBeenCalledWith(entry);
+    expect(putEncryptedObject).toHaveBeenCalledWith({
+      key: "user-1/journal/abc123/photo-1.enc",
+      body: new Uint8Array([1, 2, 3]),
+      iv: "iv-1",
+      contentType: "image/jpeg",
+    });
   });
 });

@@ -151,7 +151,6 @@ describe("image routes", () => {
     const { deleteEncryptedObject } = await import("@/lib/r2");
     mockDb.where
       .mockResolvedValueOnce([{ images: ["user-1/journal/entry-1/image.enc"] }])
-      .mockResolvedValueOnce([{ images: ["user-1/journal/entry-1/image.enc"] }])
       .mockResolvedValueOnce({ rowsAffected: 1 });
 
     const { DELETE } = await import("@/app/api/images/[key]/route");
@@ -166,6 +165,31 @@ describe("image routes", () => {
     expect(response.status).toBe(200);
     expect(deleteEncryptedObject).toHaveBeenCalledWith(
       "user-1/journal/entry-1/image.enc",
+    );
+  });
+
+  it("restores the DB reference when blob deletion fails", async () => {
+    const { deleteEncryptedObject } = await import("@/lib/r2");
+    mockDb.where
+      .mockResolvedValueOnce([{ images: ["user-1/journal/entry-1/image.enc"] }])
+      .mockResolvedValueOnce({ rowsAffected: 1 })
+      .mockResolvedValueOnce({ rowsAffected: 1 });
+    vi.mocked(deleteEncryptedObject).mockRejectedValueOnce(new Error("boom"));
+
+    const { DELETE } = await import("@/app/api/images/[key]/route");
+    const request = new NextRequest(
+      "http://localhost/api/images/user-1%2Fjournal%2Fentry-1%2Fimage.enc?owner_kind=journal&owner_id=entry-1",
+      { method: "DELETE" },
+    );
+    const response = await DELETE(request, {
+      params: Promise.resolve({ key: "user-1%2Fjournal%2Fentry-1%2Fimage.enc" }),
+    });
+
+    expect(response.status).toBe(500);
+    expect(mockDb.set).toHaveBeenNthCalledWith(1, expect.objectContaining({ images: [] }));
+    expect(mockDb.set).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ images: ["user-1/journal/entry-1/image.enc"] }),
     );
   });
 });
