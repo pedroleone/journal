@@ -5,6 +5,7 @@ import { jsonNoStore } from "@/lib/http";
 import { deleteEncryptedObject, putEncryptedObject } from "@/lib/r2";
 import { entries, foodEntries } from "@/lib/schema";
 import { db } from "@/lib/db";
+import { MAX_IMAGE_UPLOAD_BYTES } from "@/lib/image-upload-policy";
 import { encryptServerBuffer } from "@/lib/server-crypto";
 import { imageOwnerKindSchema } from "@/lib/validators";
 
@@ -57,6 +58,14 @@ export async function POST(request: Request) {
 
   if (!(file instanceof File) || typeof ownerKind !== "string" || typeof ownerId !== "string") {
     return jsonNoStore({ error: "Invalid form data" }, { status: 400 });
+  }
+
+  if (!file.type.startsWith("image/")) {
+    return jsonNoStore({ error: "Unsupported image type" }, { status: 400 });
+  }
+
+  if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+    return jsonNoStore({ error: "Image exceeds 5 MB limit" }, { status: 413 });
   }
 
   const parsedOwnerKind = imageOwnerKindSchema.safeParse(ownerKind);

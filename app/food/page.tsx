@@ -40,6 +40,7 @@ export default function FoodPage() {
   const [recent, setRecent] = useState<RecentEntry[]>([]);
   const [savedFlash, setSavedFlash] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState("");
 
   const loadRecent = useCallback(async () => {
     try {
@@ -60,6 +61,7 @@ export default function FoodPage() {
     if (!content.trim() && selectedFiles.length === 0) return;
 
     setLogging(true);
+    setUploadError("");
     try {
       const res = await fetch("/api/food", {
         method: "POST",
@@ -83,9 +85,12 @@ export default function FoodPage() {
 
       setContent("");
       setSelectedFiles([]);
+      setUploadError("");
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 1200);
       await loadRecent();
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Failed to upload image");
     } finally {
       setLogging(false);
     }
@@ -117,11 +122,12 @@ export default function FoodPage() {
               >
                 {file.name}
                 <button
-                  onClick={() =>
+                  onClick={() => {
+                    setUploadError("");
                     setSelectedFiles((current) =>
                       current.filter((_, currentIndex) => currentIndex !== index),
-                    )
-                  }
+                    );
+                  }}
                   aria-label={`Remove ${file.name}`}
                 >
                   <X className="h-3 w-3" />
@@ -129,6 +135,9 @@ export default function FoodPage() {
               </div>
             ))}
           </div>
+        ) : null}
+        {uploadError ? (
+          <p className="text-sm text-destructive">{uploadError}</p>
         ) : null}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -138,9 +147,10 @@ export default function FoodPage() {
               accept="image/*"
               multiple
               className="hidden"
-              onChange={(event) =>
-                setSelectedFiles(Array.from(event.target.files ?? []))
-              }
+              onChange={(event) => {
+                setUploadError("");
+                setSelectedFiles(Array.from(event.target.files ?? []));
+              }}
             />
             <button
               onClick={() => fileInputRef.current?.click()}

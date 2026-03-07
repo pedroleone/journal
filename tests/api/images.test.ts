@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { MAX_IMAGE_UPLOAD_BYTES } from "@/lib/image-upload-policy";
 import * as serverCrypto from "@/lib/server-crypto";
 
 vi.mock("@/lib/r2", () => ({
@@ -30,6 +31,11 @@ describe("image routes", () => {
     mockAuth.mockResolvedValue({
       user: { id: "user-1", email: "user@example.com" },
     });
+    mockDb.select.mockReset();
+    mockDb.from.mockReset();
+    mockDb.where.mockReset();
+    mockDb.update.mockReset();
+    mockDb.set.mockReset();
     mockDb.select.mockReturnThis();
     mockDb.from.mockReturnThis();
     mockDb.update.mockReturnThis();
@@ -60,6 +66,61 @@ describe("image routes", () => {
     expect(putEncryptedObject).toHaveBeenCalled();
     await expect(response.json()).resolves.toMatchObject({
       key: expect.stringContaining("user-1/journal/entry-1/"),
+    });
+  });
+
+  it("rejects oversized uploads before encryption", async () => {
+    const { putEncryptedObject } = await import("@/lib/r2");
+    mockDb.where.mockResolvedValueOnce([{ id: "entry-1", images: ["existing.enc"] }]);
+
+    const { POST } = await import("@/app/api/images/upload/route");
+    const formData = new FormData();
+    formData.append(
+      "file",
+      new File(["x".repeat(MAX_IMAGE_UPLOAD_BYTES + 1)], "photo.jpg", {
+        type: "image/jpeg",
+      }),
+    );
+    formData.append("owner_kind", "journal");
+    formData.append("owner_id", "entry-1");
+
+    const response = await POST(
+      new Request("http://localhost/api/images/upload", {
+        method: "POST",
+        body: formData,
+      }),
+    );
+
+    expect(response.status).toBe(413);
+    expect(mockServerCrypto.encryptServerBuffer).not.toHaveBeenCalled();
+    expect(putEncryptedObject).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      error: "Image exceeds 5 MB limit",
+    });
+  });
+
+  it("rejects non-image uploads", async () => {
+    const { putEncryptedObject } = await import("@/lib/r2");
+    mockDb.where.mockResolvedValueOnce([{ id: "entry-1", images: ["existing.enc"] }]);
+
+    const { POST } = await import("@/app/api/images/upload/route");
+    const formData = new FormData();
+    formData.append("file", new File(["plain"], "notes.txt", { type: "text/plain" }));
+    formData.append("owner_kind", "journal");
+    formData.append("owner_id", "entry-1");
+
+    const response = await POST(
+      new Request("http://localhost/api/images/upload", {
+        method: "POST",
+        body: formData,
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockServerCrypto.encryptServerBuffer).not.toHaveBeenCalled();
+    expect(putEncryptedObject).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      error: "Unsupported image type",
     });
   });
 

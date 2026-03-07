@@ -188,6 +188,7 @@ export default function WritePage() {
     if (!files?.length || !isOnline) return;
 
     setUploadingImages(true);
+    setEntryError("");
     try {
       const ownerId = await ensureEntryId();
 
@@ -199,8 +200,8 @@ export default function WritePage() {
         });
         setImageKeys(result.images);
       }
-    } catch {
-      setEntryError("Failed to upload image");
+    } catch (error) {
+      setEntryError(error instanceof Error ? error.message : "Failed to upload image");
     } finally {
       setUploadingImages(false);
       if (fileInputRef.current) {
