@@ -69,3 +69,13 @@ export async function decryptServerText(ciphertext: string, iv: string) {
   );
   return new TextDecoder().decode(decrypted);
 }
+
+export async function decryptServerBuffer(ciphertext: Uint8Array, iv: string) {
+  const key = await getServerCryptoKey();
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: bytesToArrayBuffer(base64ToBytes(iv)) },
+    key,
+    bytesToArrayBuffer(ciphertext),
+  );
+  return new Uint8Array(decrypted);
+}

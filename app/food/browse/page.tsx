@@ -20,10 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { decryptEntryContent } from "@/lib/client-entry";
 import { MealSlot, getMonthDays, suggestMealSlot } from "@/lib/food";
 import { cn } from "@/lib/utils";
-import { useRequireUnlock } from "@/hooks/use-require-unlock";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 type SelectedState =
@@ -45,8 +43,7 @@ interface RawFoodEntry {
   day: number;
   hour: number | null;
   meal_slot: MealSlot | null;
-  encrypted_content: string;
-  iv: string;
+  content: string;
   logged_at: string;
   images: string[] | null;
 }
@@ -148,7 +145,6 @@ function getTree(dates: DateCount[]) {
 }
 
 export default function FoodBrowsePage() {
-  const hasKey = useRequireUnlock();
   const [selected, setSelected] = useState<SelectedState>({ kind: "uncategorized" });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dates, setDates] = useState<DateCount[]>([]);
@@ -163,28 +159,6 @@ export default function FoodBrowsePage() {
   const tree = useMemo(() => getTree(dates), [dates]);
   const now = new Date();
 
-  const decryptEntries = useCallback(async (raw: RawFoodEntry[]) => {
-    const decrypted = await Promise.all(
-      raw.map(async (entry) => {
-        const content = await decryptEntryContent(entry);
-        return {
-          id: entry.id,
-          source: entry.source,
-          year: entry.year,
-          month: entry.month,
-          day: entry.day,
-          hour: entry.hour,
-          meal_slot: entry.meal_slot,
-          content,
-          logged_at: entry.logged_at,
-          images: entry.images,
-        };
-      }),
-    );
-
-    return decrypted;
-  }, []);
-
   const loadDates = useCallback(async () => {
     const res = await fetch("/api/food/dates");
     if (!res.ok) return;
@@ -198,7 +172,7 @@ export default function FoodBrowsePage() {
       const res = await fetch("/api/food?uncategorized=true");
       if (!res.ok) return;
       const raw: RawFoodEntry[] = await res.json();
-      const dec = await decryptEntries(raw);
+      const dec = raw;
       setUncategorized(dec);
 
       const draftState: Record<string, AssignDraft> = {};
@@ -214,7 +188,7 @@ export default function FoodBrowsePage() {
     } finally {
       setLoadingPane(false);
     }
-  }, [decryptEntries]);
+  }, []);
 
   const loadDayEntries = useCallback(
     async (year: number, month: number, day: number) => {
@@ -228,27 +202,24 @@ export default function FoodBrowsePage() {
         const res = await fetch(`/api/food?${params}`);
         if (!res.ok) return;
         const raw: RawFoodEntry[] = await res.json();
-        const dec = await decryptEntries(raw);
-        setDayEntries(dec);
+        setDayEntries(raw);
       } finally {
         setLoadingPane(false);
       }
     },
-    [decryptEntries],
+    [],
   );
 
   useEffect(() => {
-    if (!hasKey) return;
     loadDates();
     loadUncategorized();
-  }, [hasKey, loadDates, loadUncategorized]);
+  }, [loadDates, loadUncategorized]);
 
   useEffect(() => {
-    if (!hasKey) return;
     if (selected.kind === "date") {
       loadDayEntries(selected.year, selected.month, selected.day);
     }
-  }, [selected, hasKey, loadDayEntries]);
+  }, [selected, loadDayEntries]);
 
   function handleSelectDate(year: number, month: number, day: number) {
     setSelected({ kind: "date", year, month, day });
@@ -326,8 +297,6 @@ export default function FoodBrowsePage() {
       setAssigningAll(false);
     }
   }
-
-  if (!hasKey) return null;
 
   const showSidebar = isMobile ? sidebarOpen : true;
   const showContent = isMobile ? !sidebarOpen : true;
@@ -466,7 +435,6 @@ export default function FoodBrowsePage() {
                     {entry.images?.length ? (
                       <EncryptedImageGallery
                         imageKeys={entry.images}
-                        source={entry.source}
                         imageClassName="h-32"
                       />
                     ) : null}
@@ -551,7 +519,6 @@ export default function FoodBrowsePage() {
                           {entry.images?.length ? (
                             <EncryptedImageGallery
                               imageKeys={entry.images}
-                              source={entry.source}
                               className="mt-3"
                               imageClassName="h-32"
                             />
@@ -583,7 +550,6 @@ export default function FoodBrowsePage() {
                         {entry.images?.length ? (
                           <EncryptedImageGallery
                             imageKeys={entry.images}
-                            source={entry.source}
                             className="mt-3"
                             imageClassName="h-32"
                           />

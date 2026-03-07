@@ -5,6 +5,7 @@ import { jsonNoStore } from "@/lib/http";
 import { deleteEncryptedObject, putEncryptedObject } from "@/lib/r2";
 import { entries, foodEntries } from "@/lib/schema";
 import { db } from "@/lib/db";
+import { encryptServerBuffer } from "@/lib/server-crypto";
 import { imageOwnerKindSchema } from "@/lib/validators";
 
 async function getOwnerRecord(userId: string, ownerKind: "journal" | "food", ownerId: string) {
@@ -51,12 +52,10 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get("file");
-  const iv = formData.get("iv");
   const ownerKind = formData.get("owner_kind");
   const ownerId = formData.get("owner_id");
-  const contentType = formData.get("content_type");
 
-  if (!(file instanceof File) || typeof iv !== "string" || typeof ownerKind !== "string" || typeof ownerId !== "string") {
+  if (!(file instanceof File) || typeof ownerKind !== "string" || typeof ownerId !== "string") {
     return jsonNoStore({ error: "Invalid form data" }, { status: 400 });
   }
 
@@ -72,17 +71,15 @@ export async function POST(request: Request) {
 
   const key = `${userId}/${parsedOwnerKind.data}/${ownerId}/${nanoid()}.enc`;
   const body = new Uint8Array(await file.arrayBuffer());
+  const encrypted = await encryptServerBuffer(body);
   const nextImages = [...(record.images ?? []), key];
 
   try {
     await putEncryptedObject({
       key,
-      body,
-      iv,
-      contentType:
-        typeof contentType === "string" && contentType.length > 0
-          ? contentType
-          : "application/octet-stream",
+      body: encrypted.ciphertext,
+      iv: encrypted.iv,
+      contentType: file.type || "application/octet-stream",
     });
     await updateOwnerImages(userId, parsedOwnerKind.data, ownerId, nextImages);
   } catch (error) {

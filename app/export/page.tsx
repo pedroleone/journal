@@ -2,11 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { decryptBuffer } from "@/lib/crypto";
-import { decryptEntryContent } from "@/lib/client-entry";
-import { base64ToBytes, bytesToBase64 } from "@/lib/base64";
-import { getKeyForSource } from "@/lib/key-manager";
-import { useRequireUnlock } from "@/hooks/use-require-unlock";
+import { bytesToBase64 } from "@/lib/base64";
 import type { EntrySource } from "@/lib/types";
 
 type FormatOption = "markdown" | "plaintext" | "pdf";
@@ -19,8 +15,7 @@ interface BaseEntry {
   month: number;
   day: number;
   hour: number | null;
-  encrypted_content: string;
-  iv: string;
+  content: string;
   images: string[] | null;
 }
 
@@ -40,10 +35,6 @@ function entrySelectionId(entry: ExportableEntry) {
   return `${entry.kind}:${entry.id}`;
 }
 
-function entryDateKey(entry: ExportableEntry) {
-  return `${entry.year}-${entry.month}-${entry.day}`;
-}
-
 function rangeContains(entry: ExportableEntry, from: Date | null, to: Date | null) {
   const current = new Date(entry.year, entry.month - 1, entry.day).getTime();
   if (from && current < from.getTime()) return false;
@@ -60,28 +51,22 @@ function formatFullDate(entry: ExportableEntry) {
   });
 }
 
-async function decryptImageDataUrls(entry: ExportableEntry) {
-  const key = getKeyForSource(entry.source);
-  if (!key || !entry.images?.length) return [];
+async function fetchImageDataUrls(entry: ExportableEntry) {
+  if (!entry.images?.length) return [];
 
   const urls: string[] = [];
   for (const imageKey of entry.images) {
     const response = await fetch(`/api/images/${encodeURIComponent(imageKey)}`);
     if (!response.ok) continue;
-    const iv = response.headers.get("X-Encryption-IV");
-    const contentType = response.headers.get("X-Original-Content-Type") ?? "image/jpeg";
-    if (!iv) continue;
-
-    const encryptedBytes = new Uint8Array(await response.arrayBuffer());
-    const decrypted = await decryptBuffer(key, bytesToBase64(encryptedBytes), iv);
-    urls.push(`data:${contentType};base64,${bytesToBase64(decrypted)}`);
+    const contentType = response.headers.get("Content-Type") ?? "image/jpeg";
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    urls.push(`data:${contentType};base64,${bytesToBase64(bytes)}`);
   }
 
   return urls;
 }
 
 export default function ExportPage() {
-  const hasKey = useRequireUnlock();
   const [entries, setEntries] = useState<ExportableEntry[]>([]);
   const [preset, setPreset] = useState<PresetOption>("month");
   const [format, setFormat] = useState<FormatOption>("markdown");
@@ -92,8 +77,6 @@ export default function ExportPage() {
   const [backupDownloading, setBackupDownloading] = useState(false);
 
   useEffect(() => {
-    if (!hasKey) return;
-
     let cancelled = false;
 
     async function loadEntries() {
@@ -124,7 +107,7 @@ export default function ExportPage() {
     return () => {
       cancelled = true;
     };
-  }, [hasKey]);
+  }, []);
 
   const tree = useMemo(() => {
     const years = new Map<number, Map<number, Map<number, ExportableEntry[]>>>();
@@ -237,8 +220,8 @@ export default function ExportPage() {
           })
           .map(async (entry) => ({
             entry,
-            text: await decryptEntryContent(entry),
-            images: await decryptImageDataUrls(entry),
+            text: entry.content,
+            images: await fetchImageDataUrls(entry),
           })),
       );
 
@@ -308,15 +291,13 @@ export default function ExportPage() {
     }
   }
 
-  if (!hasKey) return null;
-
   return (
     <div className="animate-page mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
       <header className="space-y-2">
         <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
           Export
         </p>
-        <h1 className="font-display text-4xl tracking-tight">Decrypt and download</h1>
+        <h1 className="font-display text-4xl tracking-tight">Export and download</h1>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -392,10 +373,10 @@ export default function ExportPage() {
               {selectedIds.length} entries selected
             </p>
             <Button onClick={() => void handleExport()} disabled={exporting || selectedIds.length === 0} className="w-full">
-              {exporting ? "Preparing export…" : "Decrypt & export"}
+              {exporting ? "Preparing export…" : "Export selected"}
             </Button>
             <Button variant="outline" onClick={() => void downloadEncryptedBackup()} disabled={backupDownloading} className="w-full">
-              {backupDownloading ? "Downloading…" : "Download encrypted backup"}
+              {backupDownloading ? "Downloading…" : "Download backup JSON"}
             </Button>
           </div>
         </section>

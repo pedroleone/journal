@@ -1,12 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus, LogOut, Settings } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-app-button";
 import { Button } from "@/components/ui/button";
-import { wipeKeys } from "@/lib/key-manager";
 import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +14,6 @@ export function AppNav() {
   const pathname = usePathname();
 
   async function handleLogout() {
-    wipeKeys();
     await signOut({ redirectTo: "/login" });
   }
 

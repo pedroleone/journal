@@ -1,8 +1,5 @@
 "use client";
 
-import { base64ToBytes, bytesToArrayBuffer } from "@/lib/base64";
-import { encryptBuffer } from "@/lib/crypto";
-import { getUserKey } from "@/lib/key-manager";
 import type { ImageOwnerKind } from "@/lib/types";
 
 export async function uploadEncryptedImage(input: {
@@ -10,25 +7,10 @@ export async function uploadEncryptedImage(input: {
   ownerKind: ImageOwnerKind;
   ownerId: string;
 }) {
-  const key = getUserKey();
-  if (!key) {
-    throw new Error("No user key available");
-  }
-
-  const encrypted = await encryptBuffer(key, await input.file.arrayBuffer());
   const formData = new FormData();
-  formData.append(
-    "file",
-    new File(
-      [bytesToArrayBuffer(base64ToBytes(encrypted.ciphertext))],
-      `${input.file.name || "image"}.enc`,
-      { type: "application/octet-stream" },
-    ),
-  );
-  formData.append("iv", encrypted.iv);
+  formData.append("file", input.file);
   formData.append("owner_kind", input.ownerKind);
   formData.append("owner_id", input.ownerId);
-  formData.append("content_type", input.file.type || "image/jpeg");
 
   const response = await fetch("/api/images/upload", {
     method: "POST",

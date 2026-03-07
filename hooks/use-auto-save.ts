@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { encrypt } from "@/lib/crypto";
-import { getUserKey } from "@/lib/key-manager";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 
 type Status = "idle" | "saving" | "saved" | "error" | "offline";
@@ -57,23 +55,15 @@ export function useAutoSave({
       return;
     }
 
-    const key = getUserKey();
-    if (!key) {
-      setStatus("error");
-      return;
-    }
-
     savingRef.current = true;
     setStatus("saving");
 
     try {
-      const { ciphertext, iv } = await encrypt(key, currentContent);
-
       if (entryIdRef.current) {
         const res = await fetch(`/api/entries/${entryIdRef.current}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ encrypted_content: ciphertext, iv }),
+          body: JSON.stringify({ content: currentContent }),
         });
         if (!res.ok) throw new Error("Failed to update");
       } else {
@@ -82,8 +72,7 @@ export function useAutoSave({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            encrypted_content: ciphertext,
-            iv,
+            content: currentContent,
             year,
             month,
             day,

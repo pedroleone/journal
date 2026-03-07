@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import * as serverCrypto from "@/lib/server-crypto";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
+const mockServerCrypto = vi.mocked(serverCrypto);
 const mockAuth = auth as unknown as {
   mockReset: () => void;
   mockResolvedValue: (value: unknown) => void;
@@ -34,27 +36,27 @@ describe("POST /api/food", () => {
 
   it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValueOnce(null);
-    const res = await postFood({ encrypted_content: "cipher", iv: "iv" });
+    const res = await postFood({ content: "Lunch" });
     expect(res.status).toBe(401);
   });
 
   it("returns 201 with id on valid input", async () => {
     const res = await postFood({
-      encrypted_content: "cipher",
-      iv: "iv",
+      content: "Lunch",
     });
 
     expect(res.status).toBe(201);
     const data = await res.json();
     expect(typeof data.id).toBe("string");
+    expect(mockServerCrypto.encryptServerText).toHaveBeenCalledWith("Lunch");
   });
 
-  it("returns 400 on invalid input", async () => {
+  it("accepts image-first draft payloads", async () => {
     const res = await postFood({
-      encrypted_content: "",
-      iv: "iv",
+      content: "",
+      images: [],
     });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(201);
   });
 });
 
@@ -84,7 +86,19 @@ describe("GET /api/food", () => {
 
   it("returns 200 with uncategorized list", async () => {
     const rows = [
-      { id: "f1", encrypted_content: "cipher", iv: "iv", logged_at: new Date().toISOString() },
+      {
+        id: "f1",
+        source: "web",
+        year: 2026,
+        month: 3,
+        day: 7,
+        hour: 12,
+        meal_slot: null,
+        encrypted_content: "cipher",
+        iv: "iv",
+        logged_at: new Date().toISOString(),
+        images: null,
+      },
     ];
     mockDb.select.mockReturnThis();
     mockDb.from.mockReturnThis();
@@ -96,6 +110,7 @@ describe("GET /api/food", () => {
     const data = await res.json();
     expect(Array.isArray(data)).toBe(true);
     expect(data[0].id).toBe("f1");
+    expect(data[0].content).toBe("decrypted");
   });
 
   it("returns 400 on invalid query", async () => {

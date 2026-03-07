@@ -6,28 +6,17 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import { Skeleton } from "@/components/ui/skeleton";
-import { decryptEntryContent } from "@/lib/client-entry";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import type { EntrySource } from "@/lib/types";
 
-interface RawEntry {
+interface Entry {
   id: string;
   source: EntrySource;
   year: number;
   month: number;
   day: number;
   hour: number | null;
-  encrypted_content: string;
-  iv: string;
-  created_at: string;
-  images: string[] | null;
-}
-
-interface DecryptedEntry {
-  id: string;
-  source: EntrySource;
   content: string;
-  hour: number | null;
   created_at: string;
   images: string[] | null;
 }
@@ -78,12 +67,12 @@ interface EntryViewerProps {
 }
 
 export function EntryViewer({ year, month, day }: EntryViewerProps) {
-  const [entries, setEntries] = useState<DecryptedEntry[]>([]);
+  const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isOnline = useOnlineStatus();
 
-  const loadAndDecrypt = useCallback(async () => {
+  const loadEntries = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -102,33 +91,8 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
       const res = await fetch(`/api/entries?${params}`);
       if (!res.ok) throw new Error("Failed to fetch entries");
 
-      const raw: RawEntry[] = await res.json();
-      const decrypted: DecryptedEntry[] = [];
-
-      for (const entry of raw) {
-        try {
-          const content = await decryptEntryContent(entry);
-          decrypted.push({
-            id: entry.id,
-            source: entry.source,
-            content,
-            hour: entry.hour,
-            created_at: entry.created_at,
-            images: entry.images,
-          });
-        } catch {
-          decrypted.push({
-            id: entry.id,
-            source: entry.source,
-            content: "[decryption failed]",
-            hour: entry.hour,
-            created_at: entry.created_at,
-            images: entry.images,
-          });
-        }
-      }
-
-      setEntries(decrypted);
+      const raw: Entry[] = await res.json();
+      setEntries(raw);
     } catch {
       setError("Failed to load entries");
     } finally {
@@ -137,8 +101,8 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
   }, [day, isOnline, month, year]);
 
   useEffect(() => {
-    loadAndDecrypt();
-  }, [loadAndDecrypt]);
+    loadEntries();
+  }, [loadEntries]);
 
   if (loading) {
     return (
@@ -197,11 +161,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
               {entry.content}
             </div>
             {entry.images?.length ? (
-              <EncryptedImageGallery
-                imageKeys={entry.images}
-                source={entry.source}
-                className="mt-4"
-              />
+              <EncryptedImageGallery imageKeys={entry.images} className="mt-4" />
             ) : null}
             {i < entries.length - 1 && (
               <div className="mt-8 border-b border-border/40" />

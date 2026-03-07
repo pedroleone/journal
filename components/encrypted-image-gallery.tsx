@@ -1,24 +1,21 @@
 "use client";
 
 import { ImageOff } from "lucide-react";
-import { useDecryptedImages } from "@/hooks/use-decrypted-images";
+import { useImages } from "@/hooks/use-images";
 import { cn } from "@/lib/utils";
-import type { EntrySource } from "@/lib/types";
 
 interface EncryptedImageGalleryProps {
   imageKeys: string[] | null | undefined;
-  source: EntrySource;
   className?: string;
   imageClassName?: string;
 }
 
 export function EncryptedImageGallery({
   imageKeys,
-  source,
   className,
   imageClassName,
 }: EncryptedImageGalleryProps) {
-  const { images, loading } = useDecryptedImages(imageKeys, source);
+  const { images, loading } = useImages(imageKeys);
 
   if (!imageKeys?.length) return null;
 
@@ -31,7 +28,7 @@ export function EncryptedImageGallery({
     >
       {loading && images.length === 0 ? (
         <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 text-sm text-muted-foreground">
-          Decrypting images...
+          Loading images...
         </div>
       ) : null}
       {images.map((image) => (
@@ -39,6 +36,8 @@ export function EncryptedImageGallery({
           key={image.key}
           className="overflow-hidden rounded-lg border border-border/50 bg-card/30"
         >
+          {/* Blob URLs back these images, so Next/Image is not a good fit here. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={image.url}
             alt=""
@@ -49,7 +48,7 @@ export function EncryptedImageGallery({
       {!loading && images.length === 0 ? (
         <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 text-sm text-muted-foreground">
           <ImageOff className="mr-2 h-4 w-4" />
-          Unable to decrypt image
+          Unable to load image
         </div>
       ) : null}
     </div>

@@ -4,6 +4,7 @@ import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { NO_STORE_HEADERS, jsonNoStore } from "@/lib/http";
 import { entries } from "@/lib/schema";
+import { decryptServerText, encryptServerText } from "@/lib/server-crypto";
 import { updateEntrySchema } from "@/lib/validators";
 
 export async function GET(
@@ -23,7 +24,10 @@ export async function GET(
     return jsonNoStore({ error: "Not found" }, { status: 404 });
   }
 
-  return jsonNoStore(result[0]);
+  const { encrypted_content, iv, ...entry } = result[0];
+  const content = await decryptServerText(encrypted_content, iv);
+
+  return jsonNoStore({ ...entry, content });
 }
 
 export async function PUT(
@@ -42,14 +46,15 @@ export async function PUT(
   }
 
   const now = new Date().toISOString();
+  const encrypted = await encryptServerText(parsed.data.content);
   const updateData: {
     encrypted_content: string;
     iv: string;
     updated_at: string;
     images?: string[] | null;
   } = {
-    encrypted_content: parsed.data.encrypted_content,
-    iv: parsed.data.iv,
+    encrypted_content: encrypted.ciphertext,
+    iv: encrypted.iv,
     updated_at: now,
   };
 

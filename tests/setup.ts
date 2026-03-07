@@ -1,7 +1,6 @@
 import { vi } from "vitest";
 
 // Set test env vars
-process.env.NEXT_PUBLIC_PBKDF2_SALT = btoa("test-salt-16bytes");
 process.env.AUTH_SECRET = "test-auth-secret";
 process.env.AUTH_GOOGLE_ID = "test-google-id";
 process.env.AUTH_GOOGLE_SECRET = "test-google-secret";
@@ -16,6 +15,19 @@ process.env.R2_BUCKET = "journal-images";
 
 vi.mock("@/auth", () => ({
   auth: vi.fn(),
+}));
+
+vi.mock("@/lib/server-crypto", () => ({
+  encryptServerText: vi.fn().mockResolvedValue({
+    ciphertext: "mock-ct",
+    iv: "mock-iv",
+  }),
+  decryptServerText: vi.fn().mockResolvedValue("decrypted"),
+  encryptServerBuffer: vi.fn().mockResolvedValue({
+    ciphertext: new Uint8Array([7, 8, 9]),
+    iv: "mock-image-iv",
+  }),
+  decryptServerBuffer: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
 }));
 
 // Mock db module for API route tests

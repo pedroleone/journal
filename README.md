@@ -5,9 +5,10 @@ Encrypted journal web app built with Next.js, TypeScript, Drizzle, Turso, and Cl
 ## Auth And Encryption
 
 - Server auth uses Auth.js with Google sign-in.
-- Google login creates the server session only.
-- Users still unlock the journal separately with a client-side encryption passphrase at `/unlock`.
-- The server never receives the raw passphrase or plaintext web journal content.
+- Google login creates the server session and opens the app directly.
+- Web journal and food content are sent over the authenticated session, then encrypted server-side before storage.
+- Images are uploaded as normal files and encrypted server-side before being stored in R2.
+- Telegram entries are also encrypted server-side before persistence.
 
 ## Environment Variables
 
@@ -17,7 +18,6 @@ Create a local `.env` file with:
 AUTH_SECRET="replace-me"
 AUTH_GOOGLE_ID="replace-me"
 AUTH_GOOGLE_SECRET="replace-me"
-NEXT_PUBLIC_PBKDF2_SALT="base64-random-salt"
 SERVER_ENCRYPTION_SECRET="replace-me"
 TURSO_DATABASE_URL="file:local.db"
 # Required when using a remote Turso database:
@@ -65,5 +65,5 @@ pnpm build
 ## Notes
 
 - Entries are user-scoped in the database.
-- `SERVER_ENCRYPTION_SECRET` is required for unlock because the browser also derives the Telegram food-entry decryption key from it.
-- Because the encryption key only lives in memory, refreshes and inactivity locks send the user back to `/unlock` instead of requiring a new Google login while the server session is still valid.
+- `SERVER_ENCRYPTION_SECRET` is required on the server to encrypt and decrypt stored entry text and image blobs.
+- Existing data from the prior client-side encryption build is not compatible with this server-side encryption model.

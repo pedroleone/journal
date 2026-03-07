@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { putEncryptedObject } from "@/lib/r2";
 import { entries, foodEntries } from "@/lib/schema";
+import { encryptServerBuffer, encryptServerText } from "@/lib/server-crypto";
 import { backupPayloadSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
@@ -60,9 +61,14 @@ export async function POST(request: Request) {
       continue;
     }
 
+    const encrypted = await encryptServerText(entry.content);
+    const { content, ...restEntry } = entry;
+    void content;
     await db.insert(entries).values({
-      ...entry,
+      ...restEntry,
       userId,
+      encrypted_content: encrypted.ciphertext,
+      iv: encrypted.iv,
       images:
         entry.images?.map((imageKey) => imageKeyMap.get(imageKey) ?? imageKey) ??
         null,
@@ -81,9 +87,14 @@ export async function POST(request: Request) {
       continue;
     }
 
+    const encrypted = await encryptServerText(entry.content);
+    const { content, ...restEntry } = entry;
+    void content;
     await db.insert(foodEntries).values({
-      ...entry,
+      ...restEntry,
       userId,
+      encrypted_content: encrypted.ciphertext,
+      iv: encrypted.iv,
       images:
         entry.images?.map((imageKey) => imageKeyMap.get(imageKey) ?? imageKey) ??
         null,
@@ -99,10 +110,11 @@ export async function POST(request: Request) {
     }
 
     try {
+      const encrypted = await encryptServerBuffer(base64ToBytes(image.data));
       await putEncryptedObject({
         key: remappedKey,
-        body: base64ToBytes(image.data),
-        iv: image.iv,
+        body: encrypted.ciphertext,
+        iv: encrypted.iv,
         contentType: image.content_type,
       });
       importedImages += 1;

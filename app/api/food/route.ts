@@ -5,6 +5,7 @@ import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { foodEntries } from "@/lib/schema";
+import { decryptServerText, encryptServerText } from "@/lib/server-crypto";
 import { createFoodEntrySchema, foodListQuerySchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
   const id = nanoid();
   const now = new Date();
   const nowIso = now.toISOString();
+  const encrypted = await encryptServerText(parsed.data.content);
 
   await db.insert(foodEntries).values({
     id,
@@ -36,8 +38,8 @@ export async function POST(request: NextRequest) {
     meal_slot: null,
     assigned_at: null,
     logged_at: nowIso,
-    encrypted_content: parsed.data.encrypted_content,
-    iv: parsed.data.iv,
+    encrypted_content: encrypted.ciphertext,
+    iv: encrypted.iv,
     images: parsed.data.images ?? null,
     tags: null,
     created_at: nowIso,
@@ -93,5 +95,12 @@ export async function GET(request: NextRequest) {
       ? await baseQuery.limit(parsed.data.limit)
       : await baseQuery;
 
-  return jsonNoStore(result);
+  const decryptedEntries = await Promise.all(
+    result.map(async ({ encrypted_content, iv, ...entry }) => ({
+      ...entry,
+      content: await decryptServerText(encrypted_content, iv),
+    })),
+  );
+
+  return jsonNoStore(decryptedEntries);
 }

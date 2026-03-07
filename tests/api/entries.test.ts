@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
-
-// Access the mocked db
 import { db } from "@/lib/db";
+import * as serverCrypto from "@/lib/server-crypto";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
+const mockServerCrypto = vi.mocked(serverCrypto);
 const mockAuth = auth as unknown as {
   mockReset: () => void;
   mockResolvedValue: (value: unknown) => void;
@@ -20,7 +20,9 @@ describe("POST /api/entries", () => {
     mockAuth.mockResolvedValue({
       user: { id: "user-1", email: "user@example.com" },
     });
-    // Reset the chain mock
+    mockDb.select.mockReturnThis();
+    mockDb.from.mockReturnThis();
+    mockDb.where.mockResolvedValue([]);
     mockDb.insert.mockReturnThis();
     mockDb.values.mockResolvedValue(undefined);
   });
@@ -36,8 +38,7 @@ describe("POST /api/entries", () => {
   }
 
   const validBody = {
-    encrypted_content: "base64ciphertext",
-    iv: "base64iv",
+    content: "Today felt clear.",
     year: 2026,
     month: 3,
     day: 6,
@@ -64,17 +65,20 @@ describe("POST /api/entries", () => {
 
   it("calls db.insert with correct values", async () => {
     await postEntry(validBody);
+    expect(mockServerCrypto.encryptServerText).toHaveBeenCalledWith(validBody.content);
     expect(mockDb.insert).toHaveBeenCalled();
     expect(mockDb.values).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: "user-1",
+        encrypted_content: "mock-ct",
+        iv: "mock-iv",
       }),
     );
   });
 
-  it("returns 400 on missing encrypted_content", async () => {
+  it("returns 400 on missing content", async () => {
     const rest = { ...validBody };
-    delete (rest as Partial<typeof validBody>).encrypted_content;
+    delete (rest as Partial<typeof validBody>).content;
     const res = await postEntry(rest);
     expect(res.status).toBe(400);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
@@ -108,9 +112,19 @@ describe("GET /api/entries", () => {
 
   it("returns 200 with array", async () => {
     const mockEntries = [
-      { id: "1", year: 2026, month: 3, day: 6 },
+      {
+        id: "1",
+        source: "web",
+        year: 2026,
+        month: 3,
+        day: 6,
+        hour: 8,
+        encrypted_content: "cipher",
+        iv: "iv",
+        created_at: "2026-03-06T08:00:00.000Z",
+        images: null,
+      },
     ];
-    // Mock the chain to return entries
     const mockResult = mockEntries;
     mockResult.reverse = vi.fn().mockReturnValue(mockEntries);
     mockDb.select.mockReturnThis();
@@ -124,6 +138,8 @@ describe("GET /api/entries", () => {
 
     const data = await res.json();
     expect(Array.isArray(data)).toBe(true);
+    expect(data[0].content).toBe("decrypted");
+    expect(data[0].encrypted_content).toBeUndefined();
   });
 
   it("passes year filter to query", async () => {

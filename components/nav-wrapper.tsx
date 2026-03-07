@@ -5,6 +5,6 @@ import { AppNav } from "@/components/app-nav";
 
 export function NavWrapper() {
   const pathname = usePathname();
-  if (pathname === "/login" || pathname === "/unlock") return null;
+  if (pathname === "/login") return null;
   return <AppNav />;
 }

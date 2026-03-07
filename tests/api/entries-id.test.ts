@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import * as serverCrypto from "@/lib/server-crypto";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb = vi.mocked(db) as any;
+const mockServerCrypto = vi.mocked(serverCrypto);
 const mockAuth = auth as unknown as {
   mockReset: () => void;
   mockResolvedValue: (value: unknown) => void;
@@ -41,9 +43,13 @@ describe("GET /api/entries/[id]", () => {
       type: "journal",
       encrypted_content: "cipher",
       iv: "iv",
+      source: "web",
       year: 2026,
       month: 3,
       day: 6,
+      created_at: "2026-03-06T08:00:00.000Z",
+      updated_at: "2026-03-06T08:00:00.000Z",
+      images: null,
     };
     mockDb.select.mockReturnThis();
     mockDb.from.mockReturnThis();
@@ -57,6 +63,8 @@ describe("GET /api/entries/[id]", () => {
     expect(res.headers.get("Cache-Control")).toBe("no-store");
     const data = await res.json();
     expect(data.id).toBe("abc123");
+    expect(data.content).toBe("decrypted");
+    expect(data.encrypted_content).toBeUndefined();
   });
 
   it("returns 404 when not found", async () => {
@@ -91,7 +99,7 @@ describe("PUT /api/entries/[id]", () => {
     const { PUT } = await import("@/app/api/entries/[id]/route");
     const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "PUT",
-      body: JSON.stringify({ encrypted_content: "newcipher", iv: "newiv" }),
+      body: JSON.stringify({ content: "new content" }),
       headers: { "Content-Type": "application/json" },
     });
     const res = await PUT(request, { params: makeParams("abc123") });
@@ -104,7 +112,7 @@ describe("PUT /api/entries/[id]", () => {
     const { PUT } = await import("@/app/api/entries/[id]/route");
     const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "PUT",
-      body: JSON.stringify({ encrypted_content: "newcipher", iv: "newiv" }),
+      body: JSON.stringify({ content: "new content" }),
       headers: { "Content-Type": "application/json" },
     });
     const res = await PUT(request, { params: makeParams("abc123") });
@@ -112,6 +120,7 @@ describe("PUT /api/entries/[id]", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
     expect(mockDb.update).toHaveBeenCalled();
+    expect(mockServerCrypto.encryptServerText).toHaveBeenCalledWith("new content");
   });
 
   it("returns 404 when the entry is not owned by the current user", async () => {
@@ -120,7 +129,7 @@ describe("PUT /api/entries/[id]", () => {
     const { PUT } = await import("@/app/api/entries/[id]/route");
     const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "PUT",
-      body: JSON.stringify({ encrypted_content: "newcipher", iv: "newiv" }),
+      body: JSON.stringify({ content: "new content" }),
       headers: { "Content-Type": "application/json" },
     });
     const res = await PUT(request, { params: makeParams("abc123") });
@@ -133,7 +142,7 @@ describe("PUT /api/entries/[id]", () => {
     const { PUT } = await import("@/app/api/entries/[id]/route");
     const request = new NextRequest("http://localhost/api/entries/abc123", {
       method: "PUT",
-      body: JSON.stringify({ encrypted_content: "" }),
+      body: JSON.stringify({ content: "" }),
       headers: { "Content-Type": "application/json" },
     });
     const res = await PUT(request, { params: makeParams("abc123") });

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useRequireUnlock } from "@/hooks/use-require-unlock";
 import { DateTree } from "@/components/journal/date-tree";
 import { EntryViewer } from "@/components/journal/entry-viewer";
 import { cn } from "@/lib/utils";
@@ -27,11 +26,10 @@ export default function BrowsePage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const hasKey = useRequireUnlock();
   const isOnline = useOnlineStatus();
 
   useEffect(() => {
-    if (!hasKey || !isOnline) return;
+    if (!isOnline) return;
     let cancelled = false;
     fetch("/api/entries/dates")
       .then((res) => (res.ok ? res.json() : Promise.reject()))
@@ -42,7 +40,7 @@ export default function BrowsePage() {
     return () => {
       cancelled = true;
     };
-  }, [hasKey, isOnline]);
+  }, [isOnline]);
 
   function handleSelectDate(year: number, month: number, day: number) {
     setSelectedDate({ year, month, day });
@@ -53,8 +51,6 @@ export default function BrowsePage() {
     setSidebarOpen(true);
     setSelectedDate(null);
   }
-
-  if (!hasKey) return null;
 
   const showSidebar = isMobile ? sidebarOpen : true;
   const showContent = isMobile ? !sidebarOpen : true;

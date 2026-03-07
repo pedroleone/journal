@@ -6,12 +6,12 @@ import {
   createFoodEntrySchema,
   foodListQuerySchema,
   assignFoodEntrySchema,
+  backupPayloadSchema,
 } from "@/lib/validators";
 
 describe("createEntrySchema", () => {
   const validEntry = {
-    encrypted_content: "base64ciphertext",
-    iv: "base64iv",
+    content: "draft text",
     year: 2026,
     month: 3,
     day: 6,
@@ -28,21 +28,28 @@ describe("createEntrySchema", () => {
     if (result.success) expect(result.data.hour).toBe(14);
   });
 
-  it("rejects missing encrypted_content", () => {
+  it("rejects missing content", () => {
     const rest = { ...validEntry };
-    delete (rest as Partial<typeof validEntry>).encrypted_content;
+    delete (rest as Partial<typeof validEntry>).content;
     const result = createEntrySchema.safeParse(rest);
     expect(result.success).toBe(false);
   });
 
-  it("accepts image-only entry when images are present", () => {
+  it("accepts draft entry creation when image upload intent is present", () => {
     const result = createEntrySchema.safeParse({
       ...validEntry,
-      encrypted_content: "",
-      iv: "",
-      images: ["image.enc"],
+      content: "",
+      images: [],
     });
     expect(result.success).toBe(true);
+  });
+
+  it("rejects empty content when images are omitted", () => {
+    const result = createEntrySchema.safeParse({
+      ...validEntry,
+      content: "",
+    });
+    expect(result.success).toBe(false);
   });
 
   it("rejects month out of range", () => {
@@ -73,24 +80,21 @@ describe("createEntrySchema", () => {
 describe("updateEntrySchema", () => {
   it("accepts valid update", () => {
     const result = updateEntrySchema.safeParse({
-      encrypted_content: "newciphertext",
-      iv: "newiv",
+      content: "new text",
     });
     expect(result.success).toBe(true);
   });
 
-  it("rejects empty encrypted_content", () => {
+  it("rejects empty content without images", () => {
     const result = updateEntrySchema.safeParse({
-      encrypted_content: "",
-      iv: "newiv",
+      content: "",
     });
     expect(result.success).toBe(false);
   });
 
   it("accepts image-only update", () => {
     const result = updateEntrySchema.safeParse({
-      encrypted_content: "",
-      iv: "",
+      content: "",
       images: ["image.enc"],
     });
     expect(result.success).toBe(true);
@@ -118,27 +122,24 @@ describe("browseQuerySchema", () => {
 describe("createFoodEntrySchema", () => {
   it("accepts valid food payload", () => {
     const result = createFoodEntrySchema.safeParse({
-      encrypted_content: "base64ciphertext",
-      iv: "base64iv",
+      content: "omelette",
     });
     expect(result.success).toBe(true);
   });
 
-  it("rejects empty iv", () => {
+  it("accepts draft food entry creation for image-first uploads", () => {
     const result = createFoodEntrySchema.safeParse({
-      encrypted_content: "base64ciphertext",
-      iv: "",
+      content: "",
+      images: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty content when no image upload intent exists", () => {
+    const result = createFoodEntrySchema.safeParse({
+      content: "",
     });
     expect(result.success).toBe(false);
-  });
-
-  it("accepts image-only food payload", () => {
-    const result = createFoodEntrySchema.safeParse({
-      encrypted_content: "",
-      iv: "",
-      images: ["food.enc"],
-    });
-    expect(result.success).toBe(true);
   });
 });
 
@@ -196,5 +197,40 @@ describe("assignFoodEntrySchema", () => {
       meal_slot: "brunch",
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("backupPayloadSchema", () => {
+  it("accepts version 2 plaintext backups", () => {
+    const result = backupPayloadSchema.safeParse({
+      version: 2,
+      exported_at: "2026-03-07T10:00:00.000Z",
+      journal_entries: [
+        {
+          id: "j-1",
+          userId: "user-1",
+          source: "web",
+          year: 2026,
+          month: 3,
+          day: 7,
+          hour: 9,
+          content: "entry text",
+          images: null,
+          tags: null,
+          created_at: "2026-03-07T10:00:00.000Z",
+          updated_at: "2026-03-07T10:00:00.000Z",
+        },
+      ],
+      food_entries: [],
+      image_blobs: [
+        {
+          key: "user-1/journal/j-1/photo.enc",
+          content_type: "image/jpeg",
+          data: "AQID",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
   });
 });

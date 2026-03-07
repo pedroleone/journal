@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import * as serverCrypto from "@/lib/server-crypto";
 
 vi.mock("@/lib/r2", () => ({
   putEncryptedObject: vi.fn(),
@@ -13,6 +14,7 @@ const mockAuth = auth as unknown as {
   mockReset: () => void;
   mockResolvedValue: (value: unknown) => void;
 };
+const mockServerCrypto = vi.mocked(serverCrypto);
 const mockDb = vi.mocked(db) as unknown as {
   select: ReturnType<typeof vi.fn>;
   from: ReturnType<typeof vi.fn>;
@@ -42,8 +44,7 @@ describe("image routes", () => {
 
     const { POST } = await import("@/app/api/images/upload/route");
     const formData = new FormData();
-    formData.append("file", new File(["cipher"], "photo.enc"));
-    formData.append("iv", "base64-iv");
+    formData.append("file", new File(["plain"], "photo.jpg", { type: "image/jpeg" }));
     formData.append("owner_kind", "journal");
     formData.append("owner_id", "entry-1");
 
@@ -55,6 +56,7 @@ describe("image routes", () => {
     );
 
     expect(response.status).toBe(201);
+    expect(mockServerCrypto.encryptServerBuffer).toHaveBeenCalled();
     expect(putEncryptedObject).toHaveBeenCalled();
     await expect(response.json()).resolves.toMatchObject({
       key: expect.stringContaining("user-1/journal/entry-1/"),
@@ -79,7 +81,9 @@ describe("image routes", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("X-Encryption-IV")).toBe("image-iv");
+    expect(response.headers.get("Content-Type")).toBe("image/jpeg");
+    expect(response.headers.get("X-Encryption-IV")).toBeNull();
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([4, 5, 6]));
   });
 
   it("deletes an encrypted image and removes the DB reference", async () => {

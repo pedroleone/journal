@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
-import { bytesToArrayBuffer } from "@/lib/base64";
 import { deleteEncryptedObject, getEncryptedObject } from "@/lib/r2";
 import { db } from "@/lib/db";
 import { NO_STORE_HEADERS, jsonNoStore } from "@/lib/http";
 import { entries, foodEntries } from "@/lib/schema";
+import { decryptServerBuffer } from "@/lib/server-crypto";
 import { imageOwnerKindSchema } from "@/lib/validators";
 
 async function ownerHasImage(
@@ -92,14 +92,13 @@ export async function GET(
   }
 
   const object = await getEncryptedObject(key);
+  const decrypted = await decryptServerBuffer(object.body, object.iv);
 
-  return new NextResponse(bytesToArrayBuffer(object.body), {
+  return new NextResponse(decrypted, {
     status: 200,
     headers: {
       ...NO_STORE_HEADERS,
-      "Content-Type": "application/octet-stream",
-      "X-Encryption-IV": object.iv,
-      "X-Original-Content-Type": object.contentType,
+      "Content-Type": object.contentType,
     },
   });
 }

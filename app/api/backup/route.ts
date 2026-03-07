@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { getEncryptedObject } from "@/lib/r2";
 import { entries, foodEntries } from "@/lib/schema";
-import type { BackupImageBlob, BackupPayloadV1 } from "@/lib/types";
+import { decryptServerBuffer, decryptServerText } from "@/lib/server-crypto";
+import type { BackupImageBlob, BackupPayloadV2 } from "@/lib/types";
 
 export async function GET() {
   const userId = await getRequiredUserId();
@@ -29,19 +30,29 @@ export async function GET() {
   const imageBlobs: BackupImageBlob[] = [];
   for (const key of imageKeys) {
     const object = await getEncryptedObject(key);
+    const decrypted = await decryptServerBuffer(object.body, object.iv);
     imageBlobs.push({
       key,
-      iv: object.iv,
       content_type: object.contentType,
-      data: bytesToBase64(object.body),
+      data: bytesToBase64(decrypted),
     });
   }
 
-  const payload: BackupPayloadV1 = {
-    version: 1,
+  const payload: BackupPayloadV2 = {
+    version: 2,
     exported_at: new Date().toISOString(),
-    journal_entries: journalEntries,
-    food_entries: foodRows,
+    journal_entries: await Promise.all(
+      journalEntries.map(async ({ encrypted_content, iv, ...entry }) => ({
+        ...entry,
+        content: await decryptServerText(encrypted_content, iv),
+      })),
+    ),
+    food_entries: await Promise.all(
+      foodRows.map(async ({ encrypted_content, iv, ...entry }) => ({
+        ...entry,
+        content: await decryptServerText(encrypted_content, iv),
+      })),
+    ),
     image_blobs: imageBlobs,
   };
 

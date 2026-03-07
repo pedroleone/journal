@@ -6,7 +6,7 @@ export default async function LoginPage() {
   const session = await auth();
 
   if (session?.user?.id) {
-    redirect("/unlock");
+    redirect("/journal/browse");
   }
 
   return (
@@ -15,14 +15,14 @@ export default async function LoginPage() {
         <div className="text-center">
           <h1 className="font-display text-4xl tracking-tight">Journal</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Google authenticates the session. Your passphrase still unlocks the journal locally.
+            Google authenticates the session. Journal content is encrypted on the server before it is stored.
           </p>
         </div>
 
         <div className="space-y-4">
           <GoogleSignInButton />
           <p className="text-center text-xs text-muted-foreground">
-            The server never receives your encryption passphrase.
+            Sign in opens the app directly.
           </p>
         </div>
       </div>

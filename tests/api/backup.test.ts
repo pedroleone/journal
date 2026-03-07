@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import * as serverCrypto from "@/lib/server-crypto";
 
 vi.mock("@/lib/r2", () => ({
   getEncryptedObject: vi.fn(),
@@ -12,6 +13,7 @@ const mockAuth = auth as unknown as {
   mockReset: () => void;
   mockResolvedValue: (value: unknown) => void;
 };
+const mockServerCrypto = vi.mocked(serverCrypto);
 const mockDb = vi.mocked(db) as unknown as {
   select: ReturnType<typeof vi.fn>;
   from: ReturnType<typeof vi.fn>;
@@ -84,9 +86,11 @@ describe("backup routes", () => {
 
     expect(response.status).toBe(200);
     const data = await response.json();
+    expect(data.version).toBe(2);
     expect(data.journal_entries).toHaveLength(1);
     expect(data.food_entries).toHaveLength(1);
     expect(data.image_blobs).toHaveLength(1);
+    expect(data.journal_entries[0].content).toBe("decrypted");
   });
 
   it("restores a valid backup payload", async () => {
@@ -98,14 +102,28 @@ describe("backup routes", () => {
       new NextRequest("http://localhost/api/backup/restore", {
         method: "POST",
         body: JSON.stringify({
-          version: 1,
+          version: 2,
           exported_at: "2026-03-07T10:00:00.000Z",
-          journal_entries: [],
+          journal_entries: [
+            {
+              id: "j-1",
+              userId: "user-1",
+              source: "web",
+              year: 2026,
+              month: 3,
+              day: 7,
+              hour: 9,
+              content: "entry text",
+              images: null,
+              tags: null,
+              created_at: "2026-03-07T10:00:00.000Z",
+              updated_at: "2026-03-07T10:00:00.000Z",
+            },
+          ],
           food_entries: [],
           image_blobs: [
             {
               key: "user-1/journal/j-1/photo.enc",
-              iv: "image-iv",
               content_type: "image/jpeg",
               data: "AQID",
             },
@@ -116,6 +134,8 @@ describe("backup routes", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(mockServerCrypto.encryptServerText).toHaveBeenCalledWith("entry text");
+    expect(mockServerCrypto.encryptServerBuffer).toHaveBeenCalled();
     expect(putEncryptedObject).toHaveBeenCalled();
   });
 });

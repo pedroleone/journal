@@ -17,14 +17,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useDecryptedImages } from "@/hooks/use-decrypted-images";
+import { useImages } from "@/hooks/use-images";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { useRequireUnlock } from "@/hooks/use-require-unlock";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
-import { decryptEntryContent } from "@/lib/client-entry";
-import { encrypt } from "@/lib/crypto";
-import { getUserKey } from "@/lib/key-manager";
 
 const MONTH_NAMES = [
   "",
@@ -62,8 +58,7 @@ interface JournalEntryResponse {
   year: number;
   month: number;
   day: number;
-  encrypted_content: string;
-  iv: string;
+  content: string;
   images: string[] | null;
 }
 
@@ -81,21 +76,15 @@ export default function WritePage() {
   const [imageKeys, setImageKeys] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [entryError, setEntryError] = useState("");
-  const hasKey = useRequireUnlock();
   const isOnline = useOnlineStatus();
-  const { images } = useDecryptedImages(imageKeys, "web");
+  const { images } = useImages(imageKeys);
 
   const createEmptyEntry = useCallback(async (targetDate: Date) => {
-    const key = getUserKey();
-    if (!key) throw new Error("No user key");
-
-    const payload = await encrypt(key, "");
     const response = await fetch("/api/entries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        encrypted_content: payload.ciphertext,
-        iv: payload.iv,
+        content: "",
         year: targetDate.getFullYear(),
         month: targetDate.getMonth() + 1,
         day: targetDate.getDate(),
@@ -134,8 +123,7 @@ export default function WritePage() {
         return;
       }
 
-      const text = await decryptEntryContent(entry);
-      setContent(text);
+      setContent(entry.content);
       setDate(new Date(entry.year, entry.month - 1, entry.day));
       setLoadedEntryId(id);
       setImageKeys(entry.images ?? []);
@@ -161,8 +149,7 @@ export default function WritePage() {
       const webEntry = entries.find((entry) => entry.source === "web");
 
       if (webEntry) {
-        const text = await decryptEntryContent(webEntry);
-        setContent(text);
+        setContent(webEntry.content);
         setLoadedEntryId(webEntry.id);
         setImageKeys(webEntry.images ?? []);
       } else {
@@ -176,18 +163,18 @@ export default function WritePage() {
   }, []);
 
   useEffect(() => {
-    if (!hasKey || !isOnline || !editEntryId) return;
+    if (!isOnline || !editEntryId) return;
     setReadyForEditing(false);
     void loadEntry(editEntryId).finally(() => {
       setReadyForEditing(true);
     });
-  }, [editEntryId, hasKey, isOnline, loadEntry]);
+  }, [editEntryId, isOnline, loadEntry]);
 
   useEffect(() => {
-    if (!hasKey || !isOnline || editEntryId) return;
+    if (!isOnline || editEntryId) return;
     setReadyForEditing(true);
     void loadEntryForDate(date);
-  }, [date, editEntryId, hasKey, isOnline, loadEntryForDate]);
+  }, [date, editEntryId, isOnline, loadEntryForDate]);
 
   const { status } = useAutoSave({
     entryId: loadedEntryId,
@@ -236,8 +223,6 @@ export default function WritePage() {
       setEntryError("Failed to remove image");
     }
   }
-
-  if (!hasKey) return null;
 
   if (!isOnline && !readyForEditing) {
     return (
@@ -319,6 +304,8 @@ export default function WritePage() {
                 key={image.key}
                 className="relative overflow-hidden rounded-lg border border-border/50 bg-card/20"
               >
+                {/* Blob URLs back these previews, so Next/Image is not a good fit here. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={image.url} alt="" className="h-48 w-full object-cover" />
                 <button
                   onClick={() => handleRemoveImage(image.key)}

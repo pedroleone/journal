@@ -6,11 +6,7 @@ import { Button } from "@/components/ui/button";
 import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { decryptEntryContent } from "@/lib/client-entry";
-import { encrypt } from "@/lib/crypto";
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { getUserKey } from "@/lib/key-manager";
-import { useRequireUnlock } from "@/hooks/use-require-unlock";
 
 interface Entry {
   id: string;
@@ -18,8 +14,7 @@ interface Entry {
   year: number;
   month: number;
   day: number;
-  encrypted_content: string;
-  iv: string;
+  content: string;
   created_at: string;
   updated_at: string;
   images: string[] | null;
@@ -38,17 +33,15 @@ export default function EntryPage({
   const { id } = use(params);
   const router = useRouter();
   const [entry, setEntry] = useState<Entry | null>(null);
-  const [decryptedContent, setDecryptedContent] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [readyForViewing, setReadyForViewing] = useState(false);
-  const hasKey = useRequireUnlock();
   const isOnline = useOnlineStatus();
 
   useEffect(() => {
-    if (!hasKey || !isOnline) return;
+    if (!isOnline) return;
 
     fetch(`/api/entries/${id}`)
       .then((res) => {
@@ -57,6 +50,7 @@ export default function EntryPage({
       })
       .then((data) => {
         setEntry(data);
+        setEditContent(data.content);
         setLoading(false);
       })
       .catch(() => {
@@ -65,33 +59,19 @@ export default function EntryPage({
       .finally(() => {
         setReadyForViewing(true);
       });
-  }, [hasKey, id, isOnline]);
-
-  useEffect(() => {
-    if (!hasKey) return;
-    if (!entry) return;
-    decryptEntryContent(entry)
-      .then((text) => {
-        setDecryptedContent(text);
-        setEditContent(text);
-      })
-      .catch(() => setDecryptedContent("[decryption failed]"));
-  }, [entry, hasKey]);
+  }, [id, isOnline]);
 
   async function handleSave() {
-    const key = getUserKey();
-    if (!key || !entry || !isOnline || entry.source !== "web") return;
+    if (!entry || !isOnline || entry.source !== "web") return;
     setSaving(true);
     try {
-      const { ciphertext, iv } = await encrypt(key, editContent);
       const res = await fetch(`/api/entries/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ encrypted_content: ciphertext, iv }),
+        body: JSON.stringify({ content: editContent }),
       });
       if (res.ok) {
-        setEntry({ ...entry, encrypted_content: ciphertext, iv, updated_at: new Date().toISOString() });
-        setDecryptedContent(editContent);
+        setEntry({ ...entry, content: editContent, updated_at: new Date().toISOString() });
         setEditing(false);
       }
     } finally {
@@ -105,8 +85,6 @@ export default function EntryPage({
     await fetch(`/api/entries/${id}`, { method: "DELETE" });
     router.push("/journal/browse");
   }
-
-  if (!hasKey) return null;
 
   if (!isOnline && !readyForViewing) {
     return (
@@ -173,22 +151,18 @@ export default function EntryPage({
             <Button onClick={handleSave} disabled={saving || !isOnline}>
               {saving ? "Saving..." : "Save"}
             </Button>
-            <Button variant="outline" onClick={() => { setEditing(false); setEditContent(decryptedContent ?? ""); }}>
+            <Button variant="outline" onClick={() => { setEditing(false); setEditContent(entry.content); }}>
               Cancel
             </Button>
           </div>
         </div>
       ) : (
         <div className="space-y-6">
-          {decryptedContent === null ? (
-            <Skeleton className="h-32 w-full rounded-lg" />
-          ) : (
-            <div className="whitespace-pre-wrap text-base leading-relaxed">
-              {decryptedContent}
-            </div>
-          )}
+          <div className="whitespace-pre-wrap text-base leading-relaxed">
+            {entry.content}
+          </div>
           {entry.images?.length ? (
-            <EncryptedImageGallery imageKeys={entry.images} source={entry.source} />
+            <EncryptedImageGallery imageKeys={entry.images} />
           ) : null}
           <div className="flex gap-2 border-t pt-6">
             <Button

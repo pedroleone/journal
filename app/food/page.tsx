@@ -6,17 +6,12 @@ import { Camera, Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
-import { decryptEntryContent } from "@/lib/client-entry";
 import { uploadEncryptedImage } from "@/lib/client-images";
-import { encrypt } from "@/lib/crypto";
-import { getUserKey } from "@/lib/key-manager";
-import { useRequireUnlock } from "@/hooks/use-require-unlock";
 
 interface FoodEntry {
   id: string;
   source: "web" | "telegram";
-  encrypted_content: string;
-  iv: string;
+  content: string;
   logged_at: string;
   images: string[] | null;
 }
@@ -45,53 +40,32 @@ export default function FoodPage() {
   const [recent, setRecent] = useState<RecentEntry[]>([]);
   const [savedFlash, setSavedFlash] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const hasKey = useRequireUnlock();
 
   const loadRecent = useCallback(async () => {
     try {
       const res = await fetch("/api/food?uncategorized=true&limit=5");
       if (!res.ok) return;
       const raw: FoodEntry[] = await res.json();
-
-      const decrypted = await Promise.all(
-        raw.map(async (entry) => {
-          const text = await decryptEntryContent(entry);
-          return {
-            id: entry.id,
-            source: entry.source,
-            content: text,
-            logged_at: entry.logged_at,
-            images: entry.images,
-          };
-        }),
-      );
-
-      setRecent(decrypted);
+      setRecent(raw);
     } catch {
       // Ignore feed failures to keep quick-log usable.
     }
   }, []);
 
   useEffect(() => {
-    if (!hasKey) return;
     loadRecent();
-  }, [hasKey, loadRecent]);
+  }, [loadRecent]);
 
   async function handleLog() {
     if (!content.trim() && selectedFiles.length === 0) return;
 
-    const key = getUserKey();
-    if (!key) return;
-
     setLogging(true);
     try {
-      const { ciphertext, iv } = await encrypt(key, content.trim());
       const res = await fetch("/api/food", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          encrypted_content: ciphertext,
-          iv,
+          content: content.trim(),
           images: [],
         }),
       });
@@ -116,8 +90,6 @@ export default function FoodPage() {
       setLogging(false);
     }
   }
-
-  if (!hasKey) return null;
 
   return (
     <div className="animate-page mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-10">
@@ -225,7 +197,6 @@ export default function FoodPage() {
                 {entry.images?.length ? (
                   <EncryptedImageGallery
                     imageKeys={entry.images}
-                    source={entry.source}
                     className="mt-3"
                     imageClassName="h-32"
                   />

@@ -5,6 +5,7 @@ import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { entries } from "@/lib/schema";
+import { decryptServerText, encryptServerText } from "@/lib/server-crypto";
 import { createEntrySchema, browseQuerySchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
 
   const now = new Date().toISOString();
   const id = nanoid();
+  const encrypted = await encryptServerText(parsed.data.content);
 
   await db.insert(entries).values({
     id,
@@ -53,8 +55,8 @@ export async function POST(request: NextRequest) {
     month: parsed.data.month,
     day: parsed.data.day,
     hour: parsed.data.hour ?? null,
-    encrypted_content: parsed.data.encrypted_content,
-    iv: parsed.data.iv,
+    encrypted_content: encrypted.ciphertext,
+    iv: encrypted.iv,
     images: parsed.data.images ?? null,
     tags: null,
     created_at: now,
@@ -93,5 +95,12 @@ export async function GET(request: NextRequest) {
   // Reverse for desc order
   result.reverse();
 
-  return jsonNoStore(result);
+  const decryptedEntries = await Promise.all(
+    result.map(async ({ encrypted_content, iv, ...entry }) => ({
+      ...entry,
+      content: await decryptServerText(encrypted_content, iv),
+    })),
+  );
+
+  return jsonNoStore(decryptedEntries);
 }
