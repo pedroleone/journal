@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus, LogOut, Settings, Utensils } from "lucide-react";
+import { BookOpen, Plus, LogOut, Settings, Utensils, StickyNote } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-app-button";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ export function AppNav() {
   const { mode } = useMode();
   const router = useRouter();
   const [newDialogOpen, setNewDialogOpen] = useState(false);
-  const [creatingType, setCreatingType] = useState<"journal" | "food" | null>(null);
+  const [creatingType, setCreatingType] = useState<"journal" | "food" | "notes" | null>(null);
 
   async function handleLogout() {
     await signOut({ redirectTo: "/login" });
@@ -37,6 +37,16 @@ export function AppNav() {
 
   function handleSelectFood() {
     router.push("/food/browse");
+  }
+
+  function handleSelectNotes() {
+    router.push("/notes/browse");
+  }
+
+  function handleCreateNote() {
+    setCreatingType(null);
+    setNewDialogOpen(false);
+    router.push("/notes/browse?new=1");
   }
 
   async function handleCreateJournal() {
@@ -101,6 +111,17 @@ export function AppNav() {
             )}
           >
             Food
+          </button>
+          <button
+            onClick={handleSelectNotes}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-sm transition-colors",
+              mode === "notes"
+                ? "bg-secondary font-medium text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Notes
           </button>
         </div>
 
@@ -179,6 +200,21 @@ export function AppNav() {
                 <span>Food entry</span>
                 <span className="text-xs font-normal text-muted-foreground">
                   Open the quick food log to add a new entry.
+                </span>
+              </span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-auto items-start justify-start gap-3 px-4 py-4 text-left"
+              onClick={handleCreateNote}
+              disabled={creatingType !== null}
+            >
+              <StickyNote className="mt-0.5 h-4 w-4" />
+              <span className="flex flex-col items-start">
+                <span>Note</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Create a new note with optional title and tags.
                 </span>
               </span>
             </Button>

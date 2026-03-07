@@ -94,3 +94,39 @@ export const foodEntries = sqliteTable(
     index("idx_food_assigned_logged").on(table.assigned_at, table.logged_at),
   ],
 );
+
+export const notes = sqliteTable(
+  "notes",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    title: text("title"),
+    tags: text("tags", { mode: "json" }).$type<string[] | null>(),
+    images: text("images", { mode: "json" }).$type<string[] | null>(),
+    encrypted_content: text("encrypted_content").notNull(),
+    iv: text("iv").notNull(),
+    created_at: text("created_at").notNull(),
+    updated_at: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("idx_notes_user").on(table.userId),
+    index("idx_notes_user_updated").on(table.userId, table.updated_at),
+  ],
+);
+
+export const noteSubnotes = sqliteTable(
+  "note_subnotes",
+  {
+    id: text("id").primaryKey(),
+    noteId: text("note_id").notNull().references(() => notes.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    images: text("images", { mode: "json" }).$type<string[] | null>(),
+    encrypted_content: text("encrypted_content").notNull(),
+    iv: text("iv").notNull(),
+    created_at: text("created_at").notNull(),
+    updated_at: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("idx_note_subnotes_note").on(table.noteId),
+  ],
+);

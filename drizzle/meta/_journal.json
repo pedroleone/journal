@@ -8,6 +8,13 @@
       "when": 1772884311456,
       "tag": "0000_panoramic_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1772922314542,
+      "tag": "0001_aspiring_wolfpack",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 export type EntrySource = "web" | "telegram";
 
-export type ImageOwnerKind = "journal" | "food";
+export type ImageOwnerKind = "journal" | "food" | "note" | "note_subnote";
 
 export interface BackupImageBlob {
   key: string;

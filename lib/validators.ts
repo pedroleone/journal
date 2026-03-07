@@ -78,7 +78,39 @@ export const assignFoodEntrySchema = z.object({
   meal_slot: z.enum(["breakfast", "lunch", "dinner", "snack"]).nullable().optional(),
 });
 
-export const imageOwnerKindSchema = z.enum(["journal", "food"]);
+export const imageOwnerKindSchema = z.enum(["journal", "food", "note", "note_subnote"]);
+
+export const createNoteSchema = z.object({
+  title: z.string().optional(),
+  content: z.string(),
+  tags: z.array(z.string().min(1)).nullable().optional(),
+  images: z.array(z.string().min(1)).nullable().optional(),
+});
+
+export const updateNoteSchema = z.object({
+  title: z.string().nullable().optional(),
+  content: z.string().optional(),
+  tags: z.array(z.string().min(1)).nullable().optional(),
+  images: z.array(z.string().min(1)).nullable().optional(),
+});
+
+export const createSubnoteSchema = z.object({
+  content: z.string(),
+  images: z.array(z.string().min(1)).nullable().optional(),
+});
+
+export const updateSubnoteSchema = z
+  .object({
+    content: z.string().optional(),
+    images: z.array(z.string().min(1)).nullable().optional(),
+  })
+  .refine((v) => v.content !== undefined || v.images !== undefined, {
+    message: "At least one of content or images must be provided",
+  });
+
+export const noteTagQuerySchema = z.object({
+  tag: z.string().optional(),
+});
 
 const backupImageBlobSchema = z.object({
   key: z.string().min(1),

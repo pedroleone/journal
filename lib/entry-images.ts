@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { deleteEncryptedObject, getEncryptedObject, putEncryptedObject } from "@/lib/r2";
-import { entries, foodEntries } from "@/lib/schema";
+import { entries, foodEntries, notes, noteSubnotes } from "@/lib/schema";
 import type { ImageOwnerKind } from "@/lib/types";
 
 type OwnerImageRecord = {
@@ -18,7 +18,7 @@ type DeletedEncryptedObject = {
   contentType: string;
 };
 
-function getOwnerTable(ownerKind: ImageOwnerKind) {
+function getOwnerTable(ownerKind: "journal" | "food") {
   return ownerKind === "journal" ? entries : foodEntries;
 }
 
@@ -39,6 +39,20 @@ export async function getOwnerImageRecord(
   ownerKind: ImageOwnerKind,
   ownerId: string,
 ): Promise<OwnerImageRecord | null> {
+  if (ownerKind === "note") {
+    const [record] = await db
+      .select({ id: notes.id, images: notes.images })
+      .from(notes)
+      .where(and(eq(notes.userId, userId), eq(notes.id, ownerId)));
+    return record ?? null;
+  }
+  if (ownerKind === "note_subnote") {
+    const [record] = await db
+      .select({ id: noteSubnotes.id, images: noteSubnotes.images })
+      .from(noteSubnotes)
+      .where(and(eq(noteSubnotes.userId, userId), eq(noteSubnotes.id, ownerId)));
+    return record ?? null;
+  }
   const table = getOwnerTable(ownerKind);
   const [record] = await db
     .select({ id: table.id, images: table.images })
@@ -54,9 +68,22 @@ export async function setOwnerImages(
   ownerId: string,
   images: string[],
 ) {
-  const table = getOwnerTable(ownerKind);
   const now = new Date().toISOString();
-
+  if (ownerKind === "note") {
+    await db
+      .update(notes)
+      .set({ images, updated_at: now })
+      .where(and(eq(notes.userId, userId), eq(notes.id, ownerId)));
+    return;
+  }
+  if (ownerKind === "note_subnote") {
+    await db
+      .update(noteSubnotes)
+      .set({ images, updated_at: now })
+      .where(and(eq(noteSubnotes.userId, userId), eq(noteSubnotes.id, ownerId)));
+    return;
+  }
+  const table = getOwnerTable(ownerKind);
   await db
     .update(table)
     .set({ images, updated_at: now })
@@ -65,7 +92,7 @@ export async function setOwnerImages(
 
 export async function getOwnerEntryRecord(
   userId: string,
-  ownerKind: ImageOwnerKind,
+  ownerKind: "journal" | "food",
   ownerId: string,
 ): Promise<EntryRecord | null> {
   const table = getOwnerTable(ownerKind);
@@ -77,14 +104,14 @@ export async function getOwnerEntryRecord(
   return record ?? null;
 }
 
-async function restoreOwnerEntryRecord(ownerKind: ImageOwnerKind, record: EntryRecord) {
+async function restoreOwnerEntryRecord(ownerKind: "journal" | "food", record: EntryRecord) {
   const table = getOwnerTable(ownerKind);
   await db.insert(table).values(record);
 }
 
 async function deleteOwnerEntryRecord(
   userId: string,
-  ownerKind: ImageOwnerKind,
+  ownerKind: "journal" | "food",
   ownerId: string,
 ) {
   const table = getOwnerTable(ownerKind);
@@ -127,7 +154,7 @@ export async function restoreDeletedObjects(objects: DeletedEncryptedObject[]) {
 
 export async function deleteOwnerEntryAndImages(
   userId: string,
-  ownerKind: ImageOwnerKind,
+  ownerKind: "journal" | "food",
   ownerId: string,
 ) {
   const entry = await getOwnerEntryRecord(userId, ownerKind, ownerId);
