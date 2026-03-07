@@ -1,42 +1,46 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import { Plus, LogOut, Settings } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { BookOpen, Plus, LogOut, Settings, Utensils } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-app-button";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
+interface EntrySummary {
+  id: string;
+  source: "web" | "telegram";
+}
+
 export function AppNav() {
-  const { mode, setMode } = useMode();
+  const { mode } = useMode();
   const router = useRouter();
-  const pathname = usePathname();
+  const [newDialogOpen, setNewDialogOpen] = useState(false);
+  const [creatingType, setCreatingType] = useState<"journal" | "food" | null>(null);
 
   async function handleLogout() {
     await signOut({ redirectTo: "/login" });
   }
 
   function handleSelectJournal() {
-    setMode("journal");
-    if (pathname.startsWith("/food")) {
-      router.push("/journal/browse?mode=journal");
-    }
+    router.push("/journal/browse");
   }
 
   function handleSelectFood() {
-    setMode("food");
-    if (!pathname.startsWith("/food")) {
-      router.push("/food?mode=food");
-    }
+    router.push("/food/browse");
   }
 
-  async function handleNew() {
-    if (mode === "food") {
-      router.push("/food?mode=food");
-      return;
-    }
-
+  async function handleCreateJournal() {
+    setCreatingType("journal");
     const today = new Date();
     const params = new URLSearchParams({
       year: String(today.getFullYear()),
@@ -47,16 +51,13 @@ export function AppNav() {
     try {
       const response = await fetch(`/api/entries?${params.toString()}`);
       if (response.ok) {
-        const entries = await response.json();
-        if (entries.length > 0) {
-          const shouldContinueWriting = window.confirm(
-            "An entry for today already exists. Press OK to continue writing, or Cancel to view it.",
-          );
-          if (shouldContinueWriting) {
-            router.push(`/journal/write?entry=${entries[0].id}&mode=journal`);
-          } else {
-            router.push("/journal/browse?mode=journal");
-          }
+        const entries: EntrySummary[] = await response.json();
+        const existingWebEntry = entries.find((entry) => entry.source === "web");
+        const existingEntry = existingWebEntry ?? entries[0];
+        if (existingEntry) {
+          setCreatingType(null);
+          setNewDialogOpen(false);
+          router.push(`/journal/write?entry=${existingEntry.id}`);
           return;
         }
       }
@@ -64,7 +65,15 @@ export function AppNav() {
       // Fall back to write mode.
     }
 
-    router.push("/journal/write?mode=journal");
+    setNewDialogOpen(false);
+    router.push("/journal/write");
+    setCreatingType(null);
+  }
+
+  function handleCreateFood() {
+    setCreatingType(null);
+    setNewDialogOpen(false);
+    router.push("/food");
   }
 
   return (
@@ -97,7 +106,15 @@ export function AppNav() {
 
         <div className="flex items-center gap-2">
           <InstallAppButton />
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleNew}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              setCreatingType(null);
+              setNewDialogOpen(true);
+            }}
+          >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">New</span>
           </Button>
@@ -117,6 +134,57 @@ export function AppNav() {
           </button>
         </div>
       </div>
+
+      <Dialog
+        open={newDialogOpen}
+        onOpenChange={(open) => {
+          if (creatingType) return;
+          setNewDialogOpen(open);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create new entry</DialogTitle>
+            <DialogDescription>
+              Choose what kind of entry you want to create.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3">
+            <Button
+              variant="outline"
+              className="h-auto items-start justify-start gap-3 px-4 py-4 text-left"
+              onClick={() => {
+                void handleCreateJournal();
+              }}
+              disabled={creatingType !== null}
+            >
+              <BookOpen className="mt-0.5 h-4 w-4" />
+              <span className="flex flex-col items-start">
+                <span>Journal entry</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Open today&apos;s journal entry or start a new one.
+                </span>
+              </span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-auto items-start justify-start gap-3 px-4 py-4 text-left"
+              onClick={handleCreateFood}
+              disabled={creatingType !== null}
+            >
+              <Utensils className="mt-0.5 h-4 w-4" />
+              <span className="flex flex-col items-start">
+                <span>Food entry</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Open the quick food log to add a new entry.
+                </span>
+              </span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </nav>
   );
 }

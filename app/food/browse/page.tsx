@@ -318,7 +318,7 @@ export default function FoodBrowsePage() {
             <ScrollArea className="flex-1">
               <div className="p-3 space-y-1">
                 <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                  <Link href="/food?mode=food">← Quick Log</Link>
+                  <Link href="/food">← Quick Log</Link>
                 </Button>
                 <button
                   onClick={handleSelectUncategorized}
