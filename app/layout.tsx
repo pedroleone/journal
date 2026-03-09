@@ -6,6 +6,7 @@ import { NavWrapper } from "@/components/nav-wrapper";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { ModeProvider } from "@/lib/mode-context";
 import { LocaleProvider } from "@/hooks/use-locale";
+import { ThemeProvider } from "@/hooks/use-theme";
 
 const heading = Instrument_Serif({
   variable: "--font-heading",
@@ -70,14 +71,17 @@ export default function RootLayout({
       <body
         className={`${heading.variable} ${body.variable} ${geistMono.variable} antialiased`}
       >
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t===null&&d)){document.documentElement.classList.add('dark');}})();` }} />
         <ServiceWorkerRegister />
         <Suspense>
+          <ThemeProvider>
           <LocaleProvider>
             <ModeProvider>
               <NavWrapper />
               {children}
             </ModeProvider>
           </LocaleProvider>
+          </ThemeProvider>
         </Suspense>
       </body>
     </html>

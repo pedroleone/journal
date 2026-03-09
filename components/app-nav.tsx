@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus, LogOut, Settings, Utensils, StickyNote } from "lucide-react";
+import { BookOpen, Plus, LogOut, Settings, Utensils, StickyNote, Sun, Moon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-app-button";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMode } from "@/lib/mode-context";
 import { useLocale } from "@/hooks/use-locale";
+import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
 interface EntrySummary {
@@ -19,6 +20,7 @@ interface EntrySummary {
 export function AppNav() {
   const { mode } = useMode();
   const { t } = useLocale();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [newPopoverOpen, setNewPopoverOpen] = useState(false);
   const [creatingType, setCreatingType] = useState<"journal" | "food" | "notes" | null>(null);
@@ -171,6 +173,13 @@ export function AppNav() {
               </button>
             </PopoverContent>
           </Popover>
+          <button
+            onClick={toggleTheme}
+            className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
           <button
             onClick={() => router.push("/settings")}
             className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
