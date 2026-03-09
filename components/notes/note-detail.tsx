@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Trash2, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Trash2, Plus, X, Paperclip, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useImages } from "@/hooks/use-images";
+import { uploadEncryptedImage, deleteEncryptedImage } from "@/lib/client-images";
 
 export interface Subnote {
   id: string;
@@ -31,11 +32,12 @@ interface NoteDetailProps {
   onUpdateSubnote: (subnoteId: string, content: string) => Promise<void>;
   onDelete: () => Promise<void>;
   onDeleteSubnote: (subnoteId: string) => Promise<void>;
+  onImagesChange: (images: string[]) => void;
 }
 
 function formatNoteDate(iso: string): string {
   return new Date(iso).toLocaleString([], {
-    month: "short",
+    month: "long",
     day: "numeric",
     year: "numeric",
     hour: "2-digit",
@@ -43,65 +45,143 @@ function formatNoteDate(iso: string): string {
   });
 }
 
-interface ContentBlockProps {
-  content: string;
-  label?: string;
-  onSave: (content: string) => Promise<void>;
-  onDelete?: () => Promise<void>;
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
-function ContentBlock({ content, label, onSave, onDelete }: ContentBlockProps) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(content);
-  const [saving, setSaving] = useState(false);
+interface ExpandingTextareaProps {
+  value: string;
+  onChange: (v: string) => void;
+  onBlur?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  className?: string;
+  minRows?: number;
+  autoFocus?: boolean;
+}
 
-  async function handleSave() {
-    setSaving(true);
-    try {
-      await onSave(draft);
-      setEditing(false);
-    } finally {
-      setSaving(false);
+function ExpandingTextarea({
+  value,
+  onChange,
+  onBlur,
+  onKeyDown,
+  placeholder,
+  className,
+  minRows = 1,
+  autoFocus,
+}: ExpandingTextareaProps) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  const resize = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
+
+  useEffect(() => {
+    resize();
+  }, [value, resize]);
+
+  return (
+    <textarea
+      ref={ref}
+      rows={minRows}
+      value={value}
+      onChange={(e) => { onChange(e.target.value); resize(); }}
+      onBlur={onBlur}
+      onKeyDown={onKeyDown}
+      placeholder={placeholder}
+      autoFocus={autoFocus}
+      className={cn(
+        "w-full resize-none bg-transparent focus:outline-none overflow-hidden",
+        className,
+      )}
+    />
+  );
+}
+
+interface SubnoteBlockProps {
+  subnote: Subnote;
+  onSave: (content: string) => Promise<void>;
+  onDelete: () => Promise<void>;
+}
+
+function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
+  const [draft, setDraft] = useState(subnote.content);
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => { setDraft(subnote.content); }, [subnote.content]);
+
+  async function handleBlur() {
+    if (draft === subnote.content || !draft.trim()) {
+      setDraft(subnote.content);
+      return;
     }
+    setSaving(true);
+    try { await onSave(draft); } finally { setSaving(false); }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Escape") { setDraft(subnote.content); }
   }
 
   return (
-    <div className="rounded-lg border border-border/60 p-4 space-y-2">
-      {label && (
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      )}
-      {editing ? (
-        <div className="space-y-2">
-          <textarea
-            className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[120px]"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            autoFocus
-          />
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save"}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => { setDraft(content); setEditing(false); }}>
-              Cancel
-            </Button>
-          </div>
+    <div className="group relative">
+      {/* Thin rule above each subnote */}
+      <div className="mb-6 flex items-center gap-4">
+        <div className="h-px flex-1 bg-border/50" />
+        <span className="text-[11px] tracking-widest uppercase text-muted-foreground/60 font-medium select-none">
+          {formatShortDate(subnote.created_at)}
+        </span>
+        <div className="h-px flex-1 bg-border/50" />
+      </div>
+
+      <ExpandingTextarea
+        value={draft}
+        onChange={setDraft}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        placeholder="Subnote..."
+        className="text-base leading-[1.85] text-foreground/90 placeholder:text-muted-foreground/40"
+      />
+
+      {/* Delete / saving indicators */}
+      <div className="mt-2 flex items-center justify-between h-5">
+        {saving && (
+          <span className="text-[11px] text-muted-foreground/50 tracking-wide">saving…</span>
+        )}
+        <div className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {confirmDelete ? (
+            <>
+              <button
+                onClick={onDelete}
+                className="text-[11px] text-destructive hover:text-destructive/80 font-medium"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="text-muted-foreground/50 hover:text-destructive transition-colors"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
-      ) : (
-        <div className="group relative">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
-          <div className="mt-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button size="sm" variant="outline" onClick={() => { setDraft(content); setEditing(true); }}>
-              Edit
-            </Button>
-            {onDelete && (
-              <Button size="sm" variant="ghost" onClick={onDelete} className="text-destructive hover:text-destructive">
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -113,15 +193,28 @@ export function NoteDetail({
   onUpdateSubnote,
   onDelete,
   onDeleteSubnote,
+  onImagesChange,
 }: NoteDetailProps) {
   const [titleDraft, setTitleDraft] = useState(note.title ?? "");
+  const [contentDraft, setContentDraft] = useState(note.content);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(note.tags ?? []);
+  const [savingContent, setSavingContent] = useState(false);
   const [addingSubnote, setAddingSubnote] = useState(false);
   const [newSubnoteContent, setNewSubnoteContent] = useState("");
   const [submittingSubnote, setSubmittingSubnote] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const titleRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { images } = useImages(note.images);
+  const isNew = note.id === "__new__";
+
+  useEffect(() => {
+    setTitleDraft(note.title ?? "");
+    setContentDraft(note.content);
+    setTags(note.tags ?? []);
+  }, [note.id, note.title, note.content, note.tags]);
 
   async function handleTitleBlur() {
     const newTitle = titleDraft.trim() || null;
@@ -130,18 +223,33 @@ export function NoteDetail({
     }
   }
 
+  async function handleContentBlur() {
+    if (contentDraft === note.content) return;
+    setSavingContent(true);
+    try { await onUpdate({ content: contentDraft }); } finally { setSavingContent(false); }
+  }
+
+  function handleContentKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Escape") setContentDraft(note.content);
+  }
+
+  async function commitTagInput() {
+    const tag = tagInput.trim();
+    if (tag && !tags.includes(tag)) {
+      const newTags = [...tags, tag];
+      setTags(newTags);
+      setTagInput("");
+      await onUpdate({ tags: newTags }).catch(() => undefined);
+    } else {
+      setTagInput("");
+    }
+  }
+
   async function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
+    if (e.key === "Enter" || e.key === ",") { e.preventDefault(); await commitTagInput(); }
+    if (e.key === "Backspace" && tagInput === "" && tags.length > 0) {
       e.preventDefault();
-      const tag = tagInput.trim();
-      if (tag && !tags.includes(tag)) {
-        const newTags = [...tags, tag];
-        setTags(newTags);
-        setTagInput("");
-        await onUpdate({ tags: newTags }).catch(() => undefined);
-      } else {
-        setTagInput("");
-      }
+      await handleRemoveTag(tags[tags.length - 1]);
     }
   }
 
@@ -163,111 +271,233 @@ export function NoteDetail({
     }
   }
 
+  function handleSubnoteKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Escape") { setAddingSubnote(false); setNewSubnoteContent(""); }
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { handleAddSubnote(); }
+  }
+
+  async function handleImageFiles(files: FileList | null) {
+    if (!files?.length || isNew) return;
+    setUploadingImage(true);
+    setImageError("");
+    try {
+      for (const file of Array.from(files)) {
+        const result = await uploadEncryptedImage({ file, ownerKind: "note", ownerId: note.id });
+        onImagesChange(result.images);
+      }
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleRemoveImage(imageKey: string) {
+    if (isNew) return;
+    try {
+      const result = await deleteEncryptedImage({ imageKey, ownerKind: "note", ownerId: note.id });
+      onImagesChange(result.images);
+    } catch {
+      setImageError("Failed to remove image");
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-3xl p-6 sm:p-8 space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="relative flex flex-col min-h-full">
+      {/* Top bar: date left, actions right */}
+      <div className="sticky top-0 z-10 flex items-center justify-between px-10 py-3 bg-background/80 backdrop-blur-sm border-b border-border/40">
+        <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
+          {formatNoteDate(note.created_at)}
+        </time>
+
+        <div className="flex items-center gap-1">
+          {savingContent && (
+            <span className="text-[11px] text-muted-foreground/50 mr-2 tracking-wide">saving…</span>
+          )}
+          {/* Image upload */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { void handleImageFiles(e.target.files); }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isNew || uploadingImage}
+            title={isNew ? "Save the note first to attach images" : "Attach image"}
+            className="p-1.5 rounded text-muted-foreground/40 hover:text-muted-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+          </button>
+          {confirmDelete ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onDelete}
+                className="text-xs font-medium text-destructive hover:text-destructive/80 px-2 py-1 rounded"
+              >
+                Delete note
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="p-1.5 rounded text-muted-foreground/40 hover:text-destructive transition-colors"
+              aria-label="Delete note"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Writing canvas */}
+      <div className="flex-1 px-10 sm:px-16 md:px-24 lg:px-32 xl:px-40 py-12 max-w-4xl w-full mx-auto">
+
+        {/* Title */}
         <input
-          ref={titleRef}
-          className="flex-1 bg-transparent text-2xl font-display tracking-tight focus:outline-none placeholder:text-muted-foreground"
+          className="w-full bg-transparent font-display text-4xl sm:text-5xl font-semibold tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground mb-5"
           placeholder="Untitled"
           value={titleDraft}
           onChange={(e) => setTitleDraft(e.target.value)}
           onBlur={handleTitleBlur}
         />
-        {confirmDelete ? (
-          <div className="flex gap-2 shrink-0">
-            <Button size="sm" variant="destructive" onClick={onDelete}>
-              Delete
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="shrink-0 text-muted-foreground hover:text-destructive"
-            onClick={() => setConfirmDelete(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        {tags.map((tag) => (
-          <span
-            key={tag}
-            className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-          >
-            {tag}
-            <button
-              onClick={() => handleRemoveTag(tag)}
-              className="hover:text-foreground leading-none"
-              aria-label={`Remove tag ${tag}`}
+        {/* Tags row */}
+        <div className="flex flex-wrap items-center gap-1.5 mb-10 min-h-[1.5rem]">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/50 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground tracking-wide"
             >
-              ×
-            </button>
-          </span>
-        ))}
-        <input
-          className="bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/60 focus:outline-none min-w-[80px]"
-          placeholder="Add tag..."
-          value={tagInput}
-          onChange={(e) => setTagInput(e.target.value)}
-          onKeyDown={handleTagKeyDown}
-        />
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        Created {formatNoteDate(note.created_at)}
-      </p>
-
-      <ContentBlock
-        content={note.content}
-        onSave={(content) => onUpdate({ content })}
-      />
-
-      {note.subnotes.map((subnote) => (
-        <ContentBlock
-          key={subnote.id}
-          content={subnote.content}
-          label={formatNoteDate(subnote.created_at)}
-          onSave={(content) => onUpdateSubnote(subnote.id, content)}
-          onDelete={() => onDeleteSubnote(subnote.id)}
-        />
-      ))}
-
-      {addingSubnote ? (
-        <div className="rounded-lg border border-border/60 p-4 space-y-2">
-          <textarea
-            className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[100px]"
-            placeholder="Add a subnote..."
-            value={newSubnoteContent}
-            onChange={(e) => setNewSubnoteContent(e.target.value)}
-            autoFocus
+              {tag}
+              <button
+                onClick={() => handleRemoveTag(tag)}
+                className="hover:text-foreground leading-none transition-colors"
+                aria-label={`Remove tag ${tag}`}
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          ))}
+          <input
+            className="bg-transparent text-[11px] tracking-wide text-muted-foreground/60 placeholder:text-muted-foreground/30 focus:outline-none min-w-[72px]"
+            placeholder="+ add tag"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleTagKeyDown}
+            onBlur={() => { if (tagInput.trim()) commitTagInput(); }}
           />
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleAddSubnote} disabled={submittingSubnote || !newSubnoteContent.trim()}>
-              {submittingSubnote ? "Adding..." : "Add"}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => { setAddingSubnote(false); setNewSubnoteContent(""); }}>
-              Cancel
-            </Button>
-          </div>
         </div>
-      ) : (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 text-muted-foreground"
-          onClick={() => setAddingSubnote(true)}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add subnote
-        </Button>
-      )}
+
+        {/* Main content — open canvas, no box */}
+        <ExpandingTextarea
+          value={contentDraft}
+          onChange={setContentDraft}
+          onBlur={handleContentBlur}
+          onKeyDown={handleContentKeyDown}
+          placeholder="Start writing…"
+          minRows={3}
+          className="text-base sm:text-[17px] leading-[1.9] text-foreground/85 placeholder:text-muted-foreground/30"
+        />
+
+        {/* Image error */}
+        {imageError && (
+          <p className="mt-3 text-xs text-destructive">{imageError}</p>
+        )}
+
+        {/* Images */}
+        {images.length > 0 && (
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {images.map((image) => (
+              <div key={image.key} className="group relative overflow-hidden rounded-lg border border-border/50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={image.url} alt="" className="h-48 w-full object-cover" />
+                <button
+                  onClick={() => handleRemoveImage(image.key)}
+                  className="absolute right-2 top-2 rounded-full bg-background/90 p-1 text-foreground shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove image"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Subnotes */}
+        {note.subnotes.length > 0 && (
+          <div className="mt-12 space-y-8">
+            {note.subnotes.map((subnote) => (
+              <SubnoteBlock
+                key={subnote.id}
+                subnote={subnote}
+                onSave={(content) => onUpdateSubnote(subnote.id, content)}
+                onDelete={() => onDeleteSubnote(subnote.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Add subnote */}
+        <div className="mt-12">
+          {addingSubnote ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-4 mb-5">
+                <div className="h-px flex-1 bg-border/50" />
+                <span className="text-[11px] tracking-widest uppercase text-muted-foreground/60 font-medium select-none">
+                  new entry
+                </span>
+                <div className="h-px flex-1 bg-border/50" />
+              </div>
+              <ExpandingTextarea
+                value={newSubnoteContent}
+                onChange={setNewSubnoteContent}
+                onKeyDown={handleSubnoteKeyDown}
+                placeholder="Write a subnote… (⌘↵ to save, Esc to cancel)"
+                minRows={4}
+                autoFocus
+                className="text-base leading-[1.85] text-foreground/85 placeholder:text-muted-foreground/30"
+              />
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  onClick={handleAddSubnote}
+                  disabled={submittingSubnote || !newSubnoteContent.trim()}
+                  className="text-xs font-medium bg-foreground text-background rounded px-3 py-1.5 disabled:opacity-40 hover:opacity-80 transition-opacity"
+                >
+                  {submittingSubnote ? "Adding…" : "Add entry"}
+                </button>
+                <button
+                  onClick={() => { setAddingSubnote(false); setNewSubnoteContent(""); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setAddingSubnote(true)}
+              className="group flex items-center gap-2.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors py-2"
+            >
+              <span className="h-px w-6 bg-current transition-all group-hover:w-10" />
+              <Plus className="h-3.5 w-3.5" />
+              <span className="text-xs tracking-wide">add entry</span>
+            </button>
+          )}
+        </div>
+
+        {/* Bottom breathing room */}
+        <div className="h-10" />
+      </div>
     </div>
   );
 }

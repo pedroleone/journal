@@ -136,10 +136,9 @@ function getTree(dates: DateCount[]) {
         .sort((a, b) => b[0] - a[0])
         .map(([month, dayMap]) => ({
           month,
-          days: getMonthDays(year, month).map((day) => ({
-            day,
-            count: dayMap.get(day) ?? 0,
-          })),
+          days: getMonthDays(year, month)
+            .filter((day) => dayMap.has(day))
+            .map((day) => ({ day, count: dayMap.get(day)! })),
         })),
     }));
 }

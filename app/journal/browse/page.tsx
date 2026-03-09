@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { DateTree } from "@/components/journal/date-tree";
+import { DateTree, type DateSelection } from "@/components/journal/date-tree";
 import { EntryViewer } from "@/components/journal/entry-viewer";
 import { cn } from "@/lib/utils";
 
@@ -18,11 +18,7 @@ interface DateEntry {
 
 export default function BrowsePage() {
   const [dates, setDates] = useState<DateEntry[]>([]);
-  const [selectedDate, setSelectedDate] = useState<{
-    year: number;
-    month: number;
-    day: number;
-  } | null>(null);
+  const [selected, setSelected] = useState<DateSelection | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -37,7 +33,7 @@ export default function BrowsePage() {
         if (cancelled) return;
 
         setDates(data);
-        setSelectedDate((current) => {
+        setSelected((current) => {
           if (current || data.length === 0) return current;
 
           const [latestEntry] = data;
@@ -56,14 +52,14 @@ export default function BrowsePage() {
     };
   }, [isMobile, isOnline]);
 
-  function handleSelectDate(year: number, month: number, day: number) {
-    setSelectedDate({ year, month, day });
+  function handleSelect(sel: DateSelection) {
+    setSelected(sel);
     if (isMobile) setSidebarOpen(false);
   }
 
   function handleBack() {
     setSidebarOpen(true);
-    setSelectedDate(null);
+    setSelected(null);
   }
 
   const showSidebar = isMobile ? sidebarOpen : true;
@@ -80,8 +76,8 @@ export default function BrowsePage() {
         >
           <DateTree
             dates={dates}
-            selectedDate={selectedDate}
-            onSelectDate={handleSelectDate}
+            selected={selected}
+            onSelect={handleSelect}
             onExport={() => router.push("/export")}
           />
         </div>
@@ -94,7 +90,7 @@ export default function BrowsePage() {
               You are offline. Reconnect to load journal dates and entries.
             </div>
           )}
-          {isMobile && selectedDate && (
+          {isMobile && selected && (
             <button
               onClick={handleBack}
               className="flex items-center gap-1.5 px-6 pt-4 text-sm text-muted-foreground hover:text-foreground"
@@ -104,11 +100,11 @@ export default function BrowsePage() {
             </button>
           )}
 
-          {selectedDate ? (
+          {selected ? (
             <EntryViewer
-              year={selectedDate.year}
-              month={selectedDate.month}
-              day={selectedDate.day}
+              year={selected.year}
+              month={selected.month}
+              day={selected.day}
             />
           ) : (
             !isMobile && (

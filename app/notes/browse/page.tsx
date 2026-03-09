@@ -8,100 +8,6 @@ import { NoteDetail, type NoteDetailData } from "@/components/notes/note-detail"
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
-interface NewNoteFormProps {
-  onCreated: (id: string) => void;
-  onCancel: () => void;
-}
-
-function NewNoteForm({ onCreated, onCancel }: NewNoteFormProps) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [saving, setSaving] = useState(false);
-
-  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      const tag = tagInput.trim();
-      if (tag && !tags.includes(tag)) setTags((prev) => [...prev, tag]);
-      setTagInput("");
-    }
-  }
-
-  async function handleSave() {
-    if (!content.trim()) return;
-    setSaving(true);
-    try {
-      const res = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim() || undefined,
-          content: content.trim(),
-          tags: tags.length > 0 ? tags : null,
-        }),
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      onCreated(data.id);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div className="mx-auto max-w-3xl p-6 sm:p-8 space-y-4">
-      <h2 className="font-display text-2xl tracking-tight">New Note</h2>
-      <input
-        className="w-full bg-transparent text-lg focus:outline-none placeholder:text-muted-foreground border-b border-border/60 pb-2"
-        placeholder="Title (optional)"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-      <div className="flex flex-wrap items-center gap-1.5">
-        {tags.map((tag) => (
-          <span
-            key={tag}
-            className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-          >
-            {tag}
-            <button onClick={() => setTags((prev) => prev.filter((t) => t !== tag))} className="hover:text-foreground">×</button>
-          </span>
-        ))}
-        <input
-          className="bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/60 focus:outline-none min-w-[80px]"
-          placeholder="Add tag..."
-          value={tagInput}
-          onChange={(e) => setTagInput(e.target.value)}
-          onKeyDown={handleTagKeyDown}
-        />
-      </div>
-      <textarea
-        className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[200px]"
-        placeholder="Write your note..."
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        autoFocus
-      />
-      <div className="flex gap-2">
-        <button
-          onClick={handleSave}
-          disabled={saving || !content.trim()}
-          className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
-          {saving ? "Saving..." : "Save"}
-        </button>
-        <button
-          onClick={onCancel}
-          className="rounded-md px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default function NotesBrowsePage() {
   const router = useRouter();
@@ -114,9 +20,7 @@ export default function NotesBrowsePage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [creatingNew, setCreatingNew] = useState(false);
-
-  const isNewMode = searchParams.get("new") === "1";
+  const NEW_NOTE_ID = "__new__";
 
   const loadNotes = useCallback(async (tag?: string | null) => {
     const url = tag ? `/api/notes?tag=${encodeURIComponent(tag)}` : "/api/notes";
@@ -138,24 +42,31 @@ export default function NotesBrowsePage() {
     }
   }, []);
 
+  // Silent refresh — no loading flash, used after saves/updates
+  const refreshNote = useCallback(async (id: string) => {
+    const res = await fetch(`/api/notes/${id}`);
+    if (!res.ok) return;
+    setSelectedNote(await res.json());
+  }, []);
+
   useEffect(() => {
     loadNotes(activeTag);
   }, [activeTag, loadNotes]);
 
+  const isNewMode = searchParams.get("new") === "1";
+
   useEffect(() => {
     if (isNewMode) {
-      setCreatingNew(true);
-      setSelectedNoteId(null);
-      setSelectedNote(null);
+      void handleNew();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNewMode]);
 
   function handleSelectNote(id: string) {
+    if (id === NEW_NOTE_ID) return;
     setSelectedNoteId(id);
-    setCreatingNew(false);
     loadNote(id);
     if (isMobile) setSidebarOpen(false);
-    // Clear ?new=1 from URL
     if (searchParams.get("new")) router.replace("/notes/browse");
   }
 
@@ -165,28 +76,43 @@ export default function NotesBrowsePage() {
   }
 
   function handleNew() {
-    setCreatingNew(true);
-    setSelectedNoteId(null);
-    setSelectedNote(null);
-    if (isMobile) setSidebarOpen(false);
-    router.replace("/notes/browse?new=1");
-  }
-
-  async function handleNoteCreated(id: string) {
     router.replace("/notes/browse");
-    await loadNotes(activeTag);
-    setCreatingNew(false);
-    handleSelectNote(id);
+    const now = new Date().toISOString();
+    setSelectedNoteId(NEW_NOTE_ID);
+    setSelectedNote({ id: NEW_NOTE_ID, title: null, tags: null, images: null, content: "", created_at: now, updated_at: now, subnotes: [] });
+    if (isMobile) setSidebarOpen(false);
   }
 
   async function handleUpdate(data: { title?: string | null; content?: string; tags?: string[] | null }) {
     if (!selectedNoteId) return;
+
+    if (selectedNoteId === NEW_NOTE_ID) {
+      // Track accumulated state locally before the note exists on the server
+      setSelectedNote((prev) => (prev ? { ...prev, ...data } : prev));
+      // Only create once there's actual content or a title
+      const content = data.content ?? selectedNote?.content ?? "";
+      const title = data.title !== undefined ? data.title : selectedNote?.title ?? null;
+      if (!content.trim() && !title?.trim()) return;
+      const tags = data.tags !== undefined ? data.tags : selectedNote?.tags ?? null;
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, title: title || undefined, tags: tags || undefined }),
+      });
+      if (!res.ok) return;
+      const created = await res.json();
+      setSelectedNoteId(created.id);
+      await Promise.all([loadNotes(activeTag), refreshNote(created.id)]);
+      return;
+    }
+
     await fetch(`/api/notes/${selectedNoteId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    await Promise.all([loadNotes(activeTag), loadNote(selectedNoteId)]);
+    setSelectedNote((prev) => (prev ? { ...prev, ...data } : prev));
+    void loadNotes(activeTag);
   }
 
   async function handleDelete() {
@@ -205,7 +131,7 @@ export default function NotesBrowsePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
     });
-    await loadNote(selectedNoteId);
+    await refreshNote(selectedNoteId);
   }
 
   async function handleUpdateSubnote(subnoteId: string, content: string) {
@@ -215,13 +141,17 @@ export default function NotesBrowsePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
     });
-    await loadNote(selectedNoteId);
+    await refreshNote(selectedNoteId);
+  }
+
+  function handleImagesChange(images: string[]) {
+    setSelectedNote((prev) => (prev ? { ...prev, images } : prev));
   }
 
   async function handleDeleteSubnote(subnoteId: string) {
     if (!selectedNoteId) return;
     await fetch(`/api/notes/${selectedNoteId}/subnotes/${subnoteId}`, { method: "DELETE" });
-    await loadNote(selectedNoteId);
+    await refreshNote(selectedNoteId);
   }
 
   const showSidebar = isMobile ? sidebarOpen : true;
@@ -254,16 +184,7 @@ export default function NotesBrowsePage() {
             </button>
           )}
 
-          {creatingNew ? (
-            <NewNoteForm
-              onCreated={handleNoteCreated}
-              onCancel={() => {
-                setCreatingNew(false);
-                router.replace("/notes/browse");
-                if (isMobile) setSidebarOpen(true);
-              }}
-            />
-          ) : loadingDetail ? (
+          {loadingDetail ? (
             <div className="flex h-full items-center justify-center">
               <p className="text-sm text-muted-foreground">Loading...</p>
             </div>
@@ -276,6 +197,7 @@ export default function NotesBrowsePage() {
               onUpdateSubnote={handleUpdateSubnote}
               onDelete={handleDelete}
               onDeleteSubnote={handleDeleteSubnote}
+              onImagesChange={handleImagesChange}
             />
           ) : (
             <div className="flex h-full items-center justify-center">

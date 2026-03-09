@@ -6,13 +6,7 @@ import { BookOpen, Plus, LogOut, Settings, Utensils, StickyNote } from "lucide-r
 import { signOut } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-app-button";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +18,7 @@ interface EntrySummary {
 export function AppNav() {
   const { mode } = useMode();
   const router = useRouter();
-  const [newDialogOpen, setNewDialogOpen] = useState(false);
+  const [newPopoverOpen, setNewPopoverOpen] = useState(false);
   const [creatingType, setCreatingType] = useState<"journal" | "food" | "notes" | null>(null);
 
   async function handleLogout() {
@@ -45,7 +39,7 @@ export function AppNav() {
 
   function handleCreateNote() {
     setCreatingType(null);
-    setNewDialogOpen(false);
+    setNewPopoverOpen(false);
     router.push("/notes/browse?new=1");
   }
 
@@ -66,7 +60,7 @@ export function AppNav() {
         const existingEntry = existingWebEntry ?? entries[0];
         if (existingEntry) {
           setCreatingType(null);
-          setNewDialogOpen(false);
+          setNewPopoverOpen(false);
           router.push(`/journal/write?entry=${existingEntry.id}`);
           return;
         }
@@ -75,14 +69,14 @@ export function AppNav() {
       // Fall back to write mode.
     }
 
-    setNewDialogOpen(false);
+    setNewPopoverOpen(false);
     router.push("/journal/write");
     setCreatingType(null);
   }
 
   function handleCreateFood() {
     setCreatingType(null);
-    setNewDialogOpen(false);
+    setNewPopoverOpen(false);
     router.push("/food");
   }
 
@@ -93,7 +87,7 @@ export function AppNav() {
           <button
             onClick={handleSelectJournal}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm transition-colors",
+              "cursor-pointer rounded-md px-3 py-1.5 text-sm transition-colors",
               mode === "journal"
                 ? "bg-secondary font-medium text-foreground"
                 : "text-muted-foreground hover:text-foreground",
@@ -104,7 +98,7 @@ export function AppNav() {
           <button
             onClick={handleSelectFood}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm transition-colors",
+              "cursor-pointer rounded-md px-3 py-1.5 text-sm transition-colors",
               mode === "food"
                 ? "bg-secondary font-medium text-foreground"
                 : "text-muted-foreground hover:text-foreground",
@@ -115,7 +109,7 @@ export function AppNav() {
           <button
             onClick={handleSelectNotes}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm transition-colors",
+              "cursor-pointer rounded-md px-3 py-1.5 text-sm transition-colors",
               mode === "notes"
                 ? "bg-secondary font-medium text-foreground"
                 : "text-muted-foreground hover:text-foreground",
@@ -127,18 +121,54 @@ export function AppNav() {
 
         <div className="flex items-center gap-2">
           <InstallAppButton />
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => {
-              setCreatingType(null);
-              setNewDialogOpen(true);
+          <Popover
+            open={newPopoverOpen}
+            onOpenChange={(open) => {
+              if (creatingType) return;
+              setNewPopoverOpen(open);
             }}
           >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">New</span>
-          </Button>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  setCreatingType(null);
+                  setNewPopoverOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">New</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" sideOffset={8} className="w-48 p-1">
+              <button
+                onClick={() => void handleCreateJournal()}
+                disabled={creatingType !== null}
+                className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm hover:bg-secondary disabled:opacity-50"
+              >
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                Journal entry
+              </button>
+              <button
+                onClick={handleCreateFood}
+                disabled={creatingType !== null}
+                className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm hover:bg-secondary disabled:opacity-50"
+              >
+                <Utensils className="h-4 w-4 text-muted-foreground" />
+                Food entry
+              </button>
+              <button
+                onClick={handleCreateNote}
+                disabled={creatingType !== null}
+                className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm hover:bg-secondary disabled:opacity-50"
+              >
+                <StickyNote className="h-4 w-4 text-muted-foreground" />
+                Note
+              </button>
+            </PopoverContent>
+          </Popover>
           <button
             onClick={() => router.push("/settings")}
             className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
@@ -155,72 +185,6 @@ export function AppNav() {
           </button>
         </div>
       </div>
-
-      <Dialog
-        open={newDialogOpen}
-        onOpenChange={(open) => {
-          if (creatingType) return;
-          setNewDialogOpen(open);
-        }}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create new entry</DialogTitle>
-            <DialogDescription>
-              Choose what kind of entry you want to create.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-3">
-            <Button
-              variant="outline"
-              className="h-auto items-start justify-start gap-3 px-4 py-4 text-left"
-              onClick={() => {
-                void handleCreateJournal();
-              }}
-              disabled={creatingType !== null}
-            >
-              <BookOpen className="mt-0.5 h-4 w-4" />
-              <span className="flex flex-col items-start">
-                <span>Journal entry</span>
-                <span className="text-xs font-normal text-muted-foreground">
-                  Open today&apos;s journal entry or start a new one.
-                </span>
-              </span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-auto items-start justify-start gap-3 px-4 py-4 text-left"
-              onClick={handleCreateFood}
-              disabled={creatingType !== null}
-            >
-              <Utensils className="mt-0.5 h-4 w-4" />
-              <span className="flex flex-col items-start">
-                <span>Food entry</span>
-                <span className="text-xs font-normal text-muted-foreground">
-                  Open the quick food log to add a new entry.
-                </span>
-              </span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-auto items-start justify-start gap-3 px-4 py-4 text-left"
-              onClick={handleCreateNote}
-              disabled={creatingType !== null}
-            >
-              <StickyNote className="mt-0.5 h-4 w-4" />
-              <span className="flex flex-col items-start">
-                <span>Note</span>
-                <span className="text-xs font-normal text-muted-foreground">
-                  Create a new note with optional title and tags.
-                </span>
-              </span>
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </nav>
   );
 }

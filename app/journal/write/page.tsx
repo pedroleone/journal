@@ -66,6 +66,14 @@ export default function WritePage() {
   const searchParams = useSearchParams();
   const editEntryId = searchParams.get("entry");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const resizeTextarea = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
 
   const [content, setContent] = useState("");
   const [date, setDate] = useState(new Date());
@@ -175,6 +183,8 @@ export default function WritePage() {
     setReadyForEditing(true);
     void loadEntryForDate(date);
   }, [date, editEntryId, isOnline, loadEntryForDate]);
+
+  useEffect(() => { resizeTextarea(); }, [content, resizeTextarea]);
 
   const { status } = useAutoSave({
     entryId: loadedEntryId,
@@ -292,10 +302,12 @@ export default function WritePage() {
 
         <div className="flex-1 overflow-y-auto pb-4">
           <textarea
+            ref={textareaRef}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => { setContent(e.target.value); resizeTextarea(); }}
             placeholder="Start writing..."
-            className="h-full w-full resize-none border-0 bg-transparent text-lg leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
+            className="w-full resize-none overflow-hidden border-0 bg-transparent text-lg leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
+            style={{ minHeight: "calc(100vh - 12rem)" }}
             autoFocus
           />
 

@@ -18,10 +18,16 @@ interface DateEntry {
   day: number;
 }
 
+export interface DateSelection {
+  year: number;
+  month?: number;
+  day?: number;
+}
+
 interface DateTreeProps {
   dates: DateEntry[];
-  selectedDate: { year: number; month: number; day: number } | null;
-  onSelectDate: (year: number, month: number, day: number) => void;
+  selected: DateSelection | null;
+  onSelect: (sel: DateSelection) => void;
   onExport: () => void;
 }
 
@@ -91,8 +97,8 @@ function buildTree(dates: DateEntry[]): YearGroup[] {
 
 export function DateTree({
   dates,
-  selectedDate,
-  onSelectDate,
+  selected,
+  onSelect,
   onExport,
 }: DateTreeProps) {
   const tree = useMemo(() => buildTree(dates), [dates]);
@@ -109,71 +115,114 @@ export function DateTree({
               No entries yet
             </p>
           )}
-          {tree.map((yearGroup) => (
-            <Collapsible
-              key={yearGroup.year}
-              defaultOpen={yearGroup.year === currentYear}
-            >
-              <CollapsibleTrigger className="group flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground">
-                <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-90" />
-                {yearGroup.year}
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="ml-2 space-y-0.5">
-                  {yearGroup.months.map((monthGroup) => (
-                    <Collapsible
-                      key={monthGroup.month}
-                      defaultOpen={
-                        yearGroup.year === currentYear &&
-                        monthGroup.month === currentMonth
-                      }
-                    >
-                      <CollapsibleTrigger className="group flex w-full items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground hover:text-foreground">
-                        <ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]:rotate-90" />
-                        {MONTH_NAMES[monthGroup.month]}
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <div className="ml-4 space-y-0.5 py-0.5">
-                          {monthGroup.days.map(({ day }) => {
-                            const isActive =
-                              selectedDate?.year === yearGroup.year &&
-                              selectedDate?.month === monthGroup.month &&
-                              selectedDate?.day === day;
-                            return (
-                              <button
-                                key={day}
-                                onClick={() =>
-                                  onSelectDate(
-                                    yearGroup.year,
-                                    monthGroup.month,
-                                    day,
-                                  )
-                                }
-                                className={cn(
-                                  "flex w-full items-center rounded-md px-2 py-1.5 text-sm transition-colors",
-                                  isActive
-                                    ? "bg-secondary font-medium text-foreground"
-                                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
-                                )}
-                              >
-                                {getDayOfWeek(
-                                  yearGroup.year,
-                                  monthGroup.month,
-                                  day,
-                                )}
-                                , {String(day).padStart(2, "0")}/
-                                {String(monthGroup.month).padStart(2, "0")}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
+          {tree.map((yearGroup) => {
+            const yearActive =
+              selected?.year === yearGroup.year && selected?.month == null;
+            return (
+              <Collapsible
+                key={yearGroup.year}
+                defaultOpen={yearGroup.year === currentYear}
+              >
+                <div className="flex items-center">
+                  <button
+                    onClick={() => onSelect({ year: yearGroup.year })}
+                    className={cn(
+                      "flex-1 rounded-md px-2 py-1.5 text-left text-xs font-medium uppercase tracking-wider transition-colors",
+                      yearActive
+                        ? "bg-secondary font-semibold text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {yearGroup.year}
+                  </button>
+                  <CollapsibleTrigger asChild>
+                    <button className="group rounded-md p-1 text-muted-foreground hover:text-foreground">
+                      <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-90" />
+                    </button>
+                  </CollapsibleTrigger>
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          ))}
+                <CollapsibleContent>
+                  <div className="ml-2 space-y-0.5">
+                    {yearGroup.months.map((monthGroup) => {
+                      const monthActive =
+                        selected?.year === yearGroup.year &&
+                        selected?.month === monthGroup.month &&
+                        selected?.day == null;
+                      return (
+                        <Collapsible
+                          key={monthGroup.month}
+                          defaultOpen={
+                            yearGroup.year === currentYear &&
+                            monthGroup.month === currentMonth
+                          }
+                        >
+                          <div className="flex items-center">
+                            <button
+                              onClick={() =>
+                                onSelect({
+                                  year: yearGroup.year,
+                                  month: monthGroup.month,
+                                })
+                              }
+                              className={cn(
+                                "flex-1 rounded-md px-2 py-1 text-left text-sm transition-colors",
+                                monthActive
+                                  ? "bg-secondary font-medium text-foreground"
+                                  : "text-muted-foreground hover:text-foreground",
+                              )}
+                            >
+                              {MONTH_NAMES[monthGroup.month]}
+                            </button>
+                            <CollapsibleTrigger asChild>
+                              <button className="group rounded-md p-1 text-muted-foreground hover:text-foreground">
+                                <ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]:rotate-90" />
+                              </button>
+                            </CollapsibleTrigger>
+                          </div>
+                          <CollapsibleContent>
+                            <div className="ml-4 space-y-0.5 py-0.5">
+                              {monthGroup.days.map(({ day }) => {
+                                const isActive =
+                                  selected?.year === yearGroup.year &&
+                                  selected?.month === monthGroup.month &&
+                                  selected?.day === day;
+                                return (
+                                  <button
+                                    key={day}
+                                    onClick={() =>
+                                      onSelect({
+                                        year: yearGroup.year,
+                                        month: monthGroup.month,
+                                        day,
+                                      })
+                                    }
+                                    className={cn(
+                                      "flex w-full items-center rounded-md px-2 py-1.5 text-sm transition-colors",
+                                      isActive
+                                        ? "bg-secondary font-medium text-foreground"
+                                        : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
+                                    )}
+                                  >
+                                    {getDayOfWeek(
+                                      yearGroup.year,
+                                      monthGroup.month,
+                                      day,
+                                    )}
+                                    , {String(day).padStart(2, "0")}/
+                                    {String(monthGroup.month).padStart(2, "0")}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })}
         </div>
       </ScrollArea>
       <div className="border-t border-border/60 p-3">

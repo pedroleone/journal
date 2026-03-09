@@ -23,16 +23,16 @@ vi.mock("@/hooks/use-online-status", () => ({
 vi.mock("@/components/journal/date-tree", () => ({
   DateTree: ({
     dates,
-    selectedDate,
+    selected,
   }: {
     dates: Array<{ id: string }>;
-    selectedDate: { year: number; month: number; day: number } | null;
+    selected: { year: number; month?: number; day?: number } | null;
   }) => (
     <div data-testid="date-tree">
       <div data-testid="date-count">{dates.length}</div>
       <div data-testid="selected-date">
-        {selectedDate
-          ? `${selectedDate.year}-${selectedDate.month}-${selectedDate.day}`
+        {selected
+          ? `${selected.year}-${selected.month}-${selected.day}`
           : "none"}
       </div>
     </div>

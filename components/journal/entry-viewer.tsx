@@ -47,9 +47,16 @@ const DAY_NAMES = [
   "Saturday",
 ];
 
+const SHORT_DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 function formatFullDate(year: number, month: number, day: number): string {
   const date = new Date(year, month - 1, day);
   return `${DAY_NAMES[date.getDay()]}, ${day} ${MONTH_NAMES[month]} ${year}`;
+}
+
+function formatShortDate(year: number, month: number, day: number): string {
+  const date = new Date(year, month - 1, day);
+  return `${SHORT_DAY_NAMES[date.getDay()]}, ${day} ${MONTH_NAMES[month]}`;
 }
 
 function formatTime(hour: number | null, createdAt: string): string {
@@ -62,8 +69,14 @@ function formatTime(hour: number | null, createdAt: string): string {
 
 interface EntryViewerProps {
   year: number;
-  month: number;
-  day: number;
+  month?: number;
+  day?: number;
+}
+
+function getHeading(year: number, month?: number, day?: number): string {
+  if (day != null && month != null) return formatFullDate(year, month, day);
+  if (month != null) return `${MONTH_NAMES[month]} ${year}`;
+  return String(year);
 }
 
 export function EntryViewer({ year, month, day }: EntryViewerProps) {
@@ -83,11 +96,9 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
     }
 
     try {
-      const params = new URLSearchParams({
-        year: String(year),
-        month: String(month),
-        day: String(day),
-      });
+      const params = new URLSearchParams({ year: String(year) });
+      if (month != null) params.set("month", String(month));
+      if (day != null) params.set("day", String(day));
       const res = await fetch(`/api/entries?${params}`);
       if (!res.ok) throw new Error("Failed to fetch entries");
 
@@ -131,13 +142,71 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
     );
   }
 
-  const editableEntry = entries.find((entry) => entry.source === "web") ?? null;
+  const isDayView = day != null;
+  const editableEntry = isDayView
+    ? (entries.find((entry) => entry.source === "web") ?? null)
+    : null;
+
+  // For month/year views, group entries by day
+  if (!isDayView) {
+    const dayGroups = new Map<string, Entry[]>();
+    for (const entry of entries) {
+      const key = `${entry.year}-${entry.month}-${entry.day}`;
+      if (!dayGroups.has(key)) dayGroups.set(key, []);
+      dayGroups.get(key)!.push(entry);
+    }
+    const sortedKeys = [...dayGroups.keys()].sort();
+
+    return (
+      <div className="animate-page p-8 max-w-2xl mx-auto">
+        <h2 className="font-display text-2xl tracking-tight">
+          {getHeading(year, month, day)}
+        </h2>
+        <div className="mt-8 space-y-10">
+          {sortedKeys.map((key) => {
+            const dayEntries = dayGroups.get(key)!;
+            const first = dayEntries[0];
+            return (
+              <div key={key}>
+                <p className="mb-4 text-sm font-medium text-muted-foreground border-b border-border/40 pb-1">
+                  {formatShortDate(first.year, first.month, first.day)}
+                </p>
+                <div className="space-y-8">
+                  {dayEntries.map((entry, i) => (
+                    <div key={entry.id}>
+                      {dayEntries.length > 1 && (
+                        <p className="mb-2 text-xs text-muted-foreground">
+                          {formatTime(entry.hour, entry.created_at)}
+                        </p>
+                      )}
+                      <div className="whitespace-pre-wrap text-base leading-relaxed">
+                        {entry.content}
+                      </div>
+                      {entry.images?.length ? (
+                        <EncryptedImageGallery
+                          imageKeys={entry.images}
+                          className="mt-4"
+                        />
+                      ) : null}
+                      {i < dayEntries.length - 1 && (
+                        <div className="mt-8 border-b border-border/40" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-page p-8 max-w-2xl">
+    <div className="animate-page p-8 max-w-2xl mx-auto">
       <div className="flex items-start justify-between">
         <h2 className="font-display text-2xl tracking-tight">
-          {formatFullDate(year, month, day)}
+          {getHeading(year, month, day)}
         </h2>
         {editableEntry ? (
           <Button variant="ghost" size="sm" className="gap-1.5" asChild>
