@@ -5,6 +5,7 @@ import "./globals.css";
 import { NavWrapper } from "@/components/nav-wrapper";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { ModeProvider } from "@/lib/mode-context";
+import { LocaleProvider } from "@/hooks/use-locale";
 
 const heading = Instrument_Serif({
   variable: "--font-heading",
@@ -71,10 +72,12 @@ export default function RootLayout({
       >
         <ServiceWorkerRegister />
         <Suspense>
-          <ModeProvider>
-            <NavWrapper />
-            {children}
-          </ModeProvider>
+          <LocaleProvider>
+            <ModeProvider>
+              <NavWrapper />
+              {children}
+            </ModeProvider>
+          </LocaleProvider>
         </Suspense>
       </body>
     </html>

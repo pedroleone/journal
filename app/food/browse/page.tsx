@@ -24,6 +24,7 @@ import { MealSlot, getMonthDays, suggestMealSlot } from "@/lib/food";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
+import { useLocale } from "@/hooks/use-locale";
 
 type SelectedState =
   | { kind: "uncategorized" }
@@ -67,38 +68,13 @@ interface AssignDraft {
   mealSlot: MealSlot | "";
 }
 
-const MEAL_SLOTS: Array<{ value: MealSlot; label: string }> = [
-  { value: "breakfast", label: "Breakfast" },
-  { value: "lunch", label: "Lunch" },
-  { value: "dinner", label: "Dinner" },
-  { value: "snack", label: "Snack" },
-];
 
-const MONTH_NAMES = [
-  "",
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function getDayLabel(year: number, month: number, day: number): string {
-  return DAY_NAMES[new Date(year, month - 1, day).getDay()];
+function getDayLabel(year: number, month: number, day: number, localeCode: string): string {
+  return new Date(year, month - 1, day).toLocaleDateString(localeCode, { weekday: "short" });
 }
 
-function formatDateTitle(year: number, month: number, day: number): string {
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString([], {
+function formatDateTitle(year: number, month: number, day: number, localeCode: string): string {
+  return new Date(year, month - 1, day).toLocaleDateString(localeCode, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -155,6 +131,14 @@ export default function FoodBrowsePage() {
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [assigningAll, setAssigningAll] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const { t } = useLocale();
+
+  const mealSlots = [
+    { value: "breakfast" as MealSlot, label: t.food.breakfast },
+    { value: "lunch" as MealSlot, label: t.food.lunch },
+    { value: "dinner" as MealSlot, label: t.food.dinner },
+    { value: "snack" as MealSlot, label: t.food.snack },
+  ];
 
   const tree = useMemo(() => getTree(dates), [dates]);
   const now = new Date();
@@ -307,6 +291,8 @@ export default function FoodBrowsePage() {
     snack: dayEntries.filter((e) => e.meal_slot === "snack"),
   };
 
+  const localeCode = t.localeCode;
+
   const unassignedForDay = dayEntries.filter((e) => !e.meal_slot);
 
   return (
@@ -316,7 +302,7 @@ export default function FoodBrowsePage() {
           <ScrollArea className="flex-1">
             <div className="p-3 space-y-1">
                 <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                  <Link href="/food">← Quick Log</Link>
+                  <Link href="/food">{t.food.backToQuickLog}</Link>
                 </Button>
                 <button
                   onClick={handleSelectUncategorized}
@@ -327,7 +313,7 @@ export default function FoodBrowsePage() {
                       : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
                   )}
                 >
-                  Uncategorized ({uncategorized.length})
+                  {t.food.uncategorized(uncategorized.length)}
                 </button>
 
                 {tree.map((yearGroup) => (
@@ -348,7 +334,7 @@ export default function FoodBrowsePage() {
                           >
                             <CollapsibleTrigger className="group flex w-full items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground hover:text-foreground">
                               <ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]:rotate-90" />
-                              {MONTH_NAMES[monthGroup.month]}
+                              {new Date(yearGroup.year, monthGroup.month - 1, 1).toLocaleDateString(localeCode, { month: "long" })}
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <div className="ml-4 space-y-0.5 py-0.5">
@@ -373,7 +359,7 @@ export default function FoodBrowsePage() {
                                       )}
                                     >
                                       <span>
-                                        {getDayLabel(yearGroup.year, monthGroup.month, day)},{" "}
+                                        {getDayLabel(yearGroup.year, monthGroup.month, day, localeCode)},{" "}
                                         {String(day).padStart(2, "0")}/
                                         {String(monthGroup.month).padStart(2, "0")}
                                       </span>
@@ -402,32 +388,32 @@ export default function FoodBrowsePage() {
               className="flex items-center gap-1.5 px-6 pt-4 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t.notes.back}
             </button>
           )}
 
           {loadingPane ? (
             <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <p className="text-sm text-muted-foreground">{t.notes.loading}</p>
             </div>
           ) : selected.kind === "uncategorized" ? (
             <div className="animate-page mx-auto max-w-3xl p-6 sm:p-8 space-y-4">
               <div className="flex items-center justify-between">
-                <h1 className="font-display text-2xl tracking-tight">Uncategorized Entries</h1>
+                <h1 className="font-display text-2xl tracking-tight">{t.food.uncategorizedEntries}</h1>
                 <Button onClick={handleAssignAll} disabled={assigningAll || uncategorized.length === 0}>
-                  {assigningAll ? "Assigning..." : "Assign All by Date"}
+                  {assigningAll ? t.food.assigning : t.food.assignAllByDate}
                 </Button>
               </div>
 
               {uncategorized.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No uncategorized food entries.</p>
+                <p className="text-sm text-muted-foreground">{t.food.noUncategorizedEntries}</p>
               ) : (
                 uncategorized.map((entry) => (
                   <div key={entry.id} className="rounded-lg border border-border/60 p-4 space-y-3">
                     {entry.content ? (
                       <p className="text-sm leading-relaxed">{entry.content}</p>
                     ) : (
-                      <p className="text-sm italic text-muted-foreground">Photo entry</p>
+                      <p className="text-sm italic text-muted-foreground">{t.food.photoEntry}</p>
                     )}
                     {entry.images?.length ? (
                       <EncryptedImageGallery
@@ -439,7 +425,7 @@ export default function FoodBrowsePage() {
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/food/entry/${entry.id}`}>Open</Link>
+                        <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
                       </Button>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -449,8 +435,9 @@ export default function FoodBrowsePage() {
                                   assignDrafts[entry.id].date.getFullYear(),
                                   assignDrafts[entry.id].date.getMonth() + 1,
                                   assignDrafts[entry.id].date.getDate(),
+                                  localeCode,
                                 )
-                              : "Select date"}
+                              : t.food.selectDate}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
@@ -469,11 +456,11 @@ export default function FoodBrowsePage() {
                         }
                       >
                         <SelectTrigger className="w-[160px]">
-                          <SelectValue placeholder="Meal slot" />
+                          <SelectValue placeholder={t.food.mealSlot} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">No slot</SelectItem>
-                          {MEAL_SLOTS.map((slot) => (
+                          <SelectItem value="none">{t.food.noSlot}</SelectItem>
+                          {mealSlots.map((slot) => (
                             <SelectItem key={slot.value} value={slot.value}>
                               {slot.label}
                             </SelectItem>
@@ -486,7 +473,7 @@ export default function FoodBrowsePage() {
                         onClick={() => handleAssign(entry.id)}
                         disabled={assigningId === entry.id}
                       >
-                        {assigningId === entry.id ? "Assigning..." : "Assign"}
+                        {assigningId === entry.id ? t.food.assigning : t.food.assign}
                       </Button>
                     </div>
                   </div>
@@ -496,14 +483,14 @@ export default function FoodBrowsePage() {
           ) : (
             <div className="animate-page mx-auto max-w-3xl p-6 sm:p-8 space-y-6">
               <h1 className="font-display text-2xl tracking-tight">
-                {formatDateTitle(selected.year, selected.month, selected.day)}
+                {formatDateTitle(selected.year, selected.month, selected.day, localeCode)}
               </h1>
 
-              {MEAL_SLOTS.map((slot) => (
+              {mealSlots.map((slot) => (
                 <section key={slot.value} className="space-y-2">
                   <h2 className="text-sm font-medium text-muted-foreground">{slot.label}</h2>
                   {groups[slot.value].length === 0 ? (
-                    <p className="text-sm text-muted-foreground">(empty)</p>
+                    <p className="text-sm text-muted-foreground">{t.food.empty}</p>
                   ) : (
                     <div className="space-y-2">
                       {groups[slot.value].map((entry) => (
@@ -514,7 +501,7 @@ export default function FoodBrowsePage() {
                           {entry.content ? (
                             <p className="text-sm leading-relaxed">{entry.content}</p>
                           ) : (
-                            <p className="text-sm italic text-muted-foreground">Photo entry</p>
+                            <p className="text-sm italic text-muted-foreground">{t.food.photoEntry}</p>
                           )}
                           {entry.images?.length ? (
                             <EncryptedImageGallery
@@ -528,7 +515,7 @@ export default function FoodBrowsePage() {
                               {formatTime(entry.logged_at, entry.hour)}
                             </p>
                             <Button variant="outline" size="sm" asChild>
-                              <Link href={`/food/entry/${entry.id}`}>Open</Link>
+                              <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
                             </Button>
                           </div>
                         </div>
@@ -540,7 +527,7 @@ export default function FoodBrowsePage() {
 
               {unassignedForDay.length > 0 && (
                 <section className="space-y-2">
-                  <h2 className="text-sm font-medium text-muted-foreground">Uncategorized</h2>
+                  <h2 className="text-sm font-medium text-muted-foreground">{t.food.uncategorizedSection}</h2>
                   <div className="space-y-2">
                     {unassignedForDay.map((entry) => (
                       <div
@@ -550,7 +537,7 @@ export default function FoodBrowsePage() {
                         {entry.content ? (
                           <p className="text-sm leading-relaxed">{entry.content}</p>
                         ) : (
-                          <p className="text-sm italic text-muted-foreground">Photo entry</p>
+                          <p className="text-sm italic text-muted-foreground">{t.food.photoEntry}</p>
                         )}
                         {entry.images?.length ? (
                           <EncryptedImageGallery
@@ -564,7 +551,7 @@ export default function FoodBrowsePage() {
                             {formatTime(entry.logged_at, entry.hour)}
                           </p>
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/food/entry/${entry.id}`}>Open</Link>
+                            <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
                           </Button>
                         </div>
                       </div>

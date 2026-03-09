@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { bytesToBase64 } from "@/lib/base64";
 import type { EntrySource } from "@/lib/types";
+import { useLocale } from "@/hooks/use-locale";
 
 type FormatOption = "markdown" | "plaintext" | "pdf";
 type PresetOption = "week" | "month" | "custom" | "year" | "everything";
@@ -75,6 +76,7 @@ export default function ExportPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [backupDownloading, setBackupDownloading] = useState(false);
+  const { t } = useLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -295,16 +297,16 @@ export default function ExportPage() {
     <div className="animate-page mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
       <header className="space-y-2">
         <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
-          Export
+          {t.exportPage.export}
         </p>
-        <h1 className="font-display text-4xl tracking-tight">Export and download</h1>
+        <h1 className="font-display text-4xl tracking-tight">{t.exportPage.exportAndDownload}</h1>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
         <section className="space-y-6 rounded-xl border border-border/60 bg-card/30 p-6">
           <div className="space-y-3">
             <h2 className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
-              Selection preset
+              {t.exportPage.selectionPreset}
             </h2>
             <div className="grid gap-2">
               {(["week", "month", "custom", "year", "everything"] as PresetOption[]).map((option) => (
@@ -318,14 +320,14 @@ export default function ExportPage() {
                   }`}
                 >
                   {option === "week"
-                    ? "This week"
+                    ? t.exportPage.thisWeek
                     : option === "month"
-                      ? "This month"
+                      ? t.exportPage.thisMonth
                       : option === "custom"
-                        ? "Custom range"
+                        ? t.exportPage.customRange
                         : option === "year"
-                          ? "This year"
-                          : "Everything"}
+                          ? t.exportPage.thisYear
+                          : t.exportPage.everything}
                 </button>
               ))}
             </div>
@@ -349,7 +351,7 @@ export default function ExportPage() {
 
           <div className="space-y-3">
             <h2 className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
-              Format
+              {t.exportPage.format}
             </h2>
             <div className="grid gap-2">
               {(["markdown", "plaintext", "pdf"] as FormatOption[]).map((option) => (
@@ -362,7 +364,7 @@ export default function ExportPage() {
                       : "border-border/60 bg-background/50 text-foreground"
                   }`}
                 >
-                  {option === "plaintext" ? "Plain text" : option.toUpperCase()}
+                  {option === "plaintext" ? t.exportPage.plainText : option.toUpperCase()}
                 </button>
               ))}
             </div>
@@ -370,20 +372,20 @@ export default function ExportPage() {
 
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              {selectedIds.length} entries selected
+              {t.exportPage.entriesSelected(selectedIds.length)}
             </p>
             <Button onClick={() => void handleExport()} disabled={exporting || selectedIds.length === 0} className="w-full">
-              {exporting ? "Preparing export…" : "Export selected"}
+              {exporting ? t.exportPage.preparingExport : t.exportPage.exportSelected}
             </Button>
             <Button variant="outline" onClick={() => void downloadEncryptedBackup()} disabled={backupDownloading} className="w-full">
-              {backupDownloading ? "Downloading…" : "Download backup JSON"}
+              {backupDownloading ? t.exportPage.downloading : t.exportPage.downloadBackupJson}
             </Button>
           </div>
         </section>
 
         <section className="rounded-xl border border-border/60 bg-card/20 p-6">
           <h2 className="mb-4 text-sm uppercase tracking-[0.24em] text-muted-foreground">
-            Tree selection
+            {t.exportPage.treeSelection}
           </h2>
           <div className="space-y-4">
             {tree.map((yearGroup) => {

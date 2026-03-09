@@ -149,3 +149,7 @@ textarea {
   line-height: 1.75;
 }
 
+.scrollbar-gutter-stable {
+  scrollbar-gutter: stable;
+}
+

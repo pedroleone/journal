@@ -7,6 +7,7 @@ import { NoteList, type NoteListItem } from "@/components/notes/note-list";
 import { NoteDetail, type NoteDetailData } from "@/components/notes/note-detail";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
+import { useLocale } from "@/hooks/use-locale";
 
 
 export default function NotesBrowsePage() {
@@ -21,6 +22,7 @@ export default function NotesBrowsePage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const NEW_NOTE_ID = "__new__";
+  const { t } = useLocale();
 
   const loadNotes = useCallback(async (tag?: string | null) => {
     const url = tag ? `/api/notes?tag=${encodeURIComponent(tag)}` : "/api/notes";
@@ -170,20 +172,20 @@ export default function NotesBrowsePage() {
       </CollapsibleSidebar>
 
       {showContent && (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto scrollbar-gutter-stable">
           {isMobile && (
             <button
               onClick={() => setSidebarOpen(true)}
               className="flex items-center gap-1.5 px-6 pt-4 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t.notes.back}
             </button>
           )}
 
           {loadingDetail ? (
             <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <p className="text-sm text-muted-foreground">{t.notes.loading}</p>
             </div>
           ) : selectedNote ? (
             <NoteDetail
@@ -198,7 +200,7 @@ export default function NotesBrowsePage() {
             />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">Select a note or create a new one.</p>
+              <p className="text-sm text-muted-foreground">{t.notes.selectOrCreate}</p>
             </div>
           )}
         </div>

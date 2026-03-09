@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/hooks/use-locale";
 
 interface TelegramLinkState {
   linked: boolean;
@@ -20,6 +21,7 @@ function TelegramSection() {
   const [tokenState, setTokenState] = useState<TokenState | null>(null);
   const [loading, setLoading] = useState(false);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { t } = useLocale();
 
   async function fetchLinkState() {
     const res = await fetch("/api/telegram/link");
@@ -80,18 +82,18 @@ function TelegramSection() {
 
   return (
     <section className="rounded-xl border border-border/60 bg-card/30 p-6">
-      <h2 className="font-display text-2xl tracking-tight">Telegram</h2>
+      <h2 className="font-display text-2xl tracking-tight">{t.settings.telegram}</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Connect your Telegram account to log food entries from the bot.
+        {t.settings.telegramDesc}
       </p>
 
       {linkState === null ? (
-        <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
+        <p className="mt-4 text-sm text-muted-foreground">{t.settings.loading}</p>
       ) : linkState.linked ? (
         <div className="mt-4 space-y-3">
-          <p className="text-sm text-green-600 dark:text-green-400">Connected</p>
+          <p className="text-sm text-green-600 dark:text-green-400">{t.settings.connected}</p>
           <Button variant="outline" onClick={() => void handleDisconnect()} disabled={loading}>
-            Disconnect
+            {t.settings.disconnect}
           </Button>
         </div>
       ) : tokenState ? (
@@ -108,15 +110,15 @@ function TelegramSection() {
             {botUsername ? ` to @${botUsername}` : " to the bot"} manually
           </p>
           <p className="text-sm text-muted-foreground">
-            Waiting for confirmation…
+            {t.settings.waitingForConfirmation}
           </p>
           <Button variant="outline" onClick={() => void handleConnect()} disabled={loading}>
-            Generate new code
+            {t.settings.generateNewCode}
           </Button>
         </div>
       ) : (
         <Button className="mt-4" onClick={() => void handleConnect()} disabled={loading}>
-          Connect Telegram
+          {t.settings.connectTelegram}
         </Button>
       )}
     </section>
@@ -127,6 +129,7 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState("");
+  const { t, locale, setLocale } = useLocale();
 
   async function handleRestore(file: File | null) {
     if (!file) return;
@@ -150,10 +153,10 @@ export default function SettingsPage() {
 
       const data = await response.json();
       setRestoreMessage(
-        `Imported ${data.imported_journal} journal, ${data.imported_food} food, ${data.imported_images} images.`,
+        t.settings.importedResult(data.imported_journal, data.imported_food, data.imported_images),
       );
     } catch {
-      setRestoreMessage("Restore failed.");
+      setRestoreMessage(t.settings.restoreFailed);
     } finally {
       setRestoring(false);
       if (fileInputRef.current) {
@@ -166,28 +169,49 @@ export default function SettingsPage() {
     <div className="animate-page mx-auto max-w-3xl space-y-8 px-6 py-10">
       <header className="space-y-2">
         <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
-          Settings
+          {t.settings.settings}
         </p>
-        <h1 className="font-display text-4xl tracking-tight">Journal controls</h1>
+        <h1 className="font-display text-4xl tracking-tight">{t.settings.journalControls}</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Export backups, restore from a backup file, and keep Telegram commands close at hand.
+          {t.settings.description}
         </p>
       </header>
 
       <section className="rounded-xl border border-border/60 bg-card/30 p-6">
-        <h2 className="font-display text-2xl tracking-tight">Data export</h2>
+        <h2 className="font-display text-2xl tracking-tight">{t.settings.language}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t.settings.languageDesc}</p>
+        <div className="mt-4 flex gap-2">
+          <Button
+            variant={locale === "en" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setLocale("en")}
+          >
+            English
+          </Button>
+          <Button
+            variant={locale === "pt-br" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setLocale("pt-br")}
+          >
+            Português (BR)
+          </Button>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-border/60 bg-card/30 p-6">
+        <h2 className="font-display text-2xl tracking-tight">{t.settings.dataExport}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Choose text export formats or download a full backup JSON file.
+          {t.settings.dataExportDesc}
         </p>
         <Button className="mt-4" asChild>
-          <Link href="/export">Open export tools</Link>
+          <Link href="/export">{t.settings.openExportTools}</Link>
         </Button>
       </section>
 
       <section className="rounded-xl border border-border/60 bg-card/30 p-6">
-        <h2 className="font-display text-2xl tracking-tight">Restore backup</h2>
+        <h2 className="font-display text-2xl tracking-tight">{t.settings.restoreBackup}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Restore from a version 2 backup JSON file. Existing entry IDs are skipped.
+          {t.settings.restoreBackupDesc}
         </p>
         <input
           ref={fileInputRef}
@@ -198,19 +222,19 @@ export default function SettingsPage() {
             void handleRestore(event.target.files?.[0] ?? null);
           }}
         />
-        {restoring ? <p className="mt-3 text-sm text-muted-foreground">Restoring…</p> : null}
+        {restoring ? <p className="mt-3 text-sm text-muted-foreground">{t.settings.restoring}</p> : null}
         {restoreMessage ? <p className="mt-3 text-sm text-muted-foreground">{restoreMessage}</p> : null}
       </section>
 
       <TelegramSection />
 
       <section className="rounded-xl border border-border/60 bg-card/30 p-6">
-        <h2 className="font-display text-2xl tracking-tight">Telegram commands</h2>
+        <h2 className="font-display text-2xl tracking-tight">{t.settings.telegramCommands}</h2>
         <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-          <p><code>/food</code> saves a food entry.</p>
-          <p>Messages without a command also save as food entries.</p>
-          <p><code>/journal</code>, <code>/idea</code>, and <code>/note</code> are intentionally unsupported.</p>
-          <p>Photos can be sent with or without <code>/food</code> and land in uncategorized food.</p>
+          <p>{t.settings.telegramCmd1}</p>
+          <p>{t.settings.telegramCmd2}</p>
+          <p>{t.settings.telegramCmd3}</p>
+          <p>{t.settings.telegramCmd4}</p>
         </div>
       </section>
     </div>

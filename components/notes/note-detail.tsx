@@ -5,6 +5,7 @@ import { Trash2, Plus, X, Paperclip, Loader2 } from "lucide-react";
 import { useImages } from "@/hooks/use-images";
 import { uploadEncryptedImage, deleteEncryptedImage } from "@/lib/client-images";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { useLocale } from "@/hooks/use-locale";
 
 export interface Subnote {
   id: string;
@@ -64,6 +65,7 @@ function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
   const [draft, setDraft] = useState(subnote.content);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const { t } = useLocale();
 
   useEffect(() => { setDraft(subnote.content); }, [subnote.content]);
 
@@ -96,14 +98,14 @@ function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
         onChange={setDraft}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        placeholder="Subnote..."
+        placeholder={t.notes.subnote}
         className="text-base leading-[1.85] text-foreground/90"
       />
 
       {/* Delete / saving indicators */}
       <div className="mt-2 flex items-center justify-between h-5">
         {saving && (
-          <span className="text-[11px] text-muted-foreground/50 tracking-wide">saving…</span>
+          <span className="text-[11px] text-muted-foreground/50 tracking-wide">{t.notes.saving}</span>
         )}
         <div className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           {confirmDelete ? (
@@ -112,13 +114,13 @@ function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
                 onClick={onDelete}
                 className="text-[11px] text-destructive hover:text-destructive/80 font-medium"
               >
-                Delete
+                {t.notes.delete}
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
                 className="text-[11px] text-muted-foreground hover:text-foreground"
               >
-                Cancel
+                {t.notes.cancel}
               </button>
             </>
           ) : (
@@ -158,6 +160,7 @@ export function NoteDetail({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { images } = useImages(note.images);
   const isNew = note.id === "__new__";
+  const { t } = useLocale();
 
   useEffect(() => {
     setTitleDraft(note.title ?? "");
@@ -262,7 +265,7 @@ export function NoteDetail({
 
         <div className="flex items-center gap-1">
           {savingContent && (
-            <span className="text-[11px] text-muted-foreground/50 mr-2 tracking-wide">saving…</span>
+            <span className="text-[11px] text-muted-foreground/50 mr-2 tracking-wide">{t.notes.saving}</span>
           )}
           {/* Image upload */}
           <input
@@ -276,7 +279,7 @@ export function NoteDetail({
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isNew || uploadingImage}
-            title={isNew ? "Save the note first to attach images" : "Attach image"}
+            title={isNew ? t.notes.saveNoteFirst : "Attach image"}
             className="p-1.5 rounded text-muted-foreground/40 hover:text-muted-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
@@ -287,13 +290,13 @@ export function NoteDetail({
                 onClick={onDelete}
                 className="text-xs font-medium text-destructive hover:text-destructive/80 px-2 py-1 rounded"
               >
-                Delete note
+                {t.notes.deleteNote}
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
                 className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded"
               >
-                Cancel
+                {t.notes.cancel}
               </button>
             </div>
           ) : (
@@ -314,7 +317,7 @@ export function NoteDetail({
         {/* Title */}
         <input
           className="w-full bg-transparent font-display text-4xl sm:text-5xl font-semibold tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground mb-5"
-          placeholder="Untitled"
+          placeholder={t.notes.untitled}
           value={titleDraft}
           onChange={(e) => setTitleDraft(e.target.value)}
           onBlur={handleTitleBlur}
@@ -339,7 +342,7 @@ export function NoteDetail({
           ))}
           <input
             className="bg-transparent text-[11px] tracking-wide text-muted-foreground/60 placeholder:text-muted-foreground/30 focus:outline-none min-w-[72px]"
-            placeholder="+ add tag"
+            placeholder={t.notes.addTag}
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={handleTagKeyDown}
@@ -353,7 +356,7 @@ export function NoteDetail({
           onChange={setContentDraft}
           onBlur={handleContentBlur}
           onKeyDown={handleContentKeyDown}
-          placeholder="Start writing…"
+          placeholder={t.notes.startWriting}
           className="text-base sm:text-[17px] leading-[1.9] text-foreground/85"
         />
 
@@ -402,7 +405,7 @@ export function NoteDetail({
               <div className="flex items-center gap-4 mb-5">
                 <div className="h-px flex-1 bg-border/50" />
                 <span className="text-[11px] tracking-widest uppercase text-muted-foreground/60 font-medium select-none">
-                  new entry
+                  {t.notes.newEntry}
                 </span>
                 <div className="h-px flex-1 bg-border/50" />
               </div>
@@ -410,7 +413,7 @@ export function NoteDetail({
                 value={newSubnoteContent}
                 onChange={setNewSubnoteContent}
                 onKeyDown={handleSubnoteKeyDown}
-                placeholder="Write a subnote… (⌘↵ to save, Esc to cancel)"
+                placeholder={t.notes.writeSubnote}
                 autoFocus
                 className="text-base leading-[1.85] text-foreground/85"
               />
@@ -420,13 +423,13 @@ export function NoteDetail({
                   disabled={submittingSubnote || !newSubnoteContent.trim()}
                   className="text-xs font-medium bg-foreground text-background rounded px-3 py-1.5 disabled:opacity-40 hover:opacity-80 transition-opacity"
                 >
-                  {submittingSubnote ? "Adding…" : "Add entry"}
+                  {submittingSubnote ? t.notes.adding : t.notes.addEntry}
                 </button>
                 <button
                   onClick={() => { setAddingSubnote(false); setNewSubnoteContent(""); }}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Cancel
+                  {t.notes.cancel}
                 </button>
               </div>
             </div>
@@ -437,7 +440,7 @@ export function NoteDetail({
             >
               <span className="h-px w-6 bg-current transition-all group-hover:w-10" />
               <Plus className="h-3.5 w-3.5" />
-              <span className="text-xs tracking-wide">add entry</span>
+              <span className="text-xs tracking-wide">{t.notes.addEntry}</span>
             </button>
           )}
         </div>

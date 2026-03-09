@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Search, X, Tag, Check, ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/hooks/use-locale";
 
 export interface NoteListItem {
   id: string;
@@ -38,6 +39,7 @@ function getNoteLabel(note: NoteListItem): string {
 export function NoteList({ notes, selectedId, activeTag, onSelect, onTagFilter, onNew }: NoteListProps) {
   const [query, setQuery] = useState("");
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
+  const { t } = useLocale();
   const allTags = Array.from(new Set(notes.flatMap((n) => n.tags ?? []))).sort();
 
   const visibleNotes = useMemo(() => {
@@ -56,7 +58,7 @@ export function NoteList({ notes, selectedId, activeTag, onSelect, onTagFilter, 
         <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
         <input
           className="w-full bg-transparent pl-6 pr-6 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
-          placeholder="Search notes..."
+          placeholder={t.notes.searchNotes}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -78,7 +80,7 @@ export function NoteList({ notes, selectedId, activeTag, onSelect, onTagFilter, 
               activeTag ? "text-foreground font-medium" : "text-muted-foreground",
             )}>
               <Tag className="h-3 w-3" />
-              <span>{activeTag ?? "All tags"}</span>
+              <span>{activeTag ?? t.notes.allTags}</span>
               <ChevronDown className="h-3 w-3 opacity-60" />
             </PopoverTrigger>
             <PopoverContent align="start" sideOffset={4} className="w-48 p-1">
@@ -86,7 +88,7 @@ export function NoteList({ notes, selectedId, activeTag, onSelect, onTagFilter, 
                 onClick={() => { onTagFilter(null); setTagPopoverOpen(false); }}
                 className="flex w-full items-center justify-between rounded-sm px-3 py-1.5 text-sm hover:bg-secondary"
               >
-                <span>All tags</span>
+                <span>{t.notes.allTags}</span>
                 {activeTag === null && <Check className="h-3.5 w-3.5 text-muted-foreground" />}
               </button>
               {allTags.map((tag) => (
@@ -107,7 +109,7 @@ export function NoteList({ notes, selectedId, activeTag, onSelect, onTagFilter, 
       <div className="flex-1 overflow-y-auto">
         {visibleNotes.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">
-            {query ? "No notes match your search." : "No notes yet."}
+            {query ? t.notes.noNotesMatchSearch : t.notes.noNotesYet}
           </p>
         ) : (
           visibleNotes.map((note) => (
@@ -144,7 +146,7 @@ export function NoteList({ notes, selectedId, activeTag, onSelect, onTagFilter, 
           onClick={onNew}
           className="w-full rounded-md py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary/50"
         >
-          + New Note
+          {t.notes.newNote}
         </button>
       </div>
     </div>

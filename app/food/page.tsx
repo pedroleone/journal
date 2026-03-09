@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import { uploadEncryptedImage } from "@/lib/client-images";
+import { useLocale } from "@/hooks/use-locale";
 
 interface FoodEntry {
   id: string;
@@ -34,6 +35,7 @@ function formatLoggedAt(iso: string): string {
 }
 
 export default function FoodPage() {
+  const { t } = useLocale();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [content, setContent] = useState("");
   const [logging, setLogging] = useState(false);
@@ -100,16 +102,16 @@ export default function FoodPage() {
     <div className="animate-page mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-10">
       <div className="flex justify-end">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/food/browse">Browse & Organize</Link>
+          <Link href="/food/browse">{t.food.browseAndOrganize}</Link>
         </Button>
       </div>
 
       <div className="space-y-4 rounded-xl border border-border/60 bg-card/30 p-4 sm:p-6">
-        <h1 className="font-display text-2xl tracking-tight">Quick Food Log</h1>
+        <h1 className="font-display text-2xl tracking-tight">{t.food.quickFoodLog}</h1>
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="What are you eating?"
+          placeholder={t.food.whatAreYouEating}
           rows={4}
           className="resize-none border-border/50 bg-background/70"
         />
@@ -162,9 +164,9 @@ export default function FoodPage() {
               type="button"
             >
               <Camera className="h-3.5 w-3.5" />
-              Photo
+              {t.food.photo}
             </button>
-            <span>One field, one tap.</span>
+            <span>{t.food.oneFieldOneTap}</span>
           </div>
           <Button
             onClick={handleLog}
@@ -173,10 +175,10 @@ export default function FoodPage() {
             {logging ? (
               <>
                 <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                Logging...
+                {t.food.logging}
               </>
             ) : (
-              "Log"
+              t.food.log
             )}
           </Button>
         </div>
@@ -185,17 +187,17 @@ export default function FoodPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-medium text-muted-foreground">
-            Recent uncategorized
+            {t.food.recentUncategorized}
           </h2>
           {savedFlash && (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Check className="h-3 w-3" />
-              Saved
+              {t.food.saved}
             </span>
           )}
         </div>
         {recent.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No food logs yet.</p>
+          <p className="text-sm text-muted-foreground">{t.food.noFoodLogsYet}</p>
         ) : (
           <div className="space-y-3">
             {recent.map((entry) => (
@@ -206,7 +208,7 @@ export default function FoodPage() {
                 {entry.content ? (
                   <p className="text-sm leading-relaxed">{entry.content}</p>
                 ) : (
-                  <p className="text-sm italic text-muted-foreground">Photo entry</p>
+                  <p className="text-sm italic text-muted-foreground">{t.food.photoEntry}</p>
                 )}
                 {entry.images?.length ? (
                   <EncryptedImageGallery
@@ -220,7 +222,7 @@ export default function FoodPage() {
                     {formatLoggedAt(entry.logged_at)}
                   </p>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/food/entry/${entry.id}`}>Open</Link>
+                    <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
                   </Button>
                 </div>
               </div>

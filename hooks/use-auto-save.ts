@@ -12,12 +12,14 @@ interface UseAutoSaveOptions {
   month: number;
   day: number;
   delayMs?: number;
+  intervalMs?: number;
 }
 
 interface UseAutoSaveReturn {
   status: Status;
   lastSaved: Date | null;
   entryId: string | null;
+  save: () => Promise<void>;
 }
 
 export function useAutoSave({
@@ -27,12 +29,14 @@ export function useAutoSave({
   month,
   day,
   delayMs = 1500,
+  intervalMs = 30_000,
 }: UseAutoSaveOptions): UseAutoSaveReturn {
   const isOnline = useOnlineStatus();
   const [status, setStatus] = useState<Status>("idle");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [entryId, setEntryId] = useState<string | null>(initialEntryId);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const savingRef = useRef(false);
   const contentRef = useRef(content);
   const entryIdRef = useRef(entryId);
@@ -114,5 +118,13 @@ export function useAutoSave({
     };
   }, [content, delayMs, isOnline, save]);
 
-  return { status, lastSaved, entryId };
+  useEffect(() => {
+    if (!content.trim() || !isOnline) return;
+    intervalRef.current = setInterval(save, intervalMs);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [content, intervalMs, isOnline, save]);
+
+  return { status, lastSaved, entryId, save };
 }

@@ -36,11 +36,23 @@ const baseTheme = EditorView.theme({
   ".cm-placeholder": { color: "currentColor", opacity: "0.4" },
 });
 
+// CodeMirror's .cm-scroller has overflow:visible so it never scrolls itself.
+// After each update, find the rendered cursor element and call scrollIntoView
+// so the browser's native logic scrolls the nearest scrollable ancestor.
+const scrollCursorIntoView = EditorView.updateListener.of((update) => {
+  if (!update.selectionSet && !update.docChanged) return;
+  requestAnimationFrame(() => {
+    const cursor = update.view.dom.querySelector<HTMLElement>(".cm-cursor");
+    cursor?.scrollIntoView({ block: "nearest" });
+  });
+});
+
 const baseExtensions = [
   markdown(),
   EditorView.lineWrapping,
   syntaxHighlighting(markdownHighlight),
   baseTheme,
+  scrollCursorIntoView,
 ];
 
 const basicSetupOptions = {

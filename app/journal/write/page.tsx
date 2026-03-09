@@ -25,35 +25,15 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
 import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
 import { DateTree, type DateSelection } from "@/components/journal/date-tree";
+import { useLocale } from "@/hooks/use-locale";
 
-const MONTH_NAMES = [
-  "",
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const DAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
-function formatWriteDate(date: Date): string {
-  return `${DAY_NAMES[date.getDay()]}, ${date.getDate()} ${MONTH_NAMES[date.getMonth() + 1]} ${date.getFullYear()}`;
+function formatWriteDate(date: Date, localeCode: string): string {
+  return date.toLocaleDateString(localeCode, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 interface DateEntry {
@@ -91,6 +71,7 @@ export default function WritePage() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [entryError, setEntryError] = useState("");
   const isOnline = useOnlineStatus();
+  const { t } = useLocale();
   const { images } = useImages(imageKeys);
 
   const createEmptyEntry = useCallback(async (targetDate: Date) => {
@@ -130,7 +111,7 @@ export default function WritePage() {
 
       const entry: JournalEntryResponse = await res.json();
       if (entry.source !== "web") {
-        setEntryError("Telegram entries cannot be edited from write mode.");
+        setEntryError(t.journal.telegramCannotEdit);
         setContent("");
         setImageKeys(entry.images ?? []);
         setLoadedEntryId(null);
@@ -142,11 +123,11 @@ export default function WritePage() {
       setLoadedEntryId(id);
       setImageKeys(entry.images ?? []);
     } catch {
-      setEntryError("Failed to load entry");
+      setEntryError(t.journal.failedToLoadEntry);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadEntryForDate = useCallback(async (targetDate: Date) => {
     setEntryError("");
@@ -172,9 +153,9 @@ export default function WritePage() {
         setImageKeys([]);
       }
     } catch {
-      setEntryError("Failed to load journal entry");
+      setEntryError(t.journal.failedToLoadJournalEntry);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isOnline || !editEntryId) return;
@@ -200,13 +181,25 @@ export default function WritePage() {
     return () => { cancelled = true; };
   }, [isOnline]);
 
-  const { status } = useAutoSave({
+  const { status, save } = useAutoSave({
     entryId: loadedEntryId,
     content,
     year: date.getFullYear(),
     month: date.getMonth() + 1,
     day: date.getDate(),
   });
+
+  useEffect(() => {
+    if (!content.trim() || status === "saved") return;
+
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [content, status]);
 
   async function handleImageSelection(files: FileList | null) {
     if (!files?.length || !isOnline) return;
@@ -253,9 +246,9 @@ export default function WritePage() {
     return (
       <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center px-6">
         <div className="max-w-md space-y-2 text-center">
-          <h1 className="font-display text-2xl tracking-tight">Connection required</h1>
+          <h1 className="font-display text-2xl tracking-tight">{t.journal.connectionRequired}</h1>
           <p className="text-sm text-muted-foreground">
-            Install keeps the app shell available offline, but loading and saving journal entries still requires a connection.
+            {t.journal.connectionRequiredDesc}
           </p>
         </div>
       </div>
@@ -271,8 +264,9 @@ export default function WritePage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex">
       {!isMobile && (
+        <div className="sticky top-14 self-start h-[calc(100vh-3.5rem)] shrink-0 overflow-y-auto">
         <CollapsibleSidebar visible={false}>
           <DateTree
             dates={dates}
@@ -283,27 +277,28 @@ export default function WritePage() {
             onExport={() => router.push("/export")}
           />
         </CollapsibleSidebar>
+        </div>
       )}
       <div className="flex flex-1 flex-col">
       {!isOnline && (
         <div className="border-b border-border/60 bg-secondary/60 px-6 py-2 text-center text-sm text-muted-foreground">
-          You are offline. Changes stay visible here but are not being saved.
+          {t.journal.offlineChanges}
         </div>
       )}
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6">
+      <div className="mx-auto w-full max-w-3xl px-6">
         <div className="flex items-center justify-between py-4">
           <Link
             href="/journal/browse"
             className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            {t.journal.back}
           </Link>
 
           <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
             <PopoverTrigger asChild>
               <button className="font-display text-lg tracking-tight text-foreground transition-colors hover:text-muted-foreground">
-                {formatWriteDate(date)}
+                {formatWriteDate(date, t.localeCode)}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="center">
@@ -327,11 +322,12 @@ export default function WritePage() {
           <div className="pb-2 text-sm text-destructive">{entryError}</div>
         ) : null}
 
-        <div className="flex-1 overflow-y-auto pb-4">
+        <div className="pb-4">
           <MarkdownEditor
             value={content}
             onChange={setContent}
-            placeholder="Start writing..."
+            onBlur={() => { void save(); }}
+            placeholder={t.journal.startWriting}
             className="text-lg leading-relaxed"
             minHeight="calc(100vh - 12rem)"
             autoFocus
@@ -360,7 +356,7 @@ export default function WritePage() {
           ) : null}
         </div>
 
-        <div className="flex items-center justify-between border-t border-border/40 py-3">
+        <div className="sticky bottom-0 flex items-center justify-between border-t border-border/40 py-3 bg-background/95 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <input
               ref={fileInputRef}
@@ -382,7 +378,7 @@ export default function WritePage() {
               ) : (
                 <Paperclip className="h-3 w-3" />
               )}
-              Image
+              {t.journal.image}
             </button>
             {imageKeys.length > 0 ? (
               <span className="text-xs text-muted-foreground">
@@ -395,25 +391,25 @@ export default function WritePage() {
             {status === "saving" && (
               <>
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Saving...
+                {t.journal.saving}
               </>
             )}
             {status === "saved" && (
               <>
                 <Check className="h-3 w-3" />
-                Saved
+                {t.journal.saved}
               </>
             )}
             {status === "error" && (
               <>
                 <AlertCircle className="h-3 w-3" />
-                Save failed
+                {t.journal.saveFailed}
               </>
             )}
             {status === "offline" && (
               <>
                 <AlertCircle className="h-3 w-3" />
-                Offline
+                {t.journal.offline}
               </>
             )}
           </div>
