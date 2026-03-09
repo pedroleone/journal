@@ -8,6 +8,7 @@ import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import type { EntrySource } from "@/lib/types";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 
 interface Entry {
   id: string;
@@ -179,9 +180,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
                           {formatTime(entry.hour, entry.created_at)}
                         </p>
                       )}
-                      <div className="whitespace-pre-wrap text-base leading-relaxed">
-                        {entry.content}
-                      </div>
+                      <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
                       {entry.images?.length ? (
                         <EncryptedImageGallery
                           imageKeys={entry.images}
@@ -226,9 +225,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
                 {formatTime(entry.hour, entry.created_at)}
               </p>
             )}
-            <div className="whitespace-pre-wrap text-base leading-relaxed">
-              {entry.content}
-            </div>
+            <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
             {entry.images?.length ? (
               <EncryptedImageGallery imageKeys={entry.images} className="mt-4" />
             ) : null}

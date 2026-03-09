@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Trash2, Plus, X, Paperclip, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useImages } from "@/hooks/use-images";
 import { uploadEncryptedImage, deleteEncryptedImage } from "@/lib/client-images";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 
 export interface Subnote {
   id: string;
@@ -53,57 +53,6 @@ function formatShortDate(iso: string): string {
   });
 }
 
-interface ExpandingTextareaProps {
-  value: string;
-  onChange: (v: string) => void;
-  onBlur?: () => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  placeholder?: string;
-  className?: string;
-  minRows?: number;
-  autoFocus?: boolean;
-}
-
-function ExpandingTextarea({
-  value,
-  onChange,
-  onBlur,
-  onKeyDown,
-  placeholder,
-  className,
-  minRows = 1,
-  autoFocus,
-}: ExpandingTextareaProps) {
-  const ref = useRef<HTMLTextAreaElement>(null);
-
-  const resize = useCallback(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, []);
-
-  useEffect(() => {
-    resize();
-  }, [value, resize]);
-
-  return (
-    <textarea
-      ref={ref}
-      rows={minRows}
-      value={value}
-      onChange={(e) => { onChange(e.target.value); resize(); }}
-      onBlur={onBlur}
-      onKeyDown={onKeyDown}
-      placeholder={placeholder}
-      autoFocus={autoFocus}
-      className={cn(
-        "w-full resize-none bg-transparent focus:outline-none overflow-hidden",
-        className,
-      )}
-    />
-  );
-}
 
 interface SubnoteBlockProps {
   subnote: Subnote;
@@ -127,7 +76,7 @@ function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
     try { await onSave(draft); } finally { setSaving(false); }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+  function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Escape") { setDraft(subnote.content); }
   }
 
@@ -142,13 +91,13 @@ function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
         <div className="h-px flex-1 bg-border/50" />
       </div>
 
-      <ExpandingTextarea
+      <MarkdownEditor
         value={draft}
         onChange={setDraft}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="Subnote..."
-        className="text-base leading-[1.85] text-foreground/90 placeholder:text-muted-foreground/40"
+        className="text-base leading-[1.85] text-foreground/90"
       />
 
       {/* Delete / saving indicators */}
@@ -229,7 +178,7 @@ export function NoteDetail({
     try { await onUpdate({ content: contentDraft }); } finally { setSavingContent(false); }
   }
 
-  function handleContentKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+  function handleContentKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Escape") setContentDraft(note.content);
   }
 
@@ -271,9 +220,9 @@ export function NoteDetail({
     }
   }
 
-  function handleSubnoteKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+  function handleSubnoteKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Escape") { setAddingSubnote(false); setNewSubnoteContent(""); }
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { handleAddSubnote(); }
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { void handleAddSubnote(); }
   }
 
   async function handleImageFiles(files: FileList | null) {
@@ -399,14 +348,13 @@ export function NoteDetail({
         </div>
 
         {/* Main content — open canvas, no box */}
-        <ExpandingTextarea
+        <MarkdownEditor
           value={contentDraft}
           onChange={setContentDraft}
           onBlur={handleContentBlur}
           onKeyDown={handleContentKeyDown}
           placeholder="Start writing…"
-          minRows={3}
-          className="text-base sm:text-[17px] leading-[1.9] text-foreground/85 placeholder:text-muted-foreground/30"
+          className="text-base sm:text-[17px] leading-[1.9] text-foreground/85"
         />
 
         {/* Image error */}
@@ -458,14 +406,13 @@ export function NoteDetail({
                 </span>
                 <div className="h-px flex-1 bg-border/50" />
               </div>
-              <ExpandingTextarea
+              <MarkdownEditor
                 value={newSubnoteContent}
                 onChange={setNewSubnoteContent}
                 onKeyDown={handleSubnoteKeyDown}
                 placeholder="Write a subnote… (⌘↵ to save, Esc to cancel)"
-                minRows={4}
                 autoFocus
-                className="text-base leading-[1.85] text-foreground/85 placeholder:text-muted-foreground/30"
+                className="text-base leading-[1.85] text-foreground/85"
               />
               <div className="flex items-center gap-3 pt-1">
                 <button
