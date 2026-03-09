@@ -23,6 +23,7 @@ import {
 import { MealSlot, getMonthDays, suggestMealSlot } from "@/lib/food";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
 
 type SelectedState =
   | { kind: "uncategorized" }
@@ -297,7 +298,6 @@ export default function FoodBrowsePage() {
     }
   }
 
-  const showSidebar = isMobile ? sidebarOpen : true;
   const showContent = isMobile ? !sidebarOpen : true;
 
   const groups: Record<MealSlot, FoodEntryView[]> = {
@@ -311,11 +311,10 @@ export default function FoodBrowsePage() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)]">
-      {showSidebar && (
-        <div className={cn("border-r border-border/60", isMobile ? "w-full" : "w-80")}>
-          <div className="flex h-full flex-col">
-            <ScrollArea className="flex-1">
-              <div className="p-3 space-y-1">
+      <CollapsibleSidebar visible={sidebarOpen}>
+        <div className="flex h-full flex-col">
+          <ScrollArea className="flex-1">
+            <div className="p-3 space-y-1">
                 <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                   <Link href="/food">← Quick Log</Link>
                 </Button>
@@ -393,8 +392,7 @@ export default function FoodBrowsePage() {
               </div>
             </ScrollArea>
           </div>
-        </div>
-      )}
+      </CollapsibleSidebar>
 
       {showContent && (
         <div className="flex-1 overflow-y-auto">

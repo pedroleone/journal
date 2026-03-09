@@ -7,7 +7,7 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { DateTree, type DateSelection } from "@/components/journal/date-tree";
 import { EntryViewer } from "@/components/journal/entry-viewer";
-import { cn } from "@/lib/utils";
+import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
 
 interface DateEntry {
   id: string;
@@ -62,26 +62,18 @@ export default function BrowsePage() {
     setSelected(null);
   }
 
-  const showSidebar = isMobile ? sidebarOpen : true;
   const showContent = isMobile ? !sidebarOpen : true;
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)]">
-      {showSidebar && (
-        <div
-          className={cn(
-            "shrink-0 border-r border-border/60",
-            isMobile ? "w-full" : "w-72",
-          )}
-        >
-          <DateTree
-            dates={dates}
-            selected={selected}
-            onSelect={handleSelect}
-            onExport={() => router.push("/export")}
-          />
-        </div>
-      )}
+      <CollapsibleSidebar visible={sidebarOpen}>
+        <DateTree
+          dates={dates}
+          selected={selected}
+          onSelect={handleSelect}
+          onExport={() => router.push("/export")}
+        />
+      </CollapsibleSidebar>
 
       {showContent && (
         <div className="flex-1 overflow-y-auto">

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Check,
@@ -21,7 +21,10 @@ import {
 import { useImages } from "@/hooks/use-images";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
+import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
+import { DateTree, type DateSelection } from "@/components/journal/date-tree";
 
 const MONTH_NAMES = [
   "",
@@ -53,6 +56,13 @@ function formatWriteDate(date: Date): string {
   return `${DAY_NAMES[date.getDay()]}, ${date.getDate()} ${MONTH_NAMES[date.getMonth() + 1]} ${date.getFullYear()}`;
 }
 
+interface DateEntry {
+  id: string;
+  year: number;
+  month: number;
+  day: number;
+}
+
 interface JournalEntryResponse {
   id: string;
   source: "web" | "telegram";
@@ -65,11 +75,14 @@ interface JournalEntryResponse {
 
 export default function WritePage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const editEntryId = searchParams.get("entry");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const [content, setContent] = useState("");
   const [date, setDate] = useState(new Date());
+  const [dates, setDates] = useState<DateEntry[]>([]);
   const [loadedEntryId, setLoadedEntryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -177,6 +190,16 @@ export default function WritePage() {
     void loadEntryForDate(date);
   }, [date, editEntryId, isOnline, loadEntryForDate]);
 
+  useEffect(() => {
+    if (!isOnline) return;
+    let cancelled = false;
+    fetch("/api/entries/dates")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => { if (!cancelled) setDates(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isOnline]);
+
   const { status } = useAutoSave({
     entryId: loadedEntryId,
     content,
@@ -248,7 +271,20 @@ export default function WritePage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className="flex h-[calc(100vh-3.5rem)]">
+      {!isMobile && (
+        <CollapsibleSidebar visible={false}>
+          <DateTree
+            dates={dates}
+            selected={{ year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() }}
+            onSelect={(sel: DateSelection) => {
+              if (sel.day != null && sel.month != null) setDate(new Date(sel.year, sel.month - 1, sel.day));
+            }}
+            onExport={() => router.push("/export")}
+          />
+        </CollapsibleSidebar>
+      )}
+      <div className="flex flex-1 flex-col">
       {!isOnline && (
         <div className="border-b border-border/60 bg-secondary/60 px-6 py-2 text-center text-sm text-muted-foreground">
           You are offline. Changes stay visible here but are not being saved.
@@ -382,6 +418,7 @@ export default function WritePage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

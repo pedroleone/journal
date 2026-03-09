@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { NoteList, type NoteListItem } from "@/components/notes/note-list";
 import { NoteDetail, type NoteDetailData } from "@/components/notes/note-detail";
-import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
 
 
 export default function NotesBrowsePage() {
@@ -154,23 +154,20 @@ export default function NotesBrowsePage() {
     await refreshNote(selectedNoteId);
   }
 
-  const showSidebar = isMobile ? sidebarOpen : true;
   const showContent = isMobile ? !sidebarOpen : true;
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)]">
-      {showSidebar && (
-        <div className={cn("border-r border-border/60", isMobile ? "w-full" : "w-72")}>
-          <NoteList
-            notes={notes}
-            selectedId={selectedNoteId}
-            activeTag={activeTag}
-            onSelect={handleSelectNote}
-            onTagFilter={handleTagFilter}
-            onNew={handleNew}
-          />
-        </div>
-      )}
+      <CollapsibleSidebar visible={sidebarOpen}>
+        <NoteList
+          notes={notes}
+          selectedId={selectedNoteId}
+          activeTag={activeTag}
+          onSelect={handleSelectNote}
+          onTagFilter={handleTagFilter}
+          onNew={handleNew}
+        />
+      </CollapsibleSidebar>
 
       {showContent && (
         <div className="flex-1 overflow-y-auto">
