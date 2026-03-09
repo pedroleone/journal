@@ -3,7 +3,11 @@ import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { putEncryptedObject } from "@/lib/r2";
 import { foodEntries } from "@/lib/schema";
-import { getPrimaryUser } from "@/lib/auth/user";
+import {
+  getUserByTelegramChatId,
+  getUserByTelegramLinkToken,
+  linkTelegramChatId,
+} from "@/lib/auth/user";
 import { encryptServerBuffer, encryptServerText } from "@/lib/server-crypto";
 
 interface TelegramPhotoSize {
@@ -34,10 +38,6 @@ function getWebhookSecret() {
 
 function getBotToken() {
   return process.env.TELEGRAM_BOT_TOKEN;
-}
-
-function getAllowedChatId() {
-  return process.env.TELEGRAM_CHAT_ID;
 }
 
 async function telegramFetch(path: string, init?: RequestInit) {
@@ -81,6 +81,14 @@ async function fetchTelegramPhoto(fileId: string) {
 }
 
 function parseCommand(input: string) {
+  const startMatch = input.match(/^\/start(?:\s+(\S+))?$/);
+  if (startMatch) {
+    return {
+      kind: "link" as const,
+      token: startMatch[1] ?? "",
+    };
+  }
+
   if (
     input.startsWith("/journal") ||
     input.startsWith("/idea") ||
@@ -115,18 +123,34 @@ export async function POST(request: Request) {
     return jsonNoStore({ ok: true });
   }
 
-  if (chatId !== getAllowedChatId()) {
-    return jsonNoStore({ ok: true });
-  }
-
-  const user = await getPrimaryUser();
-  if (!user) {
-    await sendTelegramMessage(chatId, "No app user exists yet.");
-    return jsonNoStore({ ok: true });
-  }
-
   const rawText = (message.text ?? message.caption ?? "").trim();
   const parsed = parseCommand(rawText);
+
+  if (parsed.kind === "link") {
+    if (!parsed.token) {
+      await sendTelegramMessage(chatId, "Please generate a link code in the app settings.");
+      return jsonNoStore({ ok: true });
+    }
+    const user = await getUserByTelegramLinkToken(parsed.token);
+    if (!user || !user.telegramLinkTokenExpiresAt) {
+      await sendTelegramMessage(chatId, "This link has expired. Please generate a new one in the app.");
+      return jsonNoStore({ ok: true });
+    }
+    if (new Date(user.telegramLinkTokenExpiresAt) < new Date()) {
+      await sendTelegramMessage(chatId, "This link has expired. Please generate a new one in the app.");
+      return jsonNoStore({ ok: true });
+    }
+    await linkTelegramChatId(user.id, chatId);
+    await sendTelegramMessage(chatId, "✅ Your Telegram is now linked to your journal!");
+    return jsonNoStore({ ok: true });
+  }
+
+  const user = await getUserByTelegramChatId(chatId);
+  if (!user) {
+    await sendTelegramMessage(chatId, "Your Telegram is not linked. Open the app and connect from Settings.");
+    return jsonNoStore({ ok: true });
+  }
+
   if (parsed.kind === "unsupported") {
     await sendTelegramMessage(
       chatId,

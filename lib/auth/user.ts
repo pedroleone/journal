@@ -68,3 +68,58 @@ export async function getPrimaryUser() {
 
   return user ?? null;
 }
+
+export async function getUserByTelegramChatId(chatId: string) {
+  const [user] = await db
+    .select({ id: users.id, email: users.email })
+    .from(users)
+    .where(eq(users.telegramChatId, chatId));
+  return user ?? null;
+}
+
+export async function getUserByTelegramLinkToken(token: string) {
+  const [user] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      telegramLinkTokenExpiresAt: users.telegramLinkTokenExpiresAt,
+    })
+    .from(users)
+    .where(eq(users.telegramLinkToken, token));
+  return user ?? null;
+}
+
+export async function setTelegramLinkToken(
+  userId: string,
+  token: string,
+  expiresAt: string,
+) {
+  await db
+    .update(users)
+    .set({ telegramLinkToken: token, telegramLinkTokenExpiresAt: expiresAt, updated_at: new Date().toISOString() })
+    .where(eq(users.id, userId));
+}
+
+export async function linkTelegramChatId(userId: string, chatId: string) {
+  await db
+    .update(users)
+    .set({
+      telegramChatId: chatId,
+      telegramLinkToken: null,
+      telegramLinkTokenExpiresAt: null,
+      updated_at: new Date().toISOString(),
+    })
+    .where(eq(users.id, userId));
+}
+
+export async function unlinkTelegramChatId(userId: string) {
+  await db
+    .update(users)
+    .set({
+      telegramChatId: null,
+      telegramLinkToken: null,
+      telegramLinkTokenExpiresAt: null,
+      updated_at: new Date().toISOString(),
+    })
+    .where(eq(users.id, userId));
+}
