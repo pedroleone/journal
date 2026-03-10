@@ -33,7 +33,7 @@ interface NoteDetailProps {
   onUpdateSubnote: (subnoteId: string, content: string) => Promise<void>;
   onDelete: () => Promise<void>;
   onDeleteSubnote: (subnoteId: string) => Promise<void>;
-  onImagesChange: (images: string[]) => void;
+  onImagesChange: (noteId: string, images: string[]) => Promise<void> | void;
 }
 
 function formatNoteDate(iso: string): string {
@@ -166,6 +166,14 @@ export function NoteDetail({
     setTitleDraft(note.title ?? "");
     setContentDraft(note.content);
     setTags(note.tags ?? []);
+    setTagInput("");
+    setAddingSubnote(false);
+    setNewSubnoteContent("");
+    setConfirmDelete(false);
+    setImageError("");
+    setSavingContent(false);
+    setSubmittingSubnote(false);
+    setUploadingImage(false);
   }, [note.id, note.title, note.content, note.tags]);
 
   async function handleTitleBlur() {
@@ -235,7 +243,7 @@ export function NoteDetail({
     try {
       for (const file of Array.from(files)) {
         const result = await uploadEncryptedImage({ file, ownerKind: "note", ownerId: note.id });
-        onImagesChange(result.images);
+        await onImagesChange(note.id, result.images);
       }
     } catch (err) {
       setImageError(err instanceof Error ? err.message : "Upload failed");
@@ -249,7 +257,7 @@ export function NoteDetail({
     if (isNew) return;
     try {
       const result = await deleteEncryptedImage({ imageKey, ownerKind: "note", ownerId: note.id });
-      onImagesChange(result.images);
+      await onImagesChange(note.id, result.images);
     } catch {
       setImageError("Failed to remove image");
     }
@@ -352,6 +360,7 @@ export function NoteDetail({
 
         {/* Main content — open canvas, no box */}
         <MarkdownEditor
+          key={note.id}
           value={contentDraft}
           onChange={setContentDraft}
           onBlur={handleContentBlur}
