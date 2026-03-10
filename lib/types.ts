@@ -31,7 +31,7 @@ export interface BackupFoodEntry {
   month: number;
   day: number;
   hour: number | null;
-  meal_slot: "breakfast" | "lunch" | "dinner" | "snack" | null;
+  meal_slot: "breakfast" | "morning_snack" | "lunch" | "afternoon_snack" | "dinner" | "midnight_snack" | "snack" | null;
   assigned_at: string | null;
   logged_at: string;
   content: string;

@@ -88,10 +88,12 @@ export async function POST(request: Request) {
     }
 
     const encrypted = await encryptServerText(entry.content);
-    const { content, ...restEntry } = entry;
+    const { content, meal_slot, ...restEntry } = entry;
     void content;
+    const mappedSlot = meal_slot === "snack" ? "afternoon_snack" : meal_slot;
     await db.insert(foodEntries).values({
       ...restEntry,
+      meal_slot: mappedSlot,
       userId,
       encrypted_content: encrypted.ciphertext,
       iv: encrypted.iv,

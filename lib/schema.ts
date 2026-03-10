@@ -76,7 +76,7 @@ export const foodEntries = sqliteTable(
     day: integer("day").notNull(),
     hour: integer("hour"),
     meal_slot: text("meal_slot", {
-      enum: ["breakfast", "lunch", "dinner", "snack"],
+      enum: ["breakfast", "morning_snack", "lunch", "afternoon_snack", "dinner", "midnight_snack"],
     }),
     assigned_at: text("assigned_at"),
     logged_at: text("logged_at").notNull(),

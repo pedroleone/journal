@@ -125,6 +125,14 @@ export function AppNav() {
 
         <div className="flex items-center gap-2">
           <InstallAppButton />
+          <button
+            onClick={() => router.push("/food")}
+            className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label={t.nav.quickFood}
+            title={t.nav.quickFood}
+          >
+            <Utensils className="h-4 w-4" />
+          </button>
           <Popover
             open={newPopoverOpen}
             onOpenChange={(open) => {

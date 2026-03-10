@@ -6,6 +6,7 @@ import {
   createFoodEntrySchema,
   foodListQuerySchema,
   assignFoodEntrySchema,
+  updateFoodContentSchema,
   backupPayloadSchema,
 } from "@/lib/validators";
 
@@ -141,6 +142,51 @@ describe("createFoodEntrySchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts entry with meal_slot and date", () => {
+    const result = createFoodEntrySchema.safeParse({
+      content: "Eggs",
+      meal_slot: "breakfast",
+      year: 2026,
+      month: 3,
+      day: 9,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.meal_slot).toBe("breakfast");
+      expect(result.data.year).toBe(2026);
+    }
+  });
+
+  it("accepts skipped entry with empty content", () => {
+    const result = createFoodEntrySchema.safeParse({
+      content: "",
+      meal_slot: "lunch",
+      year: 2026,
+      month: 3,
+      day: 9,
+      tags: ["skipped"],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts new meal slot values", () => {
+    for (const slot of ["morning_snack", "afternoon_snack", "midnight_snack"]) {
+      const result = createFoodEntrySchema.safeParse({
+        content: "Snack",
+        meal_slot: slot,
+      });
+      expect(result.success).toBe(true);
+    }
+  });
+
+  it("rejects old snack value", () => {
+    const result = createFoodEntrySchema.safeParse({
+      content: "Snack",
+      meal_slot: "snack",
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("foodListQuerySchema", () => {
@@ -158,6 +204,13 @@ describe("foodListQuerySchema", () => {
       expect(result.data.uncategorized).toBe(true);
       expect(result.data.limit).toBe(5);
       expect(result.data.meal_slot).toBe("lunch");
+    }
+  });
+
+  it("accepts new meal slot values", () => {
+    for (const slot of ["morning_snack", "afternoon_snack", "midnight_snack"]) {
+      const result = foodListQuerySchema.safeParse({ meal_slot: slot });
+      expect(result.success).toBe(true);
     }
   });
 
@@ -198,6 +251,30 @@ describe("assignFoodEntrySchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts new meal slot values", () => {
+    for (const slot of ["morning_snack", "afternoon_snack", "midnight_snack"]) {
+      const result = assignFoodEntrySchema.safeParse({
+        year: 2026,
+        month: 3,
+        day: 6,
+        meal_slot: slot,
+      });
+      expect(result.success).toBe(true);
+    }
+  });
+});
+
+describe("updateFoodContentSchema", () => {
+  it("accepts valid content", () => {
+    const result = updateFoodContentSchema.safeParse({ content: "Updated meal" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty content", () => {
+    const result = updateFoodContentSchema.safeParse({ content: "" });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("backupPayloadSchema", () => {
@@ -229,6 +306,36 @@ describe("backupPayloadSchema", () => {
           data: "AQID",
         },
       ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts backup with old snack meal_slot for backward compat", () => {
+    const result = backupPayloadSchema.safeParse({
+      version: 2,
+      exported_at: "2026-03-07T10:00:00.000Z",
+      journal_entries: [],
+      food_entries: [
+        {
+          id: "f-1",
+          userId: "user-1",
+          source: "web",
+          year: 2026,
+          month: 3,
+          day: 7,
+          hour: 15,
+          meal_slot: "snack",
+          assigned_at: "2026-03-07T15:00:00.000Z",
+          logged_at: "2026-03-07T15:00:00.000Z",
+          content: "cookies",
+          images: null,
+          tags: null,
+          created_at: "2026-03-07T15:00:00.000Z",
+          updated_at: "2026-03-07T15:00:00.000Z",
+        },
+      ],
+      image_blobs: [],
     });
 
     expect(result.success).toBe(true);

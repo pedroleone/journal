@@ -48,7 +48,7 @@ const features = [
 export default async function Home() {
   const session = await auth();
   if (session?.user?.id) {
-    redirect("/journal/browse");
+    redirect("/home");
   }
 
   return (

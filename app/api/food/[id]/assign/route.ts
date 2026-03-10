@@ -38,7 +38,7 @@ export async function PATCH(
     assigned_at: string;
     updated_at: string;
     hour?: number;
-    meal_slot?: "breakfast" | "lunch" | "dinner" | "snack" | null;
+    meal_slot?: "breakfast" | "morning_snack" | "lunch" | "afternoon_snack" | "dinner" | "midnight_snack" | null;
   } = {
     year: parsed.data.year,
     month: parsed.data.month,

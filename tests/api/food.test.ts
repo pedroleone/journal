@@ -58,6 +58,51 @@ describe("POST /api/food", () => {
     });
     expect(res.status).toBe(201);
   });
+
+  it("creates entry with pre-assigned meal slot and date", async () => {
+    const res = await postFood({
+      content: "Oatmeal",
+      meal_slot: "breakfast",
+      year: 2026,
+      month: 3,
+      day: 9,
+    });
+
+    expect(res.status).toBe(201);
+    const data = await res.json();
+    expect(typeof data.id).toBe("string");
+
+    const insertedValues = mockDb.values.mock.calls[0][0];
+    expect(insertedValues.meal_slot).toBe("breakfast");
+    expect(insertedValues.year).toBe(2026);
+    expect(insertedValues.month).toBe(3);
+    expect(insertedValues.day).toBe(9);
+    expect(insertedValues.assigned_at).not.toBeNull();
+  });
+
+  it("creates a skipped entry with empty content and tags", async () => {
+    const res = await postFood({
+      content: "",
+      meal_slot: "lunch",
+      year: 2026,
+      month: 3,
+      day: 9,
+      tags: ["skipped"],
+    });
+
+    expect(res.status).toBe(201);
+
+    const insertedValues = mockDb.values.mock.calls[0][0];
+    expect(insertedValues.tags).toEqual(["skipped"]);
+    expect(insertedValues.meal_slot).toBe("lunch");
+  });
+
+  it("rejects empty content without skipped tag or images", async () => {
+    const res = await postFood({
+      content: "",
+    });
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("GET /api/food", () => {

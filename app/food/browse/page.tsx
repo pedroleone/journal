@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
@@ -20,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MealSlot, getMonthDays, suggestMealSlot } from "@/lib/food";
+import { MealSlot, MEAL_SLOTS, getMonthDays, suggestMealSlot } from "@/lib/food";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
@@ -48,6 +49,7 @@ interface RawFoodEntry {
   content: string;
   logged_at: string;
   images: string[] | null;
+  tags: string[] | null;
 }
 
 interface FoodEntryView {
@@ -61,6 +63,7 @@ interface FoodEntryView {
   content: string;
   logged_at: string;
   images: string[] | null;
+  tags: string[] | null;
 }
 
 interface AssignDraft {
@@ -120,8 +123,18 @@ function getTree(dates: DateCount[]) {
     }));
 }
 
+function getMealSlotLabel(slot: MealSlot, t: ReturnType<typeof useLocale>["t"]): string {
+  return t.food[slot];
+}
+
 export default function FoodBrowsePage() {
-  const [selected, setSelected] = useState<SelectedState>({ kind: "uncategorized" });
+  const now = new Date();
+  const [selected, setSelected] = useState<SelectedState>({
+    kind: "date",
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    day: now.getDate(),
+  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dates, setDates] = useState<DateCount[]>([]);
   const [uncategorized, setUncategorized] = useState<FoodEntryView[]>([]);
@@ -130,18 +143,17 @@ export default function FoodBrowsePage() {
   const [loadingPane, setLoadingPane] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [assigningAll, setAssigningAll] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { t } = useLocale();
+  const router = useRouter();
 
-  const mealSlots = [
-    { value: "breakfast" as MealSlot, label: t.food.breakfast },
-    { value: "lunch" as MealSlot, label: t.food.lunch },
-    { value: "dinner" as MealSlot, label: t.food.dinner },
-    { value: "snack" as MealSlot, label: t.food.snack },
-  ];
+  const mealSlots = MEAL_SLOTS.map((value) => ({
+    value,
+    label: getMealSlotLabel(value, t),
+  }));
 
   const tree = useMemo(() => getTree(dates), [dates]);
-  const now = new Date();
 
   const loadDates = useCallback(async () => {
     const res = await fetch("/api/food/dates");
@@ -282,13 +294,81 @@ export default function FoodBrowsePage() {
     }
   }
 
+  async function handleAddToSlot(slot: MealSlot) {
+    if (selected.kind !== "date") return;
+    setActionLoading(`add-${slot}`);
+    try {
+      const res = await fetch("/api/food", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: "",
+          images: [],
+          meal_slot: slot,
+          year: selected.year,
+          month: selected.month,
+          day: selected.day,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      router.push(`/food/entry/${data.id}?edit=true`);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleSkipSlot(slot: MealSlot) {
+    if (selected.kind !== "date") return;
+    setActionLoading(`skip-${slot}`);
+    try {
+      const res = await fetch("/api/food", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: "",
+          meal_slot: slot,
+          year: selected.year,
+          month: selected.month,
+          day: selected.day,
+          tags: ["skipped"],
+        }),
+      });
+      if (!res.ok) return;
+      await Promise.all([
+        loadDayEntries(selected.year, selected.month, selected.day),
+        loadDates(),
+      ]);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleUndoSkip(entryId: string) {
+    setActionLoading(`undo-${entryId}`);
+    try {
+      const res = await fetch(`/api/food/${entryId}`, { method: "DELETE" });
+      if (!res.ok) return;
+      if (selected.kind === "date") {
+        await Promise.all([
+          loadDayEntries(selected.year, selected.month, selected.day),
+          loadDates(),
+        ]);
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   const showContent = isMobile ? !sidebarOpen : true;
 
   const groups: Record<MealSlot, FoodEntryView[]> = {
     breakfast: dayEntries.filter((e) => e.meal_slot === "breakfast"),
+    morning_snack: dayEntries.filter((e) => e.meal_slot === "morning_snack"),
     lunch: dayEntries.filter((e) => e.meal_slot === "lunch"),
+    afternoon_snack: dayEntries.filter((e) => e.meal_slot === "afternoon_snack"),
     dinner: dayEntries.filter((e) => e.meal_slot === "dinner"),
-    snack: dayEntries.filter((e) => e.meal_slot === "snack"),
+    midnight_snack: dayEntries.filter((e) => e.meal_slot === "midnight_snack"),
   };
 
   const localeCode = t.localeCode;
@@ -486,44 +566,96 @@ export default function FoodBrowsePage() {
                 {formatDateTitle(selected.year, selected.month, selected.day, localeCode)}
               </h1>
 
-              {mealSlots.map((slot) => (
-                <section key={slot.value} className="space-y-2">
-                  <h2 className="text-sm font-medium text-muted-foreground">{slot.label}</h2>
-                  {groups[slot.value].length === 0 ? (
-                    <p className="text-sm text-muted-foreground">{t.food.empty}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {groups[slot.value].map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="rounded-lg border border-border/50 bg-card/20 px-3 py-2"
+              {mealSlots.map((slot) => {
+                const entries = groups[slot.value];
+                const isSkipped = entries.some((e) => e.tags?.includes("skipped"));
+                const skippedEntry = entries.find((e) => e.tags?.includes("skipped"));
+                const realEntries = entries.filter((e) => !e.tags?.includes("skipped"));
+                const isEmpty = realEntries.length === 0 && !isSkipped;
+
+                return (
+                  <section key={slot.value} className="space-y-2">
+                    <h2 className="text-sm font-medium text-muted-foreground">{slot.label}</h2>
+
+                    {isSkipped && skippedEntry ? (
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                          {t.food.skipped}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => handleUndoSkip(skippedEntry.id)}
+                          disabled={actionLoading === `undo-${skippedEntry.id}`}
                         >
-                          {entry.content ? (
-                            <p className="text-sm leading-relaxed">{entry.content}</p>
-                          ) : (
-                            <p className="text-sm italic text-muted-foreground">{t.food.photoEntry}</p>
-                          )}
-                          {entry.images?.length ? (
-                            <EncryptedImageGallery
-                              imageKeys={entry.images}
-                              className="mt-3"
-                              imageClassName="h-32"
-                            />
-                          ) : null}
-                          <div className="mt-1 flex items-center justify-between gap-3">
-                            <p className="text-xs text-muted-foreground">
-                              {formatTime(entry.logged_at, entry.hour)}
-                            </p>
-                            <Button variant="outline" size="sm" asChild>
-                              <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
-                            </Button>
+                          {t.food.undo}
+                        </Button>
+                      </div>
+                    ) : null}
+
+                    {realEntries.length > 0 ? (
+                      <div className="space-y-2">
+                        {realEntries.map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="rounded-lg border border-border/50 bg-card/20 px-3 py-2"
+                          >
+                            {entry.content ? (
+                              <p className="text-sm leading-relaxed">{entry.content}</p>
+                            ) : (
+                              <p className="text-sm italic text-muted-foreground">{t.food.photoEntry}</p>
+                            )}
+                            {entry.images?.length ? (
+                              <EncryptedImageGallery
+                                imageKeys={entry.images}
+                                className="mt-3"
+                                imageClassName="h-32"
+                              />
+                            ) : null}
+                            <div className="mt-1 flex items-center justify-between gap-3">
+                              <p className="text-xs text-muted-foreground">
+                                {formatTime(entry.logged_at, entry.hour)}
+                              </p>
+                              <div className="flex items-center gap-1">
+                                <Button variant="outline" size="sm" className="h-8 min-w-[44px]" asChild>
+                                  <Link href={`/food/entry/${entry.id}?edit=true`}>{t.food.edit}</Link>
+                                </Button>
+                                <Button variant="outline" size="sm" className="h-8 min-w-[44px]" asChild>
+                                  <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
+                                </Button>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              ))}
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {isEmpty ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 min-w-[44px]"
+                          onClick={() => handleAddToSlot(slot.value)}
+                          disabled={actionLoading === `add-${slot.value}`}
+                        >
+                          {t.food.add}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 min-w-[44px] text-muted-foreground"
+                          onClick={() => handleSkipSlot(slot.value)}
+                          disabled={actionLoading === `skip-${slot.value}`}
+                        >
+                          {t.food.skip}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </section>
+                );
+              })}
 
               {unassignedForDay.length > 0 && (
                 <section className="space-y-2">
@@ -550,9 +682,14 @@ export default function FoodBrowsePage() {
                           <p className="text-xs text-muted-foreground">
                             {formatTime(entry.logged_at, entry.hour)}
                           </p>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button variant="outline" size="sm" className="h-8 min-w-[44px]" asChild>
+                              <Link href={`/food/entry/${entry.id}?edit=true`}>{t.food.edit}</Link>
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-8 min-w-[44px]" asChild>
+                              <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}

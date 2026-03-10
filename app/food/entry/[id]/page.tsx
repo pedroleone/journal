@@ -1,10 +1,11 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { useImages } from "@/hooks/use-images";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
@@ -16,10 +17,11 @@ interface FoodEntry {
   month: number;
   day: number;
   hour: number | null;
-  meal_slot: "breakfast" | "lunch" | "dinner" | "snack" | null;
+  meal_slot: "breakfast" | "morning_snack" | "lunch" | "afternoon_snack" | "dinner" | "midnight_snack" | null;
   logged_at: string;
   content: string;
   images: string[] | null;
+  tags: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -42,6 +44,7 @@ export default function FoodEntryPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [entry, setEntry] = useState<FoodEntry | null>(null);
   const [imageKeys, setImageKeys] = useState<string[]>([]);
@@ -50,6 +53,9 @@ export default function FoodEntryPage({
   const [uploadingImages, setUploadingImages] = useState(false);
   const [deletingEntry, setDeletingEntry] = useState(false);
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [saving, setSaving] = useState(false);
   const isOnline = useOnlineStatus();
   const { images } = useImages(imageKeys);
 
@@ -64,7 +70,11 @@ export default function FoodEntryPage({
       .then((data: FoodEntry) => {
         setEntry(data);
         setImageKeys(data.images ?? []);
+        setEditContent(data.content);
         setLoading(false);
+        if (searchParams.get("edit") === "true") {
+          setEditing(true);
+        }
       })
       .catch(() => {
         setLoading(false);
@@ -73,7 +83,32 @@ export default function FoodEntryPage({
       .finally(() => {
         setReadyForViewing(true);
       });
-  }, [id, isOnline]);
+  }, [id, isOnline, searchParams]);
+
+  async function handleSaveEdit() {
+    if (!entry || !isOnline) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/food/${entry.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editContent }),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      setEntry({ ...entry, content: editContent });
+      setEditing(false);
+    } catch {
+      setError("Failed to save changes");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleCancelEdit() {
+    if (entry) setEditContent(entry.content);
+    setEditing(false);
+  }
 
   async function handleImageSelection(files: FileList | null) {
     if (!files?.length || !entry || !isOnline) return;
@@ -193,9 +228,43 @@ export default function FoodEntryPage({
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      {entry.content ? (
-        <div className="whitespace-pre-wrap text-base leading-relaxed">{entry.content}</div>
-      ) : null}
+      {editing ? (
+        <div className="space-y-3">
+          <Textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="min-h-[120px]"
+            autoFocus
+          />
+          <div className="flex items-center gap-2">
+            <Button onClick={handleSaveEdit} disabled={saving || !editContent.trim()}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button variant="outline" onClick={handleCancelEdit} disabled={saving}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {entry.content ? (
+            <div className="whitespace-pre-wrap text-base leading-relaxed">{entry.content}</div>
+          ) : null}
+          {!entry.tags?.includes("skipped") && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditContent(entry.content);
+                setEditing(true);
+              }}
+              disabled={!isOnline}
+            >
+              Edit
+            </Button>
+          )}
+        </>
+      )}
 
       {images.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -204,7 +273,6 @@ export default function FoodEntryPage({
               key={image.key}
               className="relative overflow-hidden rounded-lg border border-border/50 bg-card/20"
             >
-              {/* Blob URLs back these previews, so Next/Image is not a good fit here. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={image.url} alt="" className="h-48 w-full object-cover" />
               <button

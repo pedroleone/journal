@@ -10,6 +10,7 @@ import {
   Loader2,
   AlertCircle,
   Paperclip,
+  Plus,
   X,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -242,6 +243,14 @@ export default function WritePage() {
     }
   }
 
+  function handleNewThought() {
+    const time = new Date().toLocaleTimeString(t.localeCode, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    setContent((prev) => `${prev}\n\n---\n\n*${time}*\n\n`);
+  }
+
   if (!isOnline && !readyForEditing) {
     return (
       <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center px-6">
@@ -272,7 +281,12 @@ export default function WritePage() {
             dates={dates}
             selected={{ year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() }}
             onSelect={(sel: DateSelection) => {
-              if (sel.day != null && sel.month != null) setDate(new Date(sel.year, sel.month - 1, sel.day));
+              if (sel.day != null && sel.month != null) {
+                if (editEntryId) {
+                  router.replace("/journal/write");
+                }
+                setDate(new Date(sel.year, sel.month - 1, sel.day));
+              }
             }}
             onExport={() => router.push("/export")}
           />
@@ -328,7 +342,7 @@ export default function WritePage() {
             onChange={setContent}
             onBlur={() => { void save(); }}
             placeholder={t.journal.startWriting}
-            className="text-lg leading-relaxed"
+            className="text-base leading-relaxed"
             minHeight="calc(100vh - 12rem)"
             autoFocus
           />
@@ -379,6 +393,14 @@ export default function WritePage() {
                 <Paperclip className="h-3 w-3" />
               )}
               {t.journal.image}
+            </button>
+            <button
+              onClick={handleNewThought}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              disabled={!content.trim()}
+            >
+              <Plus className="h-3 w-3" />
+              {t.journal.newThought}
             </button>
             {imageKeys.length > 0 ? (
               <span className="text-xs text-muted-foreground">

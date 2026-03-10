@@ -27,7 +27,7 @@ interface JournalEntry extends BaseEntry {
 interface FoodEntry extends BaseEntry {
   kind: "food";
   logged_at: string;
-  meal_slot: "breakfast" | "lunch" | "dinner" | "snack" | null;
+  meal_slot: "breakfast" | "morning_snack" | "lunch" | "afternoon_snack" | "dinner" | "midnight_snack" | null;
 }
 
 type ExportableEntry = JournalEntry | FoodEntry;

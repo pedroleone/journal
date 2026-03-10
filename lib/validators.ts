@@ -53,20 +53,41 @@ const boolFromString = z.preprocess((value) => {
   return value;
 }, z.boolean().optional());
 
+const mealSlotEnum = z.enum([
+  "breakfast",
+  "morning_snack",
+  "lunch",
+  "afternoon_snack",
+  "dinner",
+  "midnight_snack",
+]);
+
 export const createFoodEntrySchema = z
   .object({
     ...encryptedPayloadFields,
+    meal_slot: mealSlotEnum.optional(),
+    year: z.coerce.number().int().optional(),
+    month: z.coerce.number().int().min(1).max(12).optional(),
+    day: z.coerce.number().int().min(1).max(31).optional(),
+    tags: z.array(z.string().min(1)).nullable().optional(),
   })
-  .refine(hasContentOrImageIntent, {
-    message: "Food entry must include text or at least one image",
-  });
+  .refine(
+    (value) => {
+      // Allow empty content when tags include "skipped"
+      if (value.tags?.includes("skipped")) return true;
+      return hasContentOrImageIntent(value);
+    },
+    {
+      message: "Food entry must include text or at least one image",
+    },
+  );
 
 export const foodListQuerySchema = z.object({
   uncategorized: boolFromString,
   year: z.coerce.number().int().optional(),
   month: z.coerce.number().int().min(1).max(12).optional(),
   day: z.coerce.number().int().min(1).max(31).optional(),
-  meal_slot: z.enum(["breakfast", "lunch", "dinner", "snack"]).optional(),
+  meal_slot: mealSlotEnum.optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
@@ -75,7 +96,11 @@ export const assignFoodEntrySchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
   day: z.coerce.number().int().min(1).max(31),
   hour: z.coerce.number().int().min(0).max(23).optional(),
-  meal_slot: z.enum(["breakfast", "lunch", "dinner", "snack"]).nullable().optional(),
+  meal_slot: mealSlotEnum.nullable().optional(),
+});
+
+export const updateFoodContentSchema = z.object({
+  content: z.string().min(1),
 });
 
 export const imageOwnerKindSchema = z.enum(["journal", "food", "note", "note_subnote"]);
@@ -141,7 +166,17 @@ const backupFoodEntrySchema = z.object({
   month: z.number().int().min(1).max(12),
   day: z.number().int().min(1).max(31),
   hour: z.number().int().min(0).max(23).nullable(),
-  meal_slot: z.enum(["breakfast", "lunch", "dinner", "snack"]).nullable(),
+  meal_slot: z
+    .enum([
+      "breakfast",
+      "morning_snack",
+      "lunch",
+      "afternoon_snack",
+      "dinner",
+      "midnight_snack",
+      "snack",
+    ])
+    .nullable(),
   assigned_at: z.string().nullable(),
   logged_at: z.string().min(1),
   content: z.string(),

@@ -1,10 +1,27 @@
-export type MealSlot = "breakfast" | "lunch" | "dinner" | "snack";
+export type MealSlot =
+  | "breakfast"
+  | "morning_snack"
+  | "lunch"
+  | "afternoon_snack"
+  | "dinner"
+  | "midnight_snack";
+
+export const MEAL_SLOTS: MealSlot[] = [
+  "breakfast",
+  "morning_snack",
+  "lunch",
+  "afternoon_snack",
+  "dinner",
+  "midnight_snack",
+];
 
 export function suggestMealSlot(hour: number): MealSlot {
-  if (hour < 11) return "breakfast";
-  if (hour < 15) return "lunch";
-  if (hour < 17) return "snack";
-  return "dinner";
+  if (hour < 10) return "breakfast";
+  if (hour < 12) return "morning_snack";
+  if (hour < 14) return "lunch";
+  if (hour < 17) return "afternoon_snack";
+  if (hour < 21) return "dinner";
+  return "midnight_snack";
 }
 
 export function getMonthDays(year: number, month: number): number[] {

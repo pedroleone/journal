@@ -27,21 +27,24 @@ export async function POST(request: NextRequest) {
   const nowIso = now.toISOString();
   const encrypted = await encryptServerText(parsed.data.content);
 
+  // When meal_slot + date are provided, create an already-assigned entry
+  const hasSlotInfo = parsed.data.meal_slot && parsed.data.year && parsed.data.month && parsed.data.day;
+
   await db.insert(foodEntries).values({
     id,
     userId,
     source: "web",
-    year: now.getFullYear(),
-    month: now.getMonth() + 1,
-    day: now.getDate(),
+    year: parsed.data.year ?? now.getFullYear(),
+    month: parsed.data.month ?? (now.getMonth() + 1),
+    day: parsed.data.day ?? now.getDate(),
     hour: now.getHours(),
-    meal_slot: null,
-    assigned_at: null,
+    meal_slot: parsed.data.meal_slot ?? null,
+    assigned_at: hasSlotInfo ? nowIso : null,
     logged_at: nowIso,
     encrypted_content: encrypted.ciphertext,
     iv: encrypted.iv,
     images: parsed.data.images ?? null,
-    tags: null,
+    tags: parsed.data.tags ?? null,
     created_at: nowIso,
     updated_at: nowIso,
   });

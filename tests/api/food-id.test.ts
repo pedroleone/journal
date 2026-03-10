@@ -91,6 +91,80 @@ describe("GET /api/food/[id]", () => {
   });
 });
 
+describe("PATCH /api/food/[id]", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", email: "user@example.com" },
+    });
+    mockDb.select.mockReturnThis();
+    mockDb.from.mockReturnThis();
+    mockDb.update.mockReturnThis();
+    mockDb.set.mockReturnThis();
+  });
+
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const { PATCH } = await import("@/app/api/food/[id]/route");
+    const request = new NextRequest("http://localhost/api/food/food-1", {
+      method: "PATCH",
+      body: JSON.stringify({ content: "Updated" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PATCH(request, { params: makeParams("food-1") });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("updates content and returns ok", async () => {
+    // First call: ownership check
+    mockDb.where
+      .mockResolvedValueOnce([{ id: "food-1" }])
+      // Second call: update
+      .mockResolvedValueOnce(undefined);
+
+    const { PATCH } = await import("@/app/api/food/[id]/route");
+    const request = new NextRequest("http://localhost/api/food/food-1", {
+      method: "PATCH",
+      body: JSON.stringify({ content: "Updated meal" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PATCH(request, { params: makeParams("food-1") });
+
+    expect(res.status).toBe(200);
+    expect(mockServerCrypto.encryptServerText).toHaveBeenCalledWith("Updated meal");
+    await expect(res.json()).resolves.toMatchObject({ ok: true });
+  });
+
+  it("returns 404 when entry not found", async () => {
+    mockDb.where.mockResolvedValueOnce([]);
+
+    const { PATCH } = await import("@/app/api/food/[id]/route");
+    const request = new NextRequest("http://localhost/api/food/food-1", {
+      method: "PATCH",
+      body: JSON.stringify({ content: "Updated" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PATCH(request, { params: makeParams("food-1") });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 on empty content", async () => {
+    const { PATCH } = await import("@/app/api/food/[id]/route");
+    const request = new NextRequest("http://localhost/api/food/food-1", {
+      method: "PATCH",
+      body: JSON.stringify({ content: "" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PATCH(request, { params: makeParams("food-1") });
+
+    expect(res.status).toBe(400);
+  });
+});
+
 describe("DELETE /api/food/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();

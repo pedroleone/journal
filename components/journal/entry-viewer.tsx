@@ -225,7 +225,13 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
                 {formatTime(entry.hour, entry.created_at)}
               </p>
             )}
-            <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
+            {entry.source === "web" ? (
+              <Link href={`/journal/write?entry=${entry.id}`} className="block rounded-md -mx-2 px-2 py-1 transition-colors hover:bg-secondary/50">
+                <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed pointer-events-none" />
+              </Link>
+            ) : (
+              <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
+            )}
             {entry.images?.length ? (
               <EncryptedImageGallery imageKeys={entry.images} className="mt-4" />
             ) : null}

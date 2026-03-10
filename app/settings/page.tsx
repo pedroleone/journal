@@ -4,6 +4,14 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/hooks/use-locale";
+import { useDefaultView, DefaultView, VIEW_ROUTES } from "@/hooks/use-default-view";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TelegramLinkState {
   linked: boolean;
@@ -125,11 +133,21 @@ function TelegramSection() {
   );
 }
 
+const VIEW_LABELS: Record<DefaultView, { en: string; pt: string }> = {
+  "journal-browse": { en: "Journal Browse", pt: "Navegar Diário" },
+  "food-browse": { en: "Food Browse", pt: "Navegar Alimentação" },
+  "notes-browse": { en: "Notes Browse", pt: "Navegar Notas" },
+  "journal-write": { en: "Journal Write", pt: "Escrever Diário" },
+  "food-new": { en: "New Food Entry", pt: "Nova Entrada de Alimentação" },
+  "notes-new": { en: "New Note", pt: "Nova Nota" },
+};
+
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState("");
   const { t, locale, setLocale } = useLocale();
+  const { view: defaultView, setView: setDefaultView } = useDefaultView();
 
   async function handleRestore(file: File | null) {
     if (!file) return;
@@ -195,6 +213,25 @@ export default function SettingsPage() {
           >
             Português (BR)
           </Button>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-border/60 bg-card/30 p-6">
+        <h2 className="font-display text-2xl tracking-tight">{t.settings.defaultView}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t.settings.defaultViewDesc}</p>
+        <div className="mt-4">
+          <Select value={defaultView} onValueChange={(v) => setDefaultView(v as DefaultView)}>
+            <SelectTrigger className="w-[240px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(VIEW_ROUTES) as DefaultView[]).map((key) => (
+                <SelectItem key={key} value={key}>
+                  {locale === "pt-br" ? VIEW_LABELS[key].pt : VIEW_LABELS[key].en}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </section>
 

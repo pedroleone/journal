@@ -8,6 +8,7 @@ export type Translations = {
     journalEntry: string;
     foodEntry: string;
     note: string;
+    quickFood: string;
   };
   journal: {
     back: string;
@@ -26,6 +27,7 @@ export type Translations = {
     failedToLoadJournalEntry: string;
     connectionRequired: string;
     connectionRequiredDesc: string;
+    newThought: string;
   };
   food: {
     quickFoodLog: string;
@@ -51,11 +53,18 @@ export type Translations = {
     mealSlot: string;
     noSlot: string;
     breakfast: string;
+    morning_snack: string;
     lunch: string;
+    afternoon_snack: string;
     dinner: string;
-    snack: string;
+    midnight_snack: string;
     uncategorizedSection: string;
     empty: string;
+    skipped: string;
+    skip: string;
+    edit: string;
+    add: string;
+    undo: string;
   };
   notes: {
     searchNotes: string;
@@ -107,6 +116,8 @@ export type Translations = {
     loading: string;
     language: string;
     languageDesc: string;
+    defaultView: string;
+    defaultViewDesc: string;
   };
   exportPage: {
     export: string;
@@ -138,6 +149,7 @@ export const en: Translations = {
     journalEntry: "Journal entry",
     foodEntry: "Food entry",
     note: "Note",
+    quickFood: "Quick food log",
   },
   journal: {
     back: "Back",
@@ -157,6 +169,7 @@ export const en: Translations = {
     connectionRequired: "Connection required",
     connectionRequiredDesc:
       "Install keeps the app shell available offline, but loading and saving journal entries still requires a connection.",
+    newThought: "New thought",
   },
   food: {
     quickFoodLog: "Quick Food Log",
@@ -171,7 +184,7 @@ export const en: Translations = {
     photoEntry: "Photo entry",
     open: "Open",
     browseAndOrganize: "Browse & Organize",
-    backToQuickLog: "← Quick Log",
+    backToQuickLog: "\u2190 Quick Log",
     uncategorized: (count) => `Uncategorized (${count})`,
     uncategorizedEntries: "Uncategorized Entries",
     assignAllByDate: "Assign All by Date",
@@ -182,11 +195,18 @@ export const en: Translations = {
     mealSlot: "Meal slot",
     noSlot: "No slot",
     breakfast: "Breakfast",
+    morning_snack: "Morning Snack",
     lunch: "Lunch",
+    afternoon_snack: "Afternoon Snack",
     dinner: "Dinner",
-    snack: "Snack",
+    midnight_snack: "Midnight Snack",
     uncategorizedSection: "Uncategorized",
     empty: "(empty)",
+    skipped: "Skipped",
+    skip: "Skip",
+    edit: "Edit",
+    add: "Add",
+    undo: "Undo",
   },
   notes: {
     searchNotes: "Search notes...",
@@ -197,14 +217,14 @@ export const en: Translations = {
     selectOrCreate: "Select a note or create a new one.",
     untitled: "Untitled",
     addTag: "+ add tag",
-    startWriting: "Start writing…",
-    writeSubnote: "Write a subnote… (⌘↵ to save, Esc to cancel)",
+    startWriting: "Start writing\u2026",
+    writeSubnote: "Write a subnote\u2026 (\u2318\u21b5 to save, Esc to cancel)",
     subnote: "Subnote...",
-    saving: "saving…",
+    saving: "saving\u2026",
     deleteNote: "Delete note",
     cancel: "Cancel",
     addEntry: "Add entry",
-    adding: "Adding…",
+    adding: "Adding\u2026",
     newEntry: "new entry",
     delete: "Delete",
     loading: "Loading...",
@@ -222,7 +242,7 @@ export const en: Translations = {
     restoreBackup: "Restore backup",
     restoreBackupDesc:
       "Restore from a version 2 backup JSON file. Existing entry IDs are skipped.",
-    restoring: "Restoring…",
+    restoring: "Restoring\u2026",
     restoreFailed: "Restore failed.",
     importedResult: (journal, food, images) =>
       `Imported ${journal} journal, ${food} food, ${images} images.`,
@@ -230,7 +250,7 @@ export const en: Translations = {
     telegramDesc: "Connect your Telegram account to log food entries from the bot.",
     connected: "Connected",
     disconnect: "Disconnect",
-    waitingForConfirmation: "Waiting for confirmation…",
+    waitingForConfirmation: "Waiting for confirmation\u2026",
     generateNewCode: "Generate new code",
     connectTelegram: "Connect Telegram",
     telegramCommands: "Telegram commands",
@@ -238,9 +258,11 @@ export const en: Translations = {
     telegramCmd2: "Messages without a command also save as food entries.",
     telegramCmd3: "/journal, /idea, and /note are intentionally unsupported.",
     telegramCmd4: "Photos can be sent with or without /food and land in uncategorized food.",
-    loading: "Loading…",
+    loading: "Loading\u2026",
     language: "Language",
     languageDesc: "Choose your preferred language.",
+    defaultView: "Default view",
+    defaultViewDesc: "Choose which page opens after login.",
   },
   exportPage: {
     export: "Export",
@@ -255,9 +277,9 @@ export const en: Translations = {
     plainText: "Plain text",
     entriesSelected: (count) => `${count} entries selected`,
     exportSelected: "Export selected",
-    preparingExport: "Preparing export…",
+    preparingExport: "Preparing export\u2026",
     downloadBackupJson: "Download backup JSON",
-    downloading: "Downloading…",
+    downloading: "Downloading\u2026",
     treeSelection: "Tree selection",
   },
 };
@@ -265,13 +287,14 @@ export const en: Translations = {
 export const ptBr: Translations = {
   localeCode: "pt-BR",
   nav: {
-    journal: "Diário",
-    food: "Alimentação",
+    journal: "Di\u00e1rio",
+    food: "Alimenta\u00e7\u00e3o",
     notes: "Notas",
     new: "Novo",
-    journalEntry: "Entrada no diário",
-    foodEntry: "Entrada de alimentação",
+    journalEntry: "Entrada no di\u00e1rio",
+    foodEntry: "Entrada de alimenta\u00e7\u00e3o",
     note: "Nota",
+    quickFood: "Registro r\u00e1pido",
   },
   journal: {
     back: "Voltar",
@@ -283,65 +306,73 @@ export const ptBr: Translations = {
     saveFailed: "Falha ao salvar",
     offline: "Offline",
     offlineChanges:
-      "Você está offline. As alterações ficam visíveis aqui, mas não estão sendo salvas.",
+      "Voc\u00ea est\u00e1 offline. As altera\u00e7\u00f5es ficam vis\u00edveis aqui, mas n\u00e3o est\u00e3o sendo salvas.",
     offlineBrowse:
-      "Você está offline. Reconecte para carregar as datas e entradas do diário.",
-    reconnectToLoad: "Reconecte para carregar seu diário.",
+      "Voc\u00ea est\u00e1 offline. Reconecte para carregar as datas e entradas do di\u00e1rio.",
+    reconnectToLoad: "Reconecte para carregar seu di\u00e1rio.",
     telegramCannotEdit:
-      "Entradas do Telegram não podem ser editadas no modo de escrita.",
+      "Entradas do Telegram n\u00e3o podem ser editadas no modo de escrita.",
     failedToLoadEntry: "Falha ao carregar entrada",
-    failedToLoadJournalEntry: "Falha ao carregar entrada do diário",
-    connectionRequired: "Conexão necessária",
+    failedToLoadJournalEntry: "Falha ao carregar entrada do di\u00e1rio",
+    connectionRequired: "Conex\u00e3o necess\u00e1ria",
     connectionRequiredDesc:
-      "O app permanece disponível offline, mas carregar e salvar entradas do diário ainda requer conexão.",
+      "O app permanece dispon\u00edvel offline, mas carregar e salvar entradas do di\u00e1rio ainda requer conex\u00e3o.",
+    newThought: "Novo pensamento",
   },
   food: {
-    quickFoodLog: "Registro Rápido de Alimentação",
-    whatAreYouEating: "O que você está comendo?",
+    quickFoodLog: "Registro R\u00e1pido de Alimenta\u00e7\u00e3o",
+    whatAreYouEating: "O que voc\u00ea est\u00e1 comendo?",
     photo: "Foto",
     oneFieldOneTap: "Um campo, um toque.",
     log: "Registrar",
     logging: "Registrando...",
-    recentUncategorized: "Recente não categorizado",
+    recentUncategorized: "Recente n\u00e3o categorizado",
     saved: "Salvo",
-    noFoodLogsYet: "Nenhum registro de alimentação ainda.",
+    noFoodLogsYet: "Nenhum registro de alimenta\u00e7\u00e3o ainda.",
     photoEntry: "Entrada com foto",
     open: "Abrir",
     browseAndOrganize: "Navegar e Organizar",
-    backToQuickLog: "← Registro Rápido",
-    uncategorized: (count) => `Não categorizado (${count})`,
-    uncategorizedEntries: "Entradas Não Categorizadas",
+    backToQuickLog: "\u2190 Registro R\u00e1pido",
+    uncategorized: (count) => `N\u00e3o categorizado (${count})`,
+    uncategorizedEntries: "Entradas N\u00e3o Categorizadas",
     assignAllByDate: "Atribuir Tudo por Data",
     assigning: "Atribuindo...",
     assign: "Atribuir",
-    noUncategorizedEntries: "Nenhuma entrada de alimentação não categorizada.",
+    noUncategorizedEntries: "Nenhuma entrada de alimenta\u00e7\u00e3o n\u00e3o categorizada.",
     selectDate: "Selecionar data",
-    mealSlot: "Refeição",
-    noSlot: "Sem refeição",
-    breakfast: "Café da manhã",
-    lunch: "Almoço",
+    mealSlot: "Refei\u00e7\u00e3o",
+    noSlot: "Sem refei\u00e7\u00e3o",
+    breakfast: "Caf\u00e9 da manh\u00e3",
+    morning_snack: "Lanche da manh\u00e3",
+    lunch: "Almo\u00e7o",
+    afternoon_snack: "Lanche da tarde",
     dinner: "Jantar",
-    snack: "Lanche",
-    uncategorizedSection: "Não categorizado",
+    midnight_snack: "Lanche da madrugada",
+    uncategorizedSection: "N\u00e3o categorizado",
     empty: "(vazio)",
+    skipped: "Pulado",
+    skip: "Pular",
+    edit: "Editar",
+    add: "Adicionar",
+    undo: "Desfazer",
   },
   notes: {
     searchNotes: "Buscar notas...",
     allTags: "Todas as tags",
-    noNotesMatchSearch: "Nenhuma nota corresponde à sua busca.",
+    noNotesMatchSearch: "Nenhuma nota corresponde \u00e0 sua busca.",
     noNotesYet: "Nenhuma nota ainda.",
     newNote: "+ Nova nota",
     selectOrCreate: "Selecione uma nota ou crie uma nova.",
-    untitled: "Sem título",
+    untitled: "Sem t\u00edtulo",
     addTag: "+ adicionar tag",
-    startWriting: "Comece a escrever…",
-    writeSubnote: "Escreva uma subnota… (⌘↵ para salvar, Esc para cancelar)",
+    startWriting: "Comece a escrever\u2026",
+    writeSubnote: "Escreva uma subnota\u2026 (\u2318\u21b5 para salvar, Esc para cancelar)",
     subnote: "Subnota...",
-    saving: "salvando…",
+    saving: "salvando\u2026",
     deleteNote: "Excluir nota",
     cancel: "Cancelar",
     addEntry: "Adicionar entrada",
-    adding: "Adicionando…",
+    adding: "Adicionando\u2026",
     newEntry: "nova entrada",
     delete: "Excluir",
     loading: "Carregando...",
@@ -349,47 +380,49 @@ export const ptBr: Translations = {
     saveNoteFirst: "Salve a nota primeiro para anexar imagens",
   },
   settings: {
-    settings: "Configurações",
-    journalControls: "Controles do diário",
+    settings: "Configura\u00e7\u00f5es",
+    journalControls: "Controles do di\u00e1rio",
     description:
-      "Exporte backups, restaure de um arquivo de backup e mantenha os comandos do Telegram à mão.",
+      "Exporte backups, restaure de um arquivo de backup e mantenha os comandos do Telegram \u00e0 m\u00e3o.",
     dataExport: "Exportar dados",
     dataExportDesc:
-      "Escolha formatos de exportação ou baixe um arquivo JSON de backup completo.",
-    openExportTools: "Abrir ferramentas de exportação",
+      "Escolha formatos de exporta\u00e7\u00e3o ou baixe um arquivo JSON de backup completo.",
+    openExportTools: "Abrir ferramentas de exporta\u00e7\u00e3o",
     restoreBackup: "Restaurar backup",
     restoreBackupDesc:
-      "Restaurar de um arquivo JSON de backup versão 2. IDs de entradas existentes são ignorados.",
-    restoring: "Restaurando…",
-    restoreFailed: "Falha na restauração.",
+      "Restaurar de um arquivo JSON de backup vers\u00e3o 2. IDs de entradas existentes s\u00e3o ignorados.",
+    restoring: "Restaurando\u2026",
+    restoreFailed: "Falha na restaura\u00e7\u00e3o.",
     importedResult: (journal, food, images) =>
-      `Importados ${journal} entradas do diário, ${food} de alimentação, ${images} imagens.`,
+      `Importados ${journal} entradas do di\u00e1rio, ${food} de alimenta\u00e7\u00e3o, ${images} imagens.`,
     telegram: "Telegram",
     telegramDesc:
-      "Conecte sua conta do Telegram para registrar entradas de alimentação pelo bot.",
+      "Conecte sua conta do Telegram para registrar entradas de alimenta\u00e7\u00e3o pelo bot.",
     connected: "Conectado",
     disconnect: "Desconectar",
-    waitingForConfirmation: "Aguardando confirmação…",
-    generateNewCode: "Gerar novo código",
+    waitingForConfirmation: "Aguardando confirma\u00e7\u00e3o\u2026",
+    generateNewCode: "Gerar novo c\u00f3digo",
     connectTelegram: "Conectar Telegram",
     telegramCommands: "Comandos do Telegram",
-    telegramCmd1: "/food salva uma entrada de alimentação.",
+    telegramCmd1: "/food salva uma entrada de alimenta\u00e7\u00e3o.",
     telegramCmd2:
-      "Mensagens sem um comando também são salvas como entradas de alimentação.",
+      "Mensagens sem um comando tamb\u00e9m s\u00e3o salvas como entradas de alimenta\u00e7\u00e3o.",
     telegramCmd3:
-      "/journal, /idea e /note não são suportados intencionalmente.",
+      "/journal, /idea e /note n\u00e3o s\u00e3o suportados intencionalmente.",
     telegramCmd4:
-      "Fotos podem ser enviadas com ou sem /food e ficam em alimentação não categorizada.",
-    loading: "Carregando…",
+      "Fotos podem ser enviadas com ou sem /food e ficam em alimenta\u00e7\u00e3o n\u00e3o categorizada.",
+    loading: "Carregando\u2026",
     language: "Idioma",
     languageDesc: "Escolha seu idioma preferido.",
+    defaultView: "Vis\u00e3o padr\u00e3o",
+    defaultViewDesc: "Escolha qual p\u00e1gina abre ap\u00f3s o login.",
   },
   exportPage: {
     export: "Exportar",
     exportAndDownload: "Exportar e baixar",
-    selectionPreset: "Predefinição de seleção",
+    selectionPreset: "Predefini\u00e7\u00e3o de sele\u00e7\u00e3o",
     thisWeek: "Esta semana",
-    thisMonth: "Este mês",
+    thisMonth: "Este m\u00eas",
     customRange: "Intervalo personalizado",
     thisYear: "Este ano",
     everything: "Tudo",
@@ -397,10 +430,10 @@ export const ptBr: Translations = {
     plainText: "Texto simples",
     entriesSelected: (count) => `${count} entradas selecionadas`,
     exportSelected: "Exportar selecionados",
-    preparingExport: "Preparando exportação…",
+    preparingExport: "Preparando exporta\u00e7\u00e3o\u2026",
     downloadBackupJson: "Baixar JSON de backup",
-    downloading: "Baixando…",
-    treeSelection: "Seleção em árvore",
+    downloading: "Baixando\u2026",
+    treeSelection: "Sele\u00e7\u00e3o em \u00e1rvore",
   },
 };
 
