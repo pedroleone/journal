@@ -60,6 +60,7 @@ const mealSlotEnum = z.enum([
   "afternoon_snack",
   "dinner",
   "midnight_snack",
+  "observation",
 ]);
 
 export const createFoodEntrySchema = z
@@ -175,6 +176,7 @@ const backupFoodEntrySchema = z.object({
       "dinner",
       "midnight_snack",
       "snack",
+      "observation",
     ])
     .nullable(),
   assigned_at: z.string().nullable(),

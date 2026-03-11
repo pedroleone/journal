@@ -4,11 +4,12 @@ export type Translations = {
     journal: string;
     food: string;
     notes: string;
-    new: string;
-    journalEntry: string;
-    foodEntry: string;
-    note: string;
-    quickFood: string;
+    openJournal: string;
+    openFood: string;
+    openNotes: string;
+    newJournalEntry: string;
+    newFoodEntry: string;
+    newNote: string;
   };
   journal: {
     back: string;
@@ -58,6 +59,7 @@ export type Translations = {
     afternoon_snack: string;
     dinner: string;
     midnight_snack: string;
+    observation: string;
     uncategorizedSection: string;
     empty: string;
     skipped: string;
@@ -145,11 +147,12 @@ export const en: Translations = {
     journal: "Journal",
     food: "Food",
     notes: "Notes",
-    new: "New",
-    journalEntry: "Journal entry",
-    foodEntry: "Food entry",
-    note: "Note",
-    quickFood: "Quick food log",
+    openJournal: "Open journal",
+    openFood: "Open food",
+    openNotes: "Open notes",
+    newJournalEntry: "New journal entry",
+    newFoodEntry: "New food entry",
+    newNote: "New note",
   },
   journal: {
     back: "Back",
@@ -200,6 +203,7 @@ export const en: Translations = {
     afternoon_snack: "Afternoon Snack",
     dinner: "Dinner",
     midnight_snack: "Midnight Snack",
+    observation: "Observation",
     uncategorizedSection: "Uncategorized",
     empty: "(empty)",
     skipped: "Skipped",
@@ -290,11 +294,12 @@ export const ptBr: Translations = {
     journal: "Di\u00e1rio",
     food: "Alimenta\u00e7\u00e3o",
     notes: "Notas",
-    new: "Novo",
-    journalEntry: "Entrada no di\u00e1rio",
-    foodEntry: "Entrada de alimenta\u00e7\u00e3o",
-    note: "Nota",
-    quickFood: "Registro r\u00e1pido",
+    openJournal: "Abrir di\u00e1rio",
+    openFood: "Abrir alimenta\u00e7\u00e3o",
+    openNotes: "Abrir notas",
+    newJournalEntry: "Nova entrada no di\u00e1rio",
+    newFoodEntry: "Nova entrada de alimenta\u00e7\u00e3o",
+    newNote: "Nova nota",
   },
   journal: {
     back: "Voltar",
@@ -348,6 +353,7 @@ export const ptBr: Translations = {
     afternoon_snack: "Lanche da tarde",
     dinner: "Jantar",
     midnight_snack: "Lanche da madrugada",
+    observation: "Observa\u00e7\u00e3o",
     uncategorizedSection: "N\u00e3o categorizado",
     empty: "(vazio)",
     skipped: "Pulado",

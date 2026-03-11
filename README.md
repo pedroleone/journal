@@ -1,14 +1,15 @@
 ## Journal
 
-Encrypted journal web app built with Next.js, TypeScript, Drizzle, Turso, and Cloudflare R2.
+Encrypted personal journal web app built with Next.js, TypeScript, Drizzle, Turso, and Cloudflare R2.
 
 ## Auth And Encryption
 
 - Server auth uses Auth.js with Google sign-in.
 - Google login creates the server session and opens the app directly.
-- Web journal and food content are sent over the authenticated session, then encrypted server-side before storage.
-- Images are uploaded as normal files and encrypted server-side before being stored in R2.
-- Telegram entries are also encrypted server-side before persistence.
+- All content (journal entries, notes, food log) is encrypted server-side before storage using AES-GCM.
+- Images are processed client-side (resized/re-encoded), then encrypted server-side before being stored in R2.
+- Telegram entries are encrypted server-side before persistence.
+- `SERVER_ENCRYPTION_SECRET` is the single key used for all server-side encryption.
 
 ## Environment Variables
 
@@ -64,6 +65,5 @@ pnpm build
 
 ## Notes
 
-- Entries are user-scoped in the database.
-- `SERVER_ENCRYPTION_SECRET` is required on the server to encrypt and decrypt stored entry text and image blobs.
-- Existing data from the prior client-side encryption build is not compatible with this server-side encryption model.
+- All data is user-scoped in the database.
+- `SERVER_ENCRYPTION_SECRET` must never change — rotating it will make existing encrypted data unreadable.

@@ -1,12 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, Plus, LogOut, Settings, Utensils, StickyNote, Sun, Moon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-app-button";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMode } from "@/lib/mode-context";
 import { useLocale } from "@/hooks/use-locale";
 import { useTheme } from "@/hooks/use-theme";
@@ -22,8 +19,6 @@ export function AppNav() {
   const { t } = useLocale();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
-  const [newPopoverOpen, setNewPopoverOpen] = useState(false);
-  const [creatingType, setCreatingType] = useState<"journal" | "food" | "notes" | null>(null);
 
   async function handleLogout() {
     await signOut({ redirectTo: "/login" });
@@ -42,13 +37,10 @@ export function AppNav() {
   }
 
   function handleCreateNote() {
-    setCreatingType(null);
-    setNewPopoverOpen(false);
     router.push("/notes/browse?new=1");
   }
 
   async function handleCreateJournal() {
-    setCreatingType("journal");
     const today = new Date();
     const params = new URLSearchParams({
       year: String(today.getFullYear()),
@@ -63,8 +55,6 @@ export function AppNav() {
         const existingWebEntry = entries.find((entry) => entry.source === "web");
         const existingEntry = existingWebEntry ?? entries[0];
         if (existingEntry) {
-          setCreatingType(null);
-          setNewPopoverOpen(false);
           router.push(`/journal/write?entry=${existingEntry.id}`);
           return;
         }
@@ -73,114 +63,91 @@ export function AppNav() {
       // Fall back to write mode.
     }
 
-    setNewPopoverOpen(false);
     router.push("/journal/write");
-    setCreatingType(null);
   }
 
   function handleCreateFood() {
-    setCreatingType(null);
-    setNewPopoverOpen(false);
     router.push("/food");
   }
+
+  const sections = [
+    {
+      key: "journal",
+      icon: BookOpen,
+      label: t.nav.journal,
+      browseLabel: t.nav.openJournal,
+      createLabel: t.nav.newJournalEntry,
+      onBrowse: handleSelectJournal,
+      onCreate: () => void handleCreateJournal(),
+    },
+    {
+      key: "food",
+      icon: Utensils,
+      label: t.nav.food,
+      browseLabel: t.nav.openFood,
+      createLabel: t.nav.newFoodEntry,
+      onBrowse: handleSelectFood,
+      onCreate: handleCreateFood,
+    },
+    {
+      key: "notes",
+      icon: StickyNote,
+      label: t.nav.notes,
+      browseLabel: t.nav.openNotes,
+      createLabel: t.nav.newNote,
+      onBrowse: handleSelectNotes,
+      onCreate: handleCreateNote,
+    },
+  ] as const;
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/60 bg-background">
       <div className="flex h-14 items-center justify-between px-6">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={handleSelectJournal}
-            className={cn(
-              "cursor-pointer rounded-md px-3 py-1.5 text-sm transition-colors",
-              mode === "journal"
-                ? "bg-secondary font-medium text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.nav.journal}
-          </button>
-          <button
-            onClick={handleSelectFood}
-            className={cn(
-              "cursor-pointer rounded-md px-3 py-1.5 text-sm transition-colors",
-              mode === "food"
-                ? "bg-secondary font-medium text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.nav.food}
-          </button>
-          <button
-            onClick={handleSelectNotes}
-            className={cn(
-              "cursor-pointer rounded-md px-3 py-1.5 text-sm transition-colors",
-              mode === "notes"
-                ? "bg-secondary font-medium text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.nav.notes}
-          </button>
+        <div className="flex min-w-0 items-center gap-1">
+          {sections.map((section) => {
+            const isActive = mode === section.key;
+            const Icon = section.icon;
+
+            return (
+              <div
+                key={section.key}
+                className="flex shrink-0 overflow-hidden rounded-md border border-border/60 bg-background/80"
+              >
+                <button
+                  onClick={section.onBrowse}
+                  aria-label={section.browseLabel}
+                  aria-current={isActive ? "page" : undefined}
+                  title={section.browseLabel}
+                  className={cn(
+                    "flex h-9 items-center gap-2 px-3 text-sm transition-colors",
+                    isActive
+                      ? "bg-secondary font-medium text-foreground"
+                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{section.label}</span>
+                </button>
+                <button
+                  onClick={section.onCreate}
+                  aria-label={section.createLabel}
+                  title={section.createLabel}
+                  className={cn(
+                    "flex h-9 items-center justify-center border-l border-border/60 px-2.5 transition-colors",
+                    isActive
+                      ? "bg-secondary text-foreground hover:bg-secondary"
+                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
+                  )}
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-2">
           <InstallAppButton />
-          <button
-            onClick={() => router.push("/food")}
-            className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
-            aria-label={t.nav.quickFood}
-            title={t.nav.quickFood}
-          >
-            <Utensils className="h-4 w-4" />
-          </button>
-          <Popover
-            open={newPopoverOpen}
-            onOpenChange={(open) => {
-              if (creatingType) return;
-              setNewPopoverOpen(open);
-            }}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => {
-                  setCreatingType(null);
-                  setNewPopoverOpen(true);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">{t.nav.new}</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" sideOffset={8} className="w-48 p-1">
-              <button
-                onClick={() => void handleCreateJournal()}
-                disabled={creatingType !== null}
-                className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm hover:bg-secondary disabled:opacity-50"
-              >
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-                {t.nav.journalEntry}
-              </button>
-              <button
-                onClick={handleCreateFood}
-                disabled={creatingType !== null}
-                className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm hover:bg-secondary disabled:opacity-50"
-              >
-                <Utensils className="h-4 w-4 text-muted-foreground" />
-                {t.nav.foodEntry}
-              </button>
-              <button
-                onClick={handleCreateNote}
-                disabled={creatingType !== null}
-                className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm hover:bg-secondary disabled:opacity-50"
-              >
-                <StickyNote className="h-4 w-4 text-muted-foreground" />
-                {t.nav.note}
-              </button>
-            </PopoverContent>
-          </Popover>
           <button
             onClick={toggleTheme}
             className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"

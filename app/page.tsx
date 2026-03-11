@@ -15,7 +15,7 @@ const features = [
     icon: LockKeyhole,
     title: "Encrypted Journal",
     description:
-      "End-to-end encrypted entries written in markdown. The server never sees plaintext.",
+      "Entries written in markdown and encrypted at rest. One entry per day.",
   },
   {
     icon: Utensils,

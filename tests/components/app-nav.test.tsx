@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppNav } from "@/components/app-nav";
 
@@ -21,20 +20,6 @@ vi.mock("@/components/pwa/install-app-button", () => ({
   InstallAppButton: () => null,
 }));
 
-vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({
-    open,
-    children,
-  }: {
-    open: boolean;
-    children: ReactNode;
-  }) => (open ? <div data-testid="dialog-root">{children}</div> : null),
-  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
-  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
-}));
-
 vi.mock("@/lib/mode-context", () => ({
   useMode: () => useModeMock(),
 }));
@@ -50,13 +35,12 @@ describe("AppNav", () => {
       ok: true,
       json: vi.fn().mockResolvedValue([]),
     });
-    window.confirm = vi.fn();
   });
 
   it("routes the journal tab to browse", () => {
     render(<AppNav />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Journal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open journal" }));
 
     expect(push).toHaveBeenCalledWith("/journal/browse");
   });
@@ -69,21 +53,36 @@ describe("AppNav", () => {
 
     render(<AppNav />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Food" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open food" }));
 
     expect(push).toHaveBeenCalledWith("/food/browse");
   });
 
-  it("opens the chooser and sends food creation to the quick log", () => {
+  it("routes the notes tab to browse", () => {
     render(<AppNav />);
 
-    fireEvent.click(screen.getByRole("button", { name: /new/i }));
-    fireEvent.click(screen.getByRole("button", { name: /food entry/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Open notes" }));
+
+    expect(push).toHaveBeenCalledWith("/notes/browse");
+  });
+
+  it("sends food creation directly to the quick log", () => {
+    render(<AppNav />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New food entry" }));
 
     expect(push).toHaveBeenCalledWith("/food");
   });
 
-  it("opens today's existing journal entry directly without confirmation", async () => {
+  it("routes note creation directly to new note mode", () => {
+    render(<AppNav />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New note" }));
+
+    expect(push).toHaveBeenCalledWith("/notes/browse?new=1");
+  });
+
+  it("opens today's existing journal entry directly", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue([
@@ -94,12 +93,44 @@ describe("AppNav", () => {
 
     render(<AppNav />);
 
-    fireEvent.click(screen.getByRole("button", { name: /new/i }));
-    fireEvent.click(screen.getByRole("button", { name: /journal entry/i }));
+    fireEvent.click(screen.getByRole("button", { name: "New journal entry" }));
 
     await waitFor(() => {
       expect(push).toHaveBeenCalledWith("/journal/write?entry=web-1");
     });
-    expect(window.confirm).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the journal writer when no entry exists", async () => {
+    render(<AppNav />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New journal entry" }));
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith("/journal/write");
+    });
+  });
+
+  it("falls back to the journal writer when the journal lookup fails", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("network"));
+
+    render(<AppNav />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New journal entry" }));
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith("/journal/write");
+    });
+  });
+
+  it("marks the active section browse button", () => {
+    useModeMock.mockReturnValue({
+      mode: "notes",
+      setMode: vi.fn(),
+    });
+
+    render(<AppNav />);
+
+    expect(screen.getByRole("button", { name: "Open notes" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("button", { name: "Open journal" }).getAttribute("aria-current")).toBeNull();
   });
 });

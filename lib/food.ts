@@ -4,7 +4,8 @@ export type MealSlot =
   | "lunch"
   | "afternoon_snack"
   | "dinner"
-  | "midnight_snack";
+  | "midnight_snack"
+  | "observation";
 
 export const MEAL_SLOTS: MealSlot[] = [
   "breakfast",
@@ -13,6 +14,7 @@ export const MEAL_SLOTS: MealSlot[] = [
   "afternoon_snack",
   "dinner",
   "midnight_snack",
+  "observation",
 ];
 
 export function suggestMealSlot(hour: number): MealSlot {

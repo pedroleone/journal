@@ -369,6 +369,7 @@ export default function FoodBrowsePage() {
     afternoon_snack: dayEntries.filter((e) => e.meal_slot === "afternoon_snack"),
     dinner: dayEntries.filter((e) => e.meal_slot === "dinner"),
     midnight_snack: dayEntries.filter((e) => e.meal_slot === "midnight_snack"),
+    observation: dayEntries.filter((e) => e.meal_slot === "observation"),
   };
 
   const localeCode = t.localeCode;
@@ -642,15 +643,17 @@ export default function FoodBrowsePage() {
                         >
                           {t.food.add}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 min-w-[44px] text-muted-foreground"
-                          onClick={() => handleSkipSlot(slot.value)}
-                          disabled={actionLoading === `skip-${slot.value}`}
-                        >
-                          {t.food.skip}
-                        </Button>
+                        {slot.value !== "observation" ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 min-w-[44px] text-muted-foreground"
+                            onClick={() => handleSkipSlot(slot.value)}
+                            disabled={actionLoading === `skip-${slot.value}`}
+                          >
+                            {t.food.skip}
+                          </Button>
+                        ) : null}
                       </div>
                     ) : null}
                   </section>
