@@ -159,7 +159,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
     const sortedKeys = [...dayGroups.keys()].sort();
 
     return (
-      <div className="animate-page p-8 max-w-2xl mx-auto">
+      <div className="animate-page p-8 max-w-3xl mx-auto">
         <h2 className="font-display text-2xl tracking-tight">
           {getHeading(year, month, day)}
         </h2>
@@ -180,13 +180,18 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
                           {formatTime(entry.hour, entry.created_at)}
                         </p>
                       )}
-                      <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
                       {entry.images?.length ? (
-                        <EncryptedImageGallery
-                          imageKeys={entry.images}
-                          className="mt-4"
-                        />
-                      ) : null}
+                        <div className="flex flex-col md:flex-row md:gap-8 md:items-start">
+                          <div className="order-2 md:order-1 md:w-20 md:shrink-0 mt-4 md:mt-0">
+                            <EncryptedImageGallery imageKeys={entry.images} />
+                          </div>
+                          <div className="order-1 md:order-2 flex-1 min-w-0">
+                            <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
+                          </div>
+                        </div>
+                      ) : (
+                        <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
+                      )}
                       {i < dayEntries.length - 1 && (
                         <div className="mt-8 border-b border-border/40" />
                       )}
@@ -202,7 +207,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
   }
 
   return (
-    <div className="animate-page p-8 max-w-2xl mx-auto">
+    <div className="animate-page p-8 max-w-3xl mx-auto">
       <div className="flex items-start justify-between">
         <h2 className="font-display text-2xl tracking-tight">
           {getHeading(year, month, day)}
@@ -225,16 +230,30 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
                 {formatTime(entry.hour, entry.created_at)}
               </p>
             )}
-            {entry.source === "web" ? (
-              <Link href={`/journal/write?entry=${entry.id}`} className="block rounded-md -mx-2 px-2 py-1 transition-colors hover:bg-secondary/50">
-                <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed pointer-events-none" />
-              </Link>
-            ) : (
-              <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
-            )}
             {entry.images?.length ? (
-              <EncryptedImageGallery imageKeys={entry.images} className="mt-4" />
-            ) : null}
+              <div className="flex flex-col md:flex-row md:gap-8 md:items-start">
+                <div className="order-2 md:order-1 md:w-20 md:shrink-0 mt-4 md:mt-0">
+                  <EncryptedImageGallery imageKeys={entry.images} />
+                </div>
+                <div className="order-1 md:order-2 flex-1 min-w-0">
+                  {entry.source === "web" ? (
+                    <Link href={`/journal/write?entry=${entry.id}`} className="block rounded-md -mx-2 px-2 py-1 transition-colors hover:bg-secondary/50">
+                      <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed pointer-events-none" />
+                    </Link>
+                  ) : (
+                    <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
+                  )}
+                </div>
+              </div>
+            ) : (
+              entry.source === "web" ? (
+                <Link href={`/journal/write?entry=${entry.id}`} className="block rounded-md -mx-2 px-2 py-1 transition-colors hover:bg-secondary/50">
+                  <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed pointer-events-none" />
+                </Link>
+              ) : (
+                <MarkdownEditor readOnly value={entry.content} className="text-base leading-relaxed" />
+              )
+            )}
             {i < entries.length - 1 && (
               <div className="mt-8 border-b border-border/40" />
             )}

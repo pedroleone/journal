@@ -13,6 +13,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import { ImageLightbox } from "@/components/image-lightbox";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -71,6 +72,8 @@ export default function WritePage() {
   const [imageKeys, setImageKeys] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [entryError, setEntryError] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [writeLightboxIndex, setWriteLightboxIndex] = useState<number | null>(null);
   const isOnline = useOnlineStatus();
   const { t } = useLocale();
   const { images } = useImages(imageKeys);
@@ -243,6 +246,28 @@ export default function WritePage() {
     }
   }
 
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
+  }
+
+  function handleDragEnter(e: React.DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    void handleImageSelection(e.dataTransfer.files);
+  }
+
   function handleNewThought() {
     const time = new Date().toLocaleTimeString(t.localeCode, {
       hour: "numeric",
@@ -293,7 +318,16 @@ export default function WritePage() {
         </CollapsibleSidebar>
         </div>
       )}
-      <div className="flex flex-1 flex-col">
+      <div
+        className="flex flex-1 flex-col"
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+      {isDragging && (
+        <div className="pointer-events-none fixed inset-0 z-40 m-4 rounded-xl ring-2 ring-primary/50 bg-primary/5 transition-all" />
+      )}
       {!isOnline && (
         <div className="border-b border-border/60 bg-secondary/60 px-6 py-2 text-center text-sm text-muted-foreground">
           {t.journal.offlineChanges}
@@ -349,14 +383,19 @@ export default function WritePage() {
 
           {images.length > 0 ? (
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {images.map((image) => (
+              {images.map((image, i) => (
                 <div
                   key={image.key}
                   className="relative overflow-hidden rounded-lg border border-border/50 bg-card/20"
                 >
                   {/* Blob URLs back these previews, so Next/Image is not a good fit here. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={image.url} alt="" className="h-48 w-full object-cover" />
+                  <img
+                    src={image.url}
+                    alt=""
+                    className="h-48 w-full cursor-pointer object-cover"
+                    onClick={() => setWriteLightboxIndex(i)}
+                  />
                   <button
                     onClick={() => handleRemoveImage(image.key)}
                     className="absolute right-2 top-2 rounded-full bg-background/90 p-1 text-foreground shadow-sm"
@@ -368,6 +407,15 @@ export default function WritePage() {
               ))}
             </div>
           ) : null}
+
+          {writeLightboxIndex !== null && (
+            <ImageLightbox
+              images={images}
+              index={writeLightboxIndex}
+              onIndexChange={setWriteLightboxIndex}
+              onClose={() => setWriteLightboxIndex(null)}
+            />
+          )}
         </div>
 
         <div className="sticky bottom-0 flex items-center justify-between border-t border-border/40 py-3 bg-background/95 backdrop-blur-sm">
