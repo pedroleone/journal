@@ -18,6 +18,9 @@ export async function GET(request: NextRequest) {
     status: searchParams.get("status") ?? undefined,
     genre: searchParams.get("genre") ?? undefined,
     reaction: searchParams.get("reaction") ?? undefined,
+    platform: searchParams.get("platform") ?? undefined,
+    rating: searchParams.get("rating") ?? undefined,
+    search: searchParams.get("search") ?? undefined,
   });
   if (!parsed.success) {
     return jsonNoStore({ error: "Invalid query" }, { status: 400 });
@@ -38,6 +41,20 @@ export async function GET(request: NextRequest) {
   if (parsed.data.reaction) {
     conditions.push(
       sql`EXISTS (SELECT 1 FROM json_each(${mediaItems.reactions}) WHERE value = ${parsed.data.reaction})`,
+    );
+  }
+  if (parsed.data.platform) {
+    conditions.push(
+      sql`EXISTS (SELECT 1 FROM json_each(json_extract(${mediaItems.metadata}, '$.platform')) WHERE value = ${parsed.data.platform})`,
+    );
+  }
+  if (parsed.data.rating) {
+    conditions.push(sql`${mediaItems.rating} >= ${parsed.data.rating}`);
+  }
+  if (parsed.data.search) {
+    const pattern = `%${parsed.data.search}%`;
+    conditions.push(
+      sql`(${mediaItems.title} LIKE ${pattern} OR ${mediaItems.creator} LIKE ${pattern})`,
     );
   }
 

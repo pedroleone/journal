@@ -8,7 +8,25 @@ import { NEW_ITEM_ID, LibraryViewer } from "@/components/library/library-viewer"
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
 import { useLocale } from "@/hooks/use-locale";
-import type { MediaType } from "@/lib/library";
+import { EMPTY_FILTERS, type LibraryFilters } from "@/components/library/filter-bar";
+import type { MediaType, MediaStatus } from "@/lib/library";
+
+interface VocabEntry {
+  value: string;
+  count: number;
+}
+
+function filtersFromParams(params: URLSearchParams): LibraryFilters {
+  return {
+    type: (params.get("type") as MediaType) || null,
+    status: (params.get("status") as MediaStatus) || null,
+    genre: params.get("genre") || null,
+    reaction: params.get("reaction") || null,
+    platform: params.get("platform") || null,
+    rating: params.get("rating") ? Number(params.get("rating")) : null,
+    search: params.get("search") || null,
+  };
+}
 
 export default function LibraryBrowsePage() {
   const router = useRouter();
@@ -17,12 +35,41 @@ export default function LibraryBrowsePage() {
 
   const [items, setItems] = useState<LibraryListItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [activeType, setActiveType] = useState<MediaType | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [genres, setGenres] = useState<VocabEntry[]>([]);
+  const [reactions, setReactions] = useState<VocabEntry[]>([]);
+  const [platforms, setPlatforms] = useState<VocabEntry[]>([]);
   const { t } = useLocale();
 
-  const loadItems = useCallback(async (type?: MediaType | null) => {
-    const url = type ? `/api/library?type=${encodeURIComponent(type)}` : "/api/library";
+  const filters = filtersFromParams(searchParams);
+
+  // Load vocabulary on mount
+  useEffect(() => {
+    async function fetchVocab(field: string) {
+      const res = await fetch(`/api/library/vocabulary?field=${field}`);
+      if (!res.ok) return [];
+      return res.json();
+    }
+    Promise.all([fetchVocab("genres"), fetchVocab("reactions"), fetchVocab("platform")]).then(
+      ([g, r, p]) => {
+        setGenres(g);
+        setReactions(r);
+        setPlatforms(p);
+      },
+    );
+  }, []);
+
+  const loadItems = useCallback(async (f: LibraryFilters) => {
+    const params = new URLSearchParams();
+    if (f.type) params.set("type", f.type);
+    if (f.status) params.set("status", f.status);
+    if (f.genre) params.set("genre", f.genre);
+    if (f.reaction) params.set("reaction", f.reaction);
+    if (f.platform) params.set("platform", f.platform);
+    if (f.rating) params.set("rating", String(f.rating));
+    if (f.search) params.set("search", f.search);
+    const qs = params.toString();
+    const url = qs ? `/api/library?${qs}` : "/api/library";
     const res = await fetch(url);
     if (!res.ok) return;
     const data = await res.json();
@@ -30,8 +77,9 @@ export default function LibraryBrowsePage() {
   }, []);
 
   useEffect(() => {
-    loadItems(activeType);
-  }, [activeType, loadItems]);
+    loadItems(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString(), loadItems]);
 
   const isNewMode = searchParams.get("new") === "1";
 
@@ -42,19 +90,31 @@ export default function LibraryBrowsePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNewMode]);
 
+  function setFilter<K extends keyof LibraryFilters>(key: K, value: LibraryFilters[K]) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === null || value === undefined) {
+      params.delete(key);
+    } else {
+      params.set(key, String(value));
+    }
+    // Remove "new" param when changing filters
+    params.delete("new");
+    const qs = params.toString();
+    router.replace(qs ? `/library/browse?${qs}` : "/library/browse");
+  }
+
   function handleSelectItem(id: string) {
     if (id === NEW_ITEM_ID) return;
     setSelectedItemId(id);
     if (isMobile) setSidebarOpen(false);
-    if (searchParams.get("new")) router.replace("/library/browse");
-  }
-
-  function handleTypeFilter(type: MediaType | null) {
-    setActiveType(type);
   }
 
   function handleNew() {
-    router.replace("/library/browse");
+    // Remove "new" from URL but keep filters
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("new");
+    const qs = params.toString();
+    router.replace(qs ? `/library/browse?${qs}` : "/library/browse");
     setSelectedItemId(NEW_ITEM_ID);
     if (isMobile) setSidebarOpen(false);
   }
@@ -67,10 +127,13 @@ export default function LibraryBrowsePage() {
         <LibraryList
           items={items}
           selectedId={selectedItemId}
-          activeType={activeType}
+          filters={filters}
           onSelect={handleSelectItem}
-          onTypeFilter={handleTypeFilter}
+          onFilterChange={setFilter}
           onNew={handleNew}
+          genres={genres}
+          reactions={reactions}
+          platforms={platforms}
         />
       </CollapsibleSidebar>
 
@@ -94,7 +157,7 @@ export default function LibraryBrowsePage() {
             onCreated={(id) => {
               setSelectedItemId(id);
             }}
-            onItemsChanged={() => loadItems(activeType)}
+            onItemsChanged={() => loadItems(filters)}
           />
         </div>
       )}

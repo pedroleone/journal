@@ -178,6 +178,9 @@ export const mediaItemListQuerySchema = z.object({
   status: mediaStatusEnum.optional(),
   genre: z.string().optional(),
   reaction: z.string().optional(),
+  platform: z.string().optional(),
+  rating: z.coerce.number().int().min(1).max(5).optional(),
+  search: z.string().max(200).optional(),
 });
 
 export const createMediaItemNoteSchema = z.object({

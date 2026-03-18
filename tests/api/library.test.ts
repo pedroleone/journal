@@ -136,6 +136,46 @@ describe("GET /api/library", () => {
     const res = await getItems({ type: "movie" });
     expect(res.status).toBe(200);
   });
+
+  it("filters by platform param", async () => {
+    mockDb.where.mockReturnThis();
+    mockDb.orderBy.mockResolvedValue([]);
+    const res = await getItems({ platform: "PS5" });
+    expect(res.status).toBe(200);
+  });
+
+  it("filters by rating param", async () => {
+    mockDb.where.mockReturnThis();
+    mockDb.orderBy.mockResolvedValue([]);
+    const res = await getItems({ rating: "3" });
+    expect(res.status).toBe(200);
+  });
+
+  it("filters by search param", async () => {
+    mockDb.where.mockReturnThis();
+    mockDb.orderBy.mockResolvedValue([]);
+    const res = await getItems({ search: "tolkien" });
+    expect(res.status).toBe(200);
+  });
+
+  it("combines multiple filters", async () => {
+    mockDb.where.mockReturnThis();
+    mockDb.orderBy.mockResolvedValue([]);
+    const res = await getItems({ type: "book", status: "finished", genre: "sci-fi", rating: "4" });
+    expect(res.status).toBe(200);
+  });
+
+  it("returns 400 for invalid rating", async () => {
+    const res = await getItems({ rating: "6" });
+    expect(res.status).toBe(400);
+  });
+
+  it("treats empty search as no filter", async () => {
+    mockDb.where.mockReturnThis();
+    mockDb.orderBy.mockResolvedValue([]);
+    const res = await getItems({ search: "" });
+    expect(res.status).toBe(200);
+  });
 });
 
 describe("GET /api/library/[id]", () => {

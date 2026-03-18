@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, X, Book, Disc3, Film, Gamepad2, Video, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
+import { FilterBar, type LibraryFilters } from "@/components/library/filter-bar";
 import type { MediaType, MediaStatus } from "@/lib/library";
 
 export interface LibraryListItem {
@@ -16,13 +17,21 @@ export interface LibraryListItem {
   updated_at: string;
 }
 
+interface VocabEntry {
+  value: string;
+  count: number;
+}
+
 interface LibraryListProps {
   items: LibraryListItem[];
   selectedId: string | null;
-  activeType: MediaType | null;
+  filters: LibraryFilters;
   onSelect: (id: string) => void;
-  onTypeFilter: (type: MediaType | null) => void;
+  onFilterChange: <K extends keyof LibraryFilters>(key: K, value: LibraryFilters[K]) => void;
   onNew: () => void;
+  genres: VocabEntry[];
+  reactions: VocabEntry[];
+  platforms: VocabEntry[];
 }
 
 const TYPE_ICONS: Record<MediaType, typeof Book> = {
@@ -49,8 +58,9 @@ function formatDate(iso: string): string {
   });
 }
 
-export function LibraryList({ items, selectedId, activeType, onSelect, onTypeFilter, onNew }: LibraryListProps) {
-  const [query, setQuery] = useState("");
+export function LibraryList({ items, selectedId, filters, onSelect, onFilterChange, onNew, genres, reactions, platforms }: LibraryListProps) {
+  const [searchInput, setSearchInput] = useState(filters.search ?? "");
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { t } = useLocale();
 
   const types: (MediaType | null)[] = [null, "book", "album", "movie", "game", "video", "misc"];
@@ -70,15 +80,20 @@ export function LibraryList({ items, selectedId, activeType, onSelect, onTypeFil
     dropped: t.library.dropped,
   };
 
-  const visibleItems = useMemo(() => {
-    if (!query.trim()) return items;
-    const q = query.toLowerCase();
-    return items.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) ||
-        (item.creator ?? "").toLowerCase().includes(q),
-    );
-  }, [items, query]);
+  // Sync external search filter to input (e.g. on URL change)
+  useEffect(() => {
+    setSearchInput(filters.search ?? "");
+  }, [filters.search]);
+
+  function handleSearchChange(value: string) {
+    setSearchInput(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onFilterChange("search", value || null);
+    }, 300);
+  }
+
+  const hasActiveFilters = filters.status || filters.genre || filters.reaction || filters.platform || filters.rating;
 
   return (
     <div className="flex h-full flex-col">
@@ -87,12 +102,12 @@ export function LibraryList({ items, selectedId, activeType, onSelect, onTypeFil
         <input
           className="w-full bg-transparent pl-6 pr-6 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
           placeholder={t.library.search}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={searchInput}
+          onChange={(e) => handleSearchChange(e.target.value)}
         />
-        {query && (
+        {searchInput && (
           <button
-            onClick={() => setQuery("")}
+            onClick={() => handleSearchChange("")}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" />
@@ -104,10 +119,10 @@ export function LibraryList({ items, selectedId, activeType, onSelect, onTypeFil
         {types.map((type) => (
           <button
             key={type ?? "all"}
-            onClick={() => onTypeFilter(type)}
+            onClick={() => onFilterChange("type", type)}
             className={cn(
               "rounded-md px-2 py-1 text-xs transition-colors",
-              activeType === type
+              filters.type === type
                 ? "bg-secondary font-medium text-foreground"
                 : "text-muted-foreground hover:bg-secondary/50",
             )}
@@ -117,13 +132,21 @@ export function LibraryList({ items, selectedId, activeType, onSelect, onTypeFil
         ))}
       </div>
 
+      <FilterBar
+        filters={filters}
+        onFilterChange={onFilterChange}
+        genres={genres}
+        reactions={reactions}
+        platforms={platforms}
+      />
+
       <div className="flex-1 overflow-y-auto">
-        {visibleItems.length === 0 ? (
+        {items.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">
-            {query ? t.library.noMatch : t.library.empty}
+            {hasActiveFilters || filters.search ? t.library.noItemsForFilters : t.library.empty}
           </p>
         ) : (
-          visibleItems.map((item) => {
+          items.map((item) => {
             const Icon = TYPE_ICONS[item.type];
             return (
               <button

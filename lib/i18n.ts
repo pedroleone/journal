@@ -134,6 +134,15 @@ export type Translations = {
     duration: string;
     channel: string;
     deleteItem: string;
+    filters: string;
+    clearFilters: string;
+    allStatuses: string;
+    allGenres: string;
+    allReactions: string;
+    allPlatforms: string;
+    ratingAndAbove: (n: number) => string;
+    anyRating: string;
+    noItemsForFilters: string;
   };
   settings: {
     settings: string;
@@ -322,6 +331,15 @@ export const en: Translations = {
     duration: "Duration",
     channel: "Channel",
     deleteItem: "Delete item",
+    filters: "Filters",
+    clearFilters: "Clear filters",
+    allStatuses: "All statuses",
+    allGenres: "All genres",
+    allReactions: "All reactions",
+    allPlatforms: "All platforms",
+    ratingAndAbove: (n) => `${n}+ stars`,
+    anyRating: "Any rating",
+    noItemsForFilters: "No items match your filters.",
   },
   settings: {
     settings: "Settings",
@@ -516,6 +534,15 @@ export const ptBr: Translations = {
     duration: "Dura\u00e7\u00e3o",
     channel: "Canal",
     deleteItem: "Excluir item",
+    filters: "Filtros",
+    clearFilters: "Limpar filtros",
+    allStatuses: "Todos os status",
+    allGenres: "Todos os g\u00eaneros",
+    allReactions: "Todas as rea\u00e7\u00f5es",
+    allPlatforms: "Todas as plataformas",
+    ratingAndAbove: (n) => `${n}+ estrelas`,
+    anyRating: "Qualquer avalia\u00e7\u00e3o",
+    noItemsForFilters: "Nenhum item corresponde aos seus filtros.",
   },
   settings: {
     settings: "Configura\u00e7\u00f5es",
