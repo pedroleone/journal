@@ -11,6 +11,7 @@
     "local:down": "docker compose down",
     "local:setup": "bash scripts/setup-local.sh",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:push:prod": "dotenv -e .env -- drizzle-kit push",
     "lint": "eslint",
