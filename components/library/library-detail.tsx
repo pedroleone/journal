@@ -319,7 +319,7 @@ export function LibraryDetail({
             <div className="group relative mb-8 rounded-lg overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/api/images/${item.cover_image}`}
+                src={`/api/images/${encodeURIComponent(item.cover_image)}`}
                 alt=""
                 className="w-full max-h-64 object-cover"
               />
