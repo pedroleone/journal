@@ -252,7 +252,7 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
                   <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-medium", STATUS_COLORS[item.status])}>
                     {statusLabels[item.status]}
                   </span>
-                  {item.rating && (
+                  {(item.status === "finished" || item.status === "dropped") && item.rating && (
                     <span className="text-xs text-muted-foreground">
                       {"★".repeat(item.rating)}
                     </span>

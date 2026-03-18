@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
   }
   if (parsed.data.rating) {
     conditions.push(sql`${mediaItems.rating} >= ${parsed.data.rating}`);
+    conditions.push(sql`${mediaItems.status} IN ('finished', 'dropped')`);
   }
   if (parsed.data.search) {
     const pattern = `%${parsed.data.search}%`;
