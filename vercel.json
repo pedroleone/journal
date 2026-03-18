@@ -1,3 +1,4 @@
 {
-  "ignoreCommand": "[ \"$VERCEL_ENV\" = \"preview\" ]"
+  "ignoreCommand": "[ \"$VERCEL_ENV\" = \"preview\" ]",
+  "buildCommand": "pnpm db:migrate && pnpm build"
 }
