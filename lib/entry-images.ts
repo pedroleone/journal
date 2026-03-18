@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { deleteEncryptedObject, getEncryptedObject, putEncryptedObject } from "@/lib/r2";
-import { entries, foodEntries, notes, noteSubnotes } from "@/lib/schema";
+import { entries, foodEntries, notes, noteSubnotes, mediaItems, mediaItemNotes } from "@/lib/schema";
 import type { ImageOwnerKind } from "@/lib/types";
 
 type OwnerImageRecord = {
@@ -53,6 +53,22 @@ export async function getOwnerImageRecord(
       .where(and(eq(noteSubnotes.userId, userId), eq(noteSubnotes.id, ownerId)));
     return record ?? null;
   }
+  if (ownerKind === "library") {
+    const [record] = await db
+      .select({ id: mediaItems.id, images: mediaItems.reactions })
+      .from(mediaItems)
+      .where(and(eq(mediaItems.userId, userId), eq(mediaItems.id, ownerId)));
+    // mediaItems doesn't have an images column directly — use cover_image via a different path
+    // For now, return null images since library items use cover_image not an images array
+    return record ? { id: record.id, images: null } : null;
+  }
+  if (ownerKind === "library_note") {
+    const [record] = await db
+      .select({ id: mediaItemNotes.id, images: mediaItemNotes.images })
+      .from(mediaItemNotes)
+      .where(and(eq(mediaItemNotes.userId, userId), eq(mediaItemNotes.id, ownerId)));
+    return record ?? null;
+  }
   const table = getOwnerTable(ownerKind);
   const [record] = await db
     .select({ id: table.id, images: table.images })
@@ -81,6 +97,17 @@ export async function setOwnerImages(
       .update(noteSubnotes)
       .set({ images, updated_at: now })
       .where(and(eq(noteSubnotes.userId, userId), eq(noteSubnotes.id, ownerId)));
+    return;
+  }
+  if (ownerKind === "library_note") {
+    await db
+      .update(mediaItemNotes)
+      .set({ images, updated_at: now })
+      .where(and(eq(mediaItemNotes.userId, userId), eq(mediaItemNotes.id, ownerId)));
+    return;
+  }
+  if (ownerKind === "library") {
+    // mediaItems doesn't have an images array column — no-op
     return;
   }
   const table = getOwnerTable(ownerKind);

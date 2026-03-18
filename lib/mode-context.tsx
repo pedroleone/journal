@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-export type Mode = "journal" | "food" | "notes";
+export type Mode = "journal" | "food" | "notes" | "library";
 
 interface ModeContextValue {
   mode: Mode;
@@ -20,6 +20,7 @@ const ModeContext = createContext<ModeContextValue | null>(null);
 export function getModeFromPathname(pathname: string): Mode {
   if (pathname.startsWith("/food")) return "food";
   if (pathname.startsWith("/notes")) return "notes";
+  if (pathname.startsWith("/library")) return "library";
   return "journal";
 }
 
@@ -33,6 +34,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
       if (newMode === mode) return;
       if (newMode === "food") router.push("/food/browse");
       else if (newMode === "notes") router.push("/notes/browse");
+      else if (newMode === "library") router.push("/library/browse");
       else router.push("/journal/browse");
     },
     [mode, router],

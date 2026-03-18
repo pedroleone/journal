@@ -104,7 +104,7 @@ export const updateFoodContentSchema = z.object({
   content: z.string().min(1),
 });
 
-export const imageOwnerKindSchema = z.enum(["journal", "food", "note", "note_subnote"]);
+export const imageOwnerKindSchema = z.enum(["journal", "food", "note", "note_subnote", "library", "library_note"]);
 
 export const createNoteSchema = z.object({
   title: z.string().optional(),
@@ -136,6 +136,66 @@ export const updateSubnoteSchema = z
 
 export const noteTagQuerySchema = z.object({
   tag: z.string().optional(),
+});
+
+export const mediaTypeEnum = z.enum(["book", "album", "movie", "game", "video", "misc"]);
+export const mediaStatusEnum = z.enum(["backlog", "in_progress", "finished", "dropped"]);
+
+export const createMediaItemSchema = z.object({
+  type: mediaTypeEnum,
+  title: z.string().min(1),
+  creator: z.string().optional(),
+  url: z.string().optional(),
+  status: mediaStatusEnum.default("backlog"),
+  rating: z.number().int().min(1).max(5).optional(),
+  reactions: z.array(z.string().min(1)).nullable().optional(),
+  genres: z.array(z.string().min(1)).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+  content: z.string().optional(),
+});
+
+export const updateMediaItemSchema = z
+  .object({
+    title: z.string().min(1).optional(),
+    creator: z.string().nullable().optional(),
+    url: z.string().nullable().optional(),
+    status: mediaStatusEnum.optional(),
+    rating: z.number().int().min(1).max(5).nullable().optional(),
+    reactions: z.array(z.string().min(1)).nullable().optional(),
+    genres: z.array(z.string().min(1)).nullable().optional(),
+    metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+    content: z.string().optional(),
+    started_at: z.string().nullable().optional(),
+    finished_at: z.string().nullable().optional(),
+  })
+  .refine(
+    (v) => Object.keys(v).length > 0,
+    { message: "At least one field must be provided" },
+  );
+
+export const mediaItemListQuerySchema = z.object({
+  type: mediaTypeEnum.optional(),
+  status: mediaStatusEnum.optional(),
+  genre: z.string().optional(),
+  reaction: z.string().optional(),
+});
+
+export const createMediaItemNoteSchema = z.object({
+  content: z.string().min(1),
+  images: z.array(z.string().min(1)).nullable().optional(),
+});
+
+export const updateMediaItemNoteSchema = z
+  .object({
+    content: z.string().optional(),
+    images: z.array(z.string().min(1)).nullable().optional(),
+  })
+  .refine((v) => v.content !== undefined || v.images !== undefined, {
+    message: "At least one of content or images must be provided",
+  });
+
+export const vocabularyQuerySchema = z.object({
+  field: z.enum(["reactions", "genres", "platform"]),
 });
 
 const backupImageBlobSchema = z.object({

@@ -133,3 +133,60 @@ export const noteSubnotes = sqliteTable(
     index("idx_note_subnotes_note").on(table.noteId),
   ],
 );
+
+export const mediaItems = sqliteTable(
+  "media_items",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type", {
+      enum: ["book", "album", "movie", "game", "video", "misc"],
+    }).notNull(),
+    title: text("title").notNull(),
+    creator: text("creator"),
+    url: text("url"),
+    status: text("status", {
+      enum: ["backlog", "in_progress", "finished", "dropped"],
+    }).notNull(),
+    rating: integer("rating"),
+    reactions: text("reactions", { mode: "json" }).$type<string[] | null>(),
+    genres: text("genres", { mode: "json" }).$type<string[] | null>(),
+    metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown> | null>(),
+    cover_image: text("cover_image"),
+    encrypted_content: text("encrypted_content"),
+    iv: text("iv"),
+    added_at: text("added_at").notNull(),
+    started_at: text("started_at"),
+    finished_at: text("finished_at"),
+    created_at: text("created_at").notNull(),
+    updated_at: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("idx_media_items_user").on(table.userId),
+    index("idx_media_items_user_updated").on(table.userId, table.updated_at),
+    index("idx_media_items_user_type").on(table.userId, table.type),
+  ],
+);
+
+export const mediaItemNotes = sqliteTable(
+  "media_item_notes",
+  {
+    id: text("id").primaryKey(),
+    mediaItemId: text("media_item_id")
+      .notNull()
+      .references(() => mediaItems.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    images: text("images", { mode: "json" }).$type<string[] | null>(),
+    encrypted_content: text("encrypted_content").notNull(),
+    iv: text("iv").notNull(),
+    created_at: text("created_at").notNull(),
+    updated_at: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("idx_media_item_notes_item").on(table.mediaItemId),
+  ],
+);

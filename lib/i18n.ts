@@ -10,6 +10,9 @@ export type Translations = {
     newJournalEntry: string;
     newFoodEntry: string;
     newNote: string;
+    library: string;
+    openLibrary: string;
+    newLibraryItem: string;
   };
   journal: {
     back: string;
@@ -91,6 +94,47 @@ export type Translations = {
     back: string;
     saveNoteFirst: string;
   };
+  library: {
+    search: string;
+    empty: string;
+    noMatch: string;
+    newItem: string;
+    selectOrCreate: string;
+    all: string;
+    book: string;
+    album: string;
+    movie: string;
+    game: string;
+    video: string;
+    misc: string;
+    backlog: string;
+    inProgress: string;
+    finished: string;
+    dropped: string;
+    title: string;
+    creator: string;
+    url: string;
+    rating: string;
+    reactions: string;
+    genres: string;
+    status: string;
+    type: string;
+    thoughts: string;
+    addThought: string;
+    writeThought: string;
+    save: string;
+    delete: string;
+    cancel: string;
+    back: string;
+    loading: string;
+    saving: string;
+    adding: string;
+    platform: string;
+    pages: string;
+    duration: string;
+    channel: string;
+    deleteItem: string;
+  };
   settings: {
     settings: string;
     journalControls: string;
@@ -153,6 +197,9 @@ export const en: Translations = {
     newJournalEntry: "New journal entry",
     newFoodEntry: "New food entry",
     newNote: "New note",
+    library: "Library",
+    openLibrary: "Open library",
+    newLibraryItem: "New library item",
   },
   journal: {
     back: "Back",
@@ -235,6 +282,47 @@ export const en: Translations = {
     back: "Back",
     saveNoteFirst: "Save the note first to attach images",
   },
+  library: {
+    search: "Search library...",
+    empty: "No items yet.",
+    noMatch: "No items match your search.",
+    newItem: "+ New Item",
+    selectOrCreate: "Select an item or create a new one.",
+    all: "All",
+    book: "Book",
+    album: "Album",
+    movie: "Movie",
+    game: "Game",
+    video: "Video",
+    misc: "Misc",
+    backlog: "Backlog",
+    inProgress: "In Progress",
+    finished: "Finished",
+    dropped: "Dropped",
+    title: "Title",
+    creator: "Creator",
+    url: "URL",
+    rating: "Rating",
+    reactions: "Reactions",
+    genres: "Genres",
+    status: "Status",
+    type: "Type",
+    thoughts: "Thoughts",
+    addThought: "Add thought",
+    writeThought: "Write a thought… (⌘↵ to save, Esc to cancel)",
+    save: "Save",
+    delete: "Delete",
+    cancel: "Cancel",
+    back: "Back",
+    loading: "Loading...",
+    saving: "saving…",
+    adding: "Adding…",
+    platform: "Platform",
+    pages: "Pages",
+    duration: "Duration",
+    channel: "Channel",
+    deleteItem: "Delete item",
+  },
   settings: {
     settings: "Settings",
     journalControls: "Journal controls",
@@ -300,6 +388,9 @@ export const ptBr: Translations = {
     newJournalEntry: "Nova entrada no di\u00e1rio",
     newFoodEntry: "Nova entrada de alimenta\u00e7\u00e3o",
     newNote: "Nova nota",
+    library: "Biblioteca",
+    openLibrary: "Abrir biblioteca",
+    newLibraryItem: "Novo item na biblioteca",
   },
   journal: {
     back: "Voltar",
@@ -384,6 +475,47 @@ export const ptBr: Translations = {
     loading: "Carregando...",
     back: "Voltar",
     saveNoteFirst: "Salve a nota primeiro para anexar imagens",
+  },
+  library: {
+    search: "Buscar na biblioteca...",
+    empty: "Nenhum item ainda.",
+    noMatch: "Nenhum item corresponde \u00e0 sua busca.",
+    newItem: "+ Novo Item",
+    selectOrCreate: "Selecione um item ou crie um novo.",
+    all: "Todos",
+    book: "Livro",
+    album: "\u00c1lbum",
+    movie: "Filme",
+    game: "Jogo",
+    video: "V\u00eddeo",
+    misc: "Outros",
+    backlog: "Lista",
+    inProgress: "Em Progresso",
+    finished: "Finalizado",
+    dropped: "Abandonado",
+    title: "T\u00edtulo",
+    creator: "Criador",
+    url: "URL",
+    rating: "Avalia\u00e7\u00e3o",
+    reactions: "Rea\u00e7\u00f5es",
+    genres: "G\u00eaneros",
+    status: "Status",
+    type: "Tipo",
+    thoughts: "Pensamentos",
+    addThought: "Adicionar pensamento",
+    writeThought: "Escreva um pensamento\u2026 (\u2318\u21b5 para salvar, Esc para cancelar)",
+    save: "Salvar",
+    delete: "Excluir",
+    cancel: "Cancelar",
+    back: "Voltar",
+    loading: "Carregando...",
+    saving: "salvando\u2026",
+    adding: "Adicionando\u2026",
+    platform: "Plataforma",
+    pages: "P\u00e1ginas",
+    duration: "Dura\u00e7\u00e3o",
+    channel: "Canal",
+    deleteItem: "Excluir item",
   },
   settings: {
     settings: "Configura\u00e7\u00f5es",

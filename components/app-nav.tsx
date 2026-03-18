@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus, LogOut, Settings, Utensils, StickyNote, Sun, Moon } from "lucide-react";
+import { BookOpen, Plus, LogOut, Settings, Utensils, StickyNote, Library, Sun, Moon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-app-button";
 import { useMode } from "@/lib/mode-context";
@@ -38,6 +38,14 @@ export function AppNav() {
 
   function handleCreateNote() {
     router.push("/notes/browse?new=1");
+  }
+
+  function handleSelectLibrary() {
+    router.push("/library/browse");
+  }
+
+  function handleCreateLibrary() {
+    router.push("/library/browse?new=1");
   }
 
   async function handleCreateJournal() {
@@ -97,6 +105,15 @@ export function AppNav() {
       createLabel: t.nav.newNote,
       onBrowse: handleSelectNotes,
       onCreate: handleCreateNote,
+    },
+    {
+      key: "library",
+      icon: Library,
+      label: t.nav.library,
+      browseLabel: t.nav.openLibrary,
+      createLabel: t.nav.newLibraryItem,
+      onBrowse: handleSelectLibrary,
+      onCreate: handleCreateLibrary,
     },
   ] as const;
 
