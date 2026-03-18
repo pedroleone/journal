@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Instrument_Serif, DM_Sans, Geist_Mono } from "next/font/google";
+import { Fraunces, DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NavWrapper } from "@/components/nav-wrapper";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
@@ -8,10 +8,11 @@ import { ModeProvider } from "@/lib/mode-context";
 import { LocaleProvider } from "@/hooks/use-locale";
 import { ThemeProvider } from "@/hooks/use-theme";
 
-const heading = Instrument_Serif({
+const heading = Fraunces({
   variable: "--font-heading",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const body = DM_Sans({
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "rgb(248 247 242)" },
-    { media: "(prefers-color-scheme: dark)", color: "rgb(31 29 25)" },
+    { media: "(prefers-color-scheme: dark)", color: "rgb(43 40 35)" },
   ],
 };
 
