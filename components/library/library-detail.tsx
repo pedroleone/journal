@@ -360,6 +360,8 @@ export function LibraryDetail({
           onBlur={handleTitleBlur}
           onKeyDown={handleTitleKeyDown}
           autoFocus={isNew}
+          autoComplete="off"
+          data-1p-ignore
         />
 
         {/* Promoted artist field for albums */}
@@ -370,6 +372,8 @@ export function LibraryDetail({
             value={creatorDraft}
             onChange={(e) => setCreatorDraft(e.target.value)}
             onBlur={handleCreatorBlur}
+            autoComplete="off"
+            data-1p-ignore
           />
         )}
 
@@ -414,6 +418,8 @@ export function LibraryDetail({
                 value={creatorDraft}
                 onChange={(e) => setCreatorDraft(e.target.value)}
                 onBlur={handleCreatorBlur}
+                autoComplete="off"
+                data-1p-ignore
               />
             </div>
           )}
@@ -428,6 +434,8 @@ export function LibraryDetail({
                 value={urlDraft}
                 onChange={(e) => setUrlDraft(e.target.value)}
                 onBlur={handleUrlBlur}
+                autoComplete="off"
+                data-1p-ignore
               />
             </div>
           )}
@@ -442,6 +450,8 @@ export function LibraryDetail({
               value={yearDraft}
               onChange={(e) => setYearDraft(e.target.value === "" ? "" : Number(e.target.value))}
               onBlur={handleYearBlur}
+              autoComplete="off"
+              data-1p-ignore
             />
           </div>
 
@@ -483,6 +493,8 @@ export function LibraryDetail({
                 className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
                 value={(item.metadata as Record<string, unknown>)?.pages as number ?? ""}
                 onChange={(e) => onUpdate({ metadata: { ...item.metadata, pages: e.target.value ? Number(e.target.value) : null } })}
+                autoComplete="off"
+                data-1p-ignore
               />
             </div>
           )}
@@ -494,6 +506,8 @@ export function LibraryDetail({
                 placeholder="2h 30m"
                 value={(item.metadata as Record<string, unknown>)?.duration as string ?? ""}
                 onChange={(e) => onUpdate({ metadata: { ...item.metadata, duration: e.target.value || null } })}
+                autoComplete="off"
+                data-1p-ignore
               />
             </div>
           )}
@@ -505,6 +519,8 @@ export function LibraryDetail({
                 placeholder={t.library.channel}
                 value={(item.metadata as Record<string, unknown>)?.channel as string ?? ""}
                 onChange={(e) => onUpdate({ metadata: { ...item.metadata, channel: e.target.value || null } })}
+                autoComplete="off"
+                data-1p-ignore
               />
             </div>
           )}

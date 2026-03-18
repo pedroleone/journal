@@ -96,6 +96,8 @@ export function VocabularyInput({ field, values, onChange, placeholder }: Vocabu
           onChange={(e) => { setInput(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
+          autoComplete="off"
+          data-1p-ignore
         />
       </div>
 

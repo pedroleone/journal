@@ -164,6 +164,8 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
           placeholder={t.library.search}
           value={searchInput}
           onChange={(e) => handleSearchChange(e.target.value)}
+          autoComplete="off"
+          data-1p-ignore
         />
         {searchInput && (
           <button
@@ -337,6 +339,8 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
                       onChange={(e) => setQuickAddTitle(e.target.value)}
                       onKeyDown={handleQuickAddKeyDown}
                       autoFocus
+                      autoComplete="off"
+                      data-1p-ignore
                     />
                     <input
                       className="flex-1 bg-transparent border border-border/60 rounded-md px-2 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
@@ -344,6 +348,8 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
                       value={quickAddCreator}
                       onChange={(e) => setQuickAddCreator(e.target.value)}
                       onKeyDown={handleQuickAddKeyDown}
+                      autoComplete="off"
+                      data-1p-ignore
                     />
                   </>
                 ) : (
@@ -355,6 +361,8 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
                     onChange={(e) => setQuickAddTitle(e.target.value)}
                     onKeyDown={handleQuickAddKeyDown}
                     autoFocus
+                    autoComplete="off"
+                    data-1p-ignore
                   />
                 )}
                 <button
