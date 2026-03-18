@@ -45,7 +45,7 @@ export function AppNav() {
   }
 
   function handleCreateLibrary() {
-    router.push("/library/browse?new=1");
+    router.push("/library/new");
   }
 
   async function handleCreateJournal() {

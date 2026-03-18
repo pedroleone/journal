@@ -2,12 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { LibraryList, type LibraryListItem } from "@/components/library/library-list";
-import { NEW_ITEM_ID, LibraryViewer } from "@/components/library/library-viewer";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
-import { useLocale } from "@/hooks/use-locale";
+import { LibraryBrowse, type BrowseItem } from "@/components/library/library-browse";
 import type { LibraryFilters } from "@/components/library/filter-bar";
 import type { MediaType, MediaStatus } from "@/lib/library";
 
@@ -31,15 +26,11 @@ function filtersFromParams(params: URLSearchParams): LibraryFilters {
 export default function LibraryBrowsePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isMobile = useMediaQuery("(max-width: 768px)");
 
-  const [items, setItems] = useState<LibraryListItem[]>([]);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [items, setItems] = useState<BrowseItem[]>([]);
   const [genres, setGenres] = useState<VocabEntry[]>([]);
   const [reactions, setReactions] = useState<VocabEntry[]>([]);
   const [platforms, setPlatforms] = useState<VocabEntry[]>([]);
-  const { t } = useLocale();
 
   const filters = filtersFromParams(searchParams);
 
@@ -81,14 +72,14 @@ export default function LibraryBrowsePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString(), loadItems]);
 
-  const isNewMode = searchParams.get("new") === "1";
-
+  // Redirect legacy ?new=1 to /library/new
   useEffect(() => {
-    if (isNewMode) {
-      void handleNew();
+    if (searchParams.get("new") === "1") {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("new");
+      router.replace("/library/new");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNewMode]);
+  }, [searchParams, router]);
 
   function setFilter<K extends keyof LibraryFilters>(key: K, value: LibraryFilters[K]) {
     const params = new URLSearchParams(searchParams.toString());
@@ -97,26 +88,9 @@ export default function LibraryBrowsePage() {
     } else {
       params.set(key, String(value));
     }
-    // Remove "new" param when changing filters
     params.delete("new");
     const qs = params.toString();
     router.replace(qs ? `/library/browse?${qs}` : "/library/browse");
-  }
-
-  function handleSelectItem(id: string) {
-    if (id === NEW_ITEM_ID) return;
-    setSelectedItemId(id);
-    if (isMobile) setSidebarOpen(false);
-  }
-
-  function handleNew() {
-    // Remove "new" from URL but keep filters
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("new");
-    const qs = params.toString();
-    router.replace(qs ? `/library/browse?${qs}` : "/library/browse");
-    setSelectedItemId(NEW_ITEM_ID);
-    if (isMobile) setSidebarOpen(false);
   }
 
   async function handleQuickAdd(type: MediaType, title: string, creator?: string) {
@@ -126,66 +100,18 @@ export default function LibraryBrowsePage() {
       body: JSON.stringify({ type, title, ...(creator && { creator }) }),
     });
     if (!res.ok) return;
-    const { id } = await res.json();
-    await loadItems(filters);
-    setSelectedItemId(id);
-    if (isMobile) setSidebarOpen(false);
-  }
-
-  async function handleBulkStatus(ids: string[], status: MediaStatus) {
-    const res = await fetch("/api/library/bulk-status", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids, status }),
-    });
-    if (!res.ok) return;
     await loadItems(filters);
   }
-
-  const showContent = isMobile ? !sidebarOpen : true;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
-      <CollapsibleSidebar visible={sidebarOpen}>
-        <LibraryList
-          items={items}
-          selectedId={selectedItemId}
-          filters={filters}
-          onSelect={handleSelectItem}
-          onFilterChange={setFilter}
-          onNew={handleNew}
-          onQuickAdd={handleQuickAdd}
-          onBulkStatus={handleBulkStatus}
-          genres={genres}
-          reactions={reactions}
-          platforms={platforms}
-        />
-      </CollapsibleSidebar>
-
-      {showContent && (
-        <div className="flex-1 overflow-y-auto scrollbar-gutter-stable">
-          {isMobile && (
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="flex items-center gap-1.5 px-6 pt-4 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {t.library.back}
-            </button>
-          )}
-          <LibraryViewer
-            itemId={selectedItemId}
-            onDeleted={() => {
-              setSelectedItemId(null);
-              if (isMobile) setSidebarOpen(true);
-            }}
-            onCreated={(id) => {
-              setSelectedItemId(id);
-            }}
-            onItemsChanged={() => loadItems(filters)}
-          />
-        </div>
-      )}
-    </div>
+    <LibraryBrowse
+      items={items}
+      filters={filters}
+      onFilterChange={setFilter}
+      onQuickAdd={handleQuickAdd}
+      genres={genres}
+      reactions={reactions}
+      platforms={platforms}
+    />
   );
 }

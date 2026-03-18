@@ -158,6 +158,9 @@ export type Translations = {
     year: string;
     selectType: string;
     addToLibrary: string;
+    listening: string;
+    listened: string;
+    nItems: (type: string, count: number) => string;
   };
   settings: {
     settings: string;
@@ -370,6 +373,9 @@ export const en: Translations = {
     year: "Year",
     selectType: "What are you adding?",
     addToLibrary: "Add to Library",
+    listening: "Listening",
+    listened: "Listened",
+    nItems: (type, count) => `${type} (${count})`,
   },
   settings: {
     settings: "Settings",
@@ -588,6 +594,9 @@ export const ptBr: Translations = {
     year: "Ano",
     selectType: "O que você está adicionando?",
     addToLibrary: "Adicionar à Biblioteca",
+    listening: "Ouvindo",
+    listened: "Ouvido",
+    nItems: (type, count) => `${type} (${count})`,
   },
   settings: {
     settings: "Configura\u00e7\u00f5es",
