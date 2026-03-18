@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import type { MealSlot } from "@/lib/food";
 import { jsonNoStore } from "@/lib/http";
 import { foodEntries } from "@/lib/schema";
 import { assignFoodEntrySchema } from "@/lib/validators";
@@ -38,7 +39,7 @@ export async function PATCH(
     assigned_at: string;
     updated_at: string;
     hour?: number;
-    meal_slot?: "breakfast" | "morning_snack" | "lunch" | "afternoon_snack" | "dinner" | "midnight_snack" | null;
+    meal_slot?: MealSlot | null;
   } = {
     year: parsed.data.year,
     month: parsed.data.month,

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useImages } from "@/hooks/use-images";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
+import type { MealSlot } from "@/lib/food";
 
 interface FoodEntry {
   id: string;
@@ -17,7 +18,7 @@ interface FoodEntry {
   month: number;
   day: number;
   hour: number | null;
-  meal_slot: "breakfast" | "morning_snack" | "lunch" | "afternoon_snack" | "dinner" | "midnight_snack" | null;
+  meal_slot: MealSlot | null;
   logged_at: string;
   content: string;
   images: string[] | null;

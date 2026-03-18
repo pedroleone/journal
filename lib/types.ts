@@ -1,3 +1,5 @@
+import type { MealSlot } from "./food";
+
 export type EntrySource = "web" | "telegram";
 
 export type ImageOwnerKind = "journal" | "food" | "note" | "note_subnote" | "library" | "library_note";
@@ -31,7 +33,7 @@ export interface BackupFoodEntry {
   month: number;
   day: number;
   hour: number | null;
-  meal_slot: "breakfast" | "morning_snack" | "lunch" | "afternoon_snack" | "dinner" | "midnight_snack" | "snack" | null;
+  meal_slot: MealSlot | "snack" | null;
   assigned_at: string | null;
   logged_at: string;
   content: string;
