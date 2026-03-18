@@ -1,4 +1,4 @@
-CREATE TABLE `media_item_notes` (
+CREATE TABLE IF NOT EXISTS `media_item_notes` (
 	`id` text PRIMARY KEY NOT NULL,
 	`media_item_id` text NOT NULL,
 	`user_id` text NOT NULL,
@@ -11,8 +11,8 @@ CREATE TABLE `media_item_notes` (
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `idx_media_item_notes_item` ON `media_item_notes` (`media_item_id`);--> statement-breakpoint
-CREATE TABLE `media_items` (
+CREATE INDEX IF NOT EXISTS `idx_media_item_notes_item` ON `media_item_notes` (`media_item_id`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `media_items` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
 	`type` text NOT NULL,
@@ -35,6 +35,6 @@ CREATE TABLE `media_items` (
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `idx_media_items_user` ON `media_items` (`user_id`);--> statement-breakpoint
-CREATE INDEX `idx_media_items_user_updated` ON `media_items` (`user_id`,`updated_at`);--> statement-breakpoint
-CREATE INDEX `idx_media_items_user_type` ON `media_items` (`user_id`,`type`);
+CREATE INDEX IF NOT EXISTS `idx_media_items_user` ON `media_items` (`user_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `idx_media_items_user_updated` ON `media_items` (`user_id`,`updated_at`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `idx_media_items_user_type` ON `media_items` (`user_id`,`type`);

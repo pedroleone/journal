@@ -1,4 +1,4 @@
-CREATE TABLE `food_entries` (
+CREATE TABLE IF NOT EXISTS `food_entries` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
 	`source` text NOT NULL,
@@ -18,9 +18,9 @@ CREATE TABLE `food_entries` (
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `idx_food_user_date` ON `food_entries` (`user_id`,`year`,`month`,`day`);--> statement-breakpoint
-CREATE INDEX `idx_food_assigned_logged` ON `food_entries` (`assigned_at`,`logged_at`);--> statement-breakpoint
-CREATE TABLE `note_subnotes` (
+CREATE INDEX IF NOT EXISTS `idx_food_user_date` ON `food_entries` (`user_id`,`year`,`month`,`day`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `idx_food_assigned_logged` ON `food_entries` (`assigned_at`,`logged_at`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `note_subnotes` (
 	`id` text PRIMARY KEY NOT NULL,
 	`note_id` text NOT NULL,
 	`user_id` text NOT NULL,
@@ -33,8 +33,8 @@ CREATE TABLE `note_subnotes` (
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `idx_note_subnotes_note` ON `note_subnotes` (`note_id`);--> statement-breakpoint
-CREATE TABLE `notes` (
+CREATE INDEX IF NOT EXISTS `idx_note_subnotes_note` ON `note_subnotes` (`note_id`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `notes` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
 	`title` text,
@@ -47,5 +47,5 @@ CREATE TABLE `notes` (
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `idx_notes_user` ON `notes` (`user_id`);--> statement-breakpoint
-CREATE INDEX `idx_notes_user_updated` ON `notes` (`user_id`,`updated_at`);
+CREATE INDEX IF NOT EXISTS `idx_notes_user` ON `notes` (`user_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `idx_notes_user_updated` ON `notes` (`user_id`,`updated_at`);

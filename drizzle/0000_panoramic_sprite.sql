@@ -1,4 +1,4 @@
-CREATE TABLE `entries` (
+CREATE TABLE IF NOT EXISTS `entries` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
 	`source` text NOT NULL,
@@ -15,9 +15,9 @@ CREATE TABLE `entries` (
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `idx_entries_user_date` ON `entries` (`user_id`,`year`,`month`,`day`);--> statement-breakpoint
-CREATE UNIQUE INDEX `idx_entries_unique_user_date` ON `entries` (`user_id`,`year`,`month`,`day`);--> statement-breakpoint
-CREATE TABLE `users` (
+CREATE INDEX IF NOT EXISTS `idx_entries_user_date` ON `entries` (`user_id`,`year`,`month`,`day`);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_entries_unique_user_date` ON `entries` (`user_id`,`year`,`month`,`day`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `users` (
 	`id` text PRIMARY KEY NOT NULL,
 	`google_sub` text NOT NULL,
 	`email` text NOT NULL,
@@ -25,5 +25,5 @@ CREATE TABLE `users` (
 	`updated_at` text NOT NULL
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `idx_users_google_sub` ON `users` (`google_sub`);--> statement-breakpoint
-CREATE UNIQUE INDEX `idx_users_email` ON `users` (`email`);
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_users_google_sub` ON `users` (`google_sub`);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_users_email` ON `users` (`email`);
