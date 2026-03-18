@@ -55,12 +55,11 @@ export async function getOwnerImageRecord(
   }
   if (ownerKind === "library") {
     const [record] = await db
-      .select({ id: mediaItems.id, images: mediaItems.reactions })
+      .select({ id: mediaItems.id, cover_image: mediaItems.cover_image })
       .from(mediaItems)
       .where(and(eq(mediaItems.userId, userId), eq(mediaItems.id, ownerId)));
-    // mediaItems doesn't have an images column directly — use cover_image via a different path
-    // For now, return null images since library items use cover_image not an images array
-    return record ? { id: record.id, images: null } : null;
+    if (!record) return null;
+    return { id: record.id, images: record.cover_image ? [record.cover_image] : null };
   }
   if (ownerKind === "library_note") {
     const [record] = await db
