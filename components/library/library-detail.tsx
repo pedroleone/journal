@@ -395,20 +395,22 @@ export function LibraryDetail({
           )}
 
           {/* Rating */}
-          <div>
-            <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.rating}</label>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => onUpdate({ rating: item.rating === n ? null : n })}
-                  className="p-0.5 transition-colors"
-                >
-                  <Star className={`h-5 w-5 ${n <= (item.rating ?? 0) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
-                </button>
-              ))}
+          {(item.status === "finished" || item.status === "dropped") && (
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.rating}</label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => onUpdate({ rating: item.rating === n ? null : n })}
+                    className="p-0.5 transition-colors"
+                  >
+                    <Star className={`h-5 w-5 ${n <= (item.rating ?? 0) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Type-specific metadata */}
           {item.type === "game" && (
