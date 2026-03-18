@@ -30,7 +30,7 @@ interface LibraryListProps {
   onSelect: (id: string) => void;
   onFilterChange: <K extends keyof LibraryFilters>(key: K, value: LibraryFilters[K]) => void;
   onNew: () => void;
-  onQuickAdd?: (type: MediaType, title: string) => Promise<void>;
+  onQuickAdd?: (type: MediaType, title: string, creator?: string) => Promise<void>;
   onBulkStatus?: (ids: string[], status: MediaStatus) => Promise<void>;
   genres: VocabEntry[];
   reactions: VocabEntry[];
@@ -67,6 +67,7 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickAddType, setQuickAddType] = useState<MediaType>("book");
   const [quickAddTitle, setQuickAddTitle] = useState("");
+  const [quickAddCreator, setQuickAddCreator] = useState("");
   const [quickAddSubmitting, setQuickAddSubmitting] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -109,8 +110,9 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
     if (!quickAddTitle.trim() || !onQuickAdd || quickAddSubmitting) return;
     setQuickAddSubmitting(true);
     try {
-      await onQuickAdd(quickAddType, quickAddTitle.trim());
+      await onQuickAdd(quickAddType, quickAddTitle.trim(), quickAddCreator.trim() || undefined);
       setQuickAddTitle("");
+      setQuickAddCreator("");
       // Stay open for batch adds, refocus input
       setTimeout(() => quickAddInputRef.current?.focus(), 0);
     } finally {
@@ -120,7 +122,7 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
 
   function handleQuickAddKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter") void handleQuickAddSubmit();
-    if (e.key === "Escape") { setQuickAddOpen(false); setQuickAddTitle(""); }
+    if (e.key === "Escape") { setQuickAddOpen(false); setQuickAddTitle(""); setQuickAddCreator(""); }
   }
 
   function toggleSelected(id: string) {
@@ -242,11 +244,13 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
                   )}
                   <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <p className={cn("truncate text-sm", selectedId === item.id && !selectMode ? "font-medium" : "")}>
-                    {item.title}
+                    {item.type === "album" && item.creator
+                      ? `${item.creator} - ${item.title}`
+                      : item.title}
                   </p>
                 </div>
                 <div className={cn("mt-0.5 flex items-center gap-1.5 flex-wrap", selectMode ? "pl-9" : "pl-5.5")}>
-                  {item.creator && (
+                  {item.type !== "album" && item.creator && (
                     <span className="text-xs text-muted-foreground">{item.creator}</span>
                   )}
                   <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-medium", STATUS_COLORS[item.status])}>
@@ -323,15 +327,36 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
                 })}
               </div>
               <div className="flex gap-2">
-                <input
-                  ref={quickAddInputRef}
-                  className="flex-1 bg-transparent border border-border/60 rounded-md px-2 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
-                  placeholder={t.library.titlePlaceholder}
-                  value={quickAddTitle}
-                  onChange={(e) => setQuickAddTitle(e.target.value)}
-                  onKeyDown={handleQuickAddKeyDown}
-                  autoFocus
-                />
+                {quickAddType === "album" ? (
+                  <>
+                    <input
+                      ref={quickAddInputRef}
+                      className="flex-1 bg-transparent border border-border/60 rounded-md px-2 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
+                      placeholder={t.library.albumName}
+                      value={quickAddTitle}
+                      onChange={(e) => setQuickAddTitle(e.target.value)}
+                      onKeyDown={handleQuickAddKeyDown}
+                      autoFocus
+                    />
+                    <input
+                      className="flex-1 bg-transparent border border-border/60 rounded-md px-2 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
+                      placeholder={t.library.artistPlaceholder}
+                      value={quickAddCreator}
+                      onChange={(e) => setQuickAddCreator(e.target.value)}
+                      onKeyDown={handleQuickAddKeyDown}
+                    />
+                  </>
+                ) : (
+                  <input
+                    ref={quickAddInputRef}
+                    className="flex-1 bg-transparent border border-border/60 rounded-md px-2 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
+                    placeholder={t.library.titlePlaceholder}
+                    value={quickAddTitle}
+                    onChange={(e) => setQuickAddTitle(e.target.value)}
+                    onKeyDown={handleQuickAddKeyDown}
+                    autoFocus
+                  />
+                )}
                 <button
                   onClick={handleQuickAddSubmit}
                   disabled={quickAddSubmitting || !quickAddTitle.trim()}

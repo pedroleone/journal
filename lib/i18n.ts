@@ -148,6 +148,9 @@ export type Translations = {
     removeCover: string;
     quickAdd: string;
     titlePlaceholder: string;
+    albumName: string;
+    artistName: string;
+    artistPlaceholder: string;
     select: string;
     selectAll: string;
     updateStatus: string;
@@ -354,6 +357,9 @@ export const en: Translations = {
     removeCover: "Remove cover",
     quickAdd: "Quick add",
     titlePlaceholder: "Title...",
+    albumName: "Album Name",
+    artistName: "Artist Name",
+    artistPlaceholder: "Artist...",
     select: "Select",
     selectAll: "Select all",
     updateStatus: "Update status",
@@ -566,6 +572,9 @@ export const ptBr: Translations = {
     removeCover: "Remover capa",
     quickAdd: "Adicionar rápido",
     titlePlaceholder: "Título...",
+    albumName: "Nome do Álbum",
+    artistName: "Nome do Artista",
+    artistPlaceholder: "Artista...",
     select: "Selecionar",
     selectAll: "Selecionar todos",
     updateStatus: "Atualizar status",
