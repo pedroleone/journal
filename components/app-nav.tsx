@@ -119,8 +119,8 @@ export function AppNav() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/60 bg-background">
-      <div className="flex h-14 items-center justify-between px-6">
-        <div className="flex min-w-0 items-center gap-1">
+      <div className="flex h-14 items-center justify-between px-2 sm:px-6">
+        <div className="flex min-w-0 items-center gap-0.5 sm:gap-1">
           {sections.map((section) => {
             const isActive = mode === section.key;
             const Icon = section.icon;
@@ -136,7 +136,7 @@ export function AppNav() {
                   aria-current={isActive ? "page" : undefined}
                   title={section.browseLabel}
                   className={cn(
-                    "flex h-9 items-center gap-2 px-3 text-sm transition-colors",
+                    "flex h-9 items-center gap-2 px-2 sm:px-3 text-sm transition-colors",
                     isActive
                       ? "bg-secondary font-medium text-foreground"
                       : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
@@ -150,7 +150,7 @@ export function AppNav() {
                   aria-label={section.createLabel}
                   title={section.createLabel}
                   className={cn(
-                    "flex h-9 items-center justify-center border-l border-border/60 px-2.5 transition-colors",
+                    "flex h-9 items-center justify-center border-l border-border/60 px-1.5 sm:px-2.5 transition-colors",
                     isActive
                       ? "bg-secondary text-foreground hover:bg-secondary"
                       : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
@@ -163,25 +163,25 @@ export function AppNav() {
           })}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <InstallAppButton />
           <button
             onClick={toggleTheme}
-            className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+            className="rounded-md p-1.5 sm:p-2 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           <button
             onClick={() => router.push("/settings")}
-            className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+            className="rounded-md p-1.5 sm:p-2 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Settings"
           >
             <Settings className="h-4 w-4" />
           </button>
           <button
             onClick={handleLogout}
-            className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+            className="rounded-md p-1.5 sm:p-2 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Sign out"
           >
             <LogOut className="h-4 w-4" />
