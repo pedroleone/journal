@@ -23,6 +23,18 @@ const mockDb = vi.mocked(db) as unknown as {
 
 const LINKED_CHAT_ID = 123456;
 
+function getSendMessageBody() {
+  const sendCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(
+    (call: unknown[]) => String(call[0]).includes("sendMessage"),
+  );
+
+  if (!sendCall) {
+    throw new Error("Expected Telegram sendMessage request");
+  }
+
+  return JSON.parse((sendCall[1] as RequestInit).body as string) as { text: string };
+}
+
 describe("POST /api/telegram/webhook", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -165,12 +177,7 @@ describe("POST /api/telegram/webhook", () => {
     expect(response.status).toBe(200);
     expect(mockDb.insert).not.toHaveBeenCalled();
 
-    const sendCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(
-      (call: unknown[]) => String(call[0]).includes("sendMessage"),
-    );
-    expect(sendCall).toBeDefined();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const body = JSON.parse(sendCall![1].body as string) as { text: string };
+    const body = getSendMessageBody();
     expect(body.text).toContain("not linked");
   });
 
@@ -218,11 +225,7 @@ describe("POST /api/telegram/webhook", () => {
     expect(response.status).toBe(200);
     expect(authUser.linkTelegramChatId).not.toHaveBeenCalled();
 
-    const sendCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(
-      (call: unknown[]) => String(call[0]).includes("sendMessage"),
-    );
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const body = JSON.parse(sendCall![1].body as string) as { text: string };
+    const body = getSendMessageBody();
     expect(body.text).toContain("expired");
   });
 

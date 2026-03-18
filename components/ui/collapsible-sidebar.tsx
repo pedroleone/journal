@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
@@ -12,11 +12,14 @@ interface CollapsibleSidebarProps {
 
 export function CollapsibleSidebar({ children, visible }: CollapsibleSidebarProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    try { setCollapsed(localStorage.getItem("sidebar-collapsed") === "true"); } catch {}
-  }, []);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
 
   function toggle() {
     const next = !collapsed;

@@ -9,10 +9,10 @@ const replace = vi.fn();
 const useMediaQueryMock = vi.fn();
 
 function jsonResponse(data: unknown) {
-  return {
-    ok: true,
-    json: vi.fn().mockResolvedValue(data),
-  };
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 function deferred<T>() {
@@ -106,7 +106,7 @@ describe("NotesBrowsePage", () => {
       }
 
       return Promise.reject(new Error(`Unexpected fetch: ${url}`));
-    }) as typeof fetch;
+    }) as unknown as typeof fetch;
 
     render(<NotesBrowsePage />);
 
@@ -121,8 +121,8 @@ describe("NotesBrowsePage", () => {
   });
 
   it("ignores late note responses after the user switches to a different note", async () => {
-    const noteOne = deferred<ReturnType<typeof jsonResponse>>();
-    const noteTwo = deferred<ReturnType<typeof jsonResponse>>();
+    const noteOne = deferred<Response>();
+    const noteTwo = deferred<Response>();
 
     global.fetch = vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : input.toString();
@@ -152,7 +152,7 @@ describe("NotesBrowsePage", () => {
       if (url === "/api/notes/note-2") return noteTwo.promise;
 
       return Promise.reject(new Error(`Unexpected fetch: ${url}`));
-    }) as typeof fetch;
+    }) as unknown as typeof fetch;
 
     render(<NotesBrowsePage />);
 

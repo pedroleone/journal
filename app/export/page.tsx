@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { bytesToBase64 } from "@/lib/base64";
+import type { MealSlot } from "@/lib/food";
 import type { EntrySource } from "@/lib/types";
 import { useLocale } from "@/hooks/use-locale";
 
@@ -27,7 +28,7 @@ interface JournalEntry extends BaseEntry {
 interface FoodEntry extends BaseEntry {
   kind: "food";
   logged_at: string;
-  meal_slot: "breakfast" | "morning_snack" | "lunch" | "afternoon_snack" | "dinner" | "midnight_snack" | null;
+  meal_slot: MealSlot | null;
 }
 
 type ExportableEntry = JournalEntry | FoodEntry;
