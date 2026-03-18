@@ -150,6 +150,9 @@ export function LibraryDetail({
   const [titleDraft, setTitleDraft] = useState(item.title);
   const [creatorDraft, setCreatorDraft] = useState(item.creator ?? "");
   const [urlDraft, setUrlDraft] = useState(item.url ?? "");
+  const [yearDraft, setYearDraft] = useState(
+    (item.metadata as Record<string, unknown>)?.year as number | undefined ?? ""
+  );
   const [contentDraft, setContentDraft] = useState(item.content ?? "");
   const [savingContent, setSavingContent] = useState(false);
   const [addingNote, setAddingNote] = useState(false);
@@ -158,6 +161,7 @@ export function LibraryDetail({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isNew = item.id === "__new__";
   const { t } = useLocale();
 
@@ -174,6 +178,7 @@ export function LibraryDetail({
     setTitleDraft(item.title);
     setCreatorDraft(item.creator ?? "");
     setUrlDraft(item.url ?? "");
+    setYearDraft((item.metadata as Record<string, unknown>)?.year as number | undefined ?? "");
     setContentDraft(item.content ?? "");
     setAddingNote(false);
     setNewNoteContent("");
@@ -183,7 +188,27 @@ export function LibraryDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
 
+  // For new items: explicit create triggered by button or Enter
+  async function handleCreate() {
+    const newTitle = titleDraft.trim();
+    if (!newTitle) return;
+    await onUpdate({
+      title: newTitle,
+      creator: creatorDraft.trim() || undefined,
+      url: urlDraft.trim() || undefined,
+    }).catch(() => undefined);
+  }
+
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (isNew && e.key === "Enter") {
+      e.preventDefault();
+      void handleCreate();
+    }
+  }
+
+  // For existing items: save on blur
   async function handleTitleBlur() {
+    if (isNew) return;
     const newTitle = titleDraft.trim();
     if (newTitle && newTitle !== item.title) {
       await onUpdate({ title: newTitle }).catch(() => undefined);
@@ -191,6 +216,7 @@ export function LibraryDetail({
   }
 
   async function handleCreatorBlur() {
+    if (isNew) return;
     const val = creatorDraft.trim() || null;
     if (val !== item.creator) {
       await onUpdate({ creator: val }).catch(() => undefined);
@@ -198,9 +224,19 @@ export function LibraryDetail({
   }
 
   async function handleUrlBlur() {
+    if (isNew) return;
     const val = urlDraft.trim() || null;
     if (val !== item.url) {
       await onUpdate({ url: val }).catch(() => undefined);
+    }
+  }
+
+  async function handleYearBlur() {
+    if (isNew) return;
+    const val = yearDraft !== "" ? Number(yearDraft) : null;
+    const current = (item.metadata as Record<string, unknown>)?.year as number | null ?? null;
+    if (val !== current) {
+      await onUpdate({ metadata: { ...item.metadata, year: val } }).catch(() => undefined);
     }
   }
 
@@ -242,7 +278,7 @@ export function LibraryDetail({
   }
 
   return (
-    <div className="relative flex flex-col min-h-full">
+    <div ref={containerRef} className="relative flex flex-col min-h-full">
       <div className="sticky top-0 z-10 flex items-center justify-between px-10 py-3 bg-background/80 backdrop-blur-sm border-b border-border/40">
         <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
           {formatDate(item.created_at)}
@@ -322,6 +358,8 @@ export function LibraryDetail({
           value={titleDraft}
           onChange={(e) => setTitleDraft(e.target.value)}
           onBlur={handleTitleBlur}
+          onKeyDown={handleTitleKeyDown}
+          autoFocus={isNew}
         />
 
         {/* Promoted artist field for albums */}
@@ -393,6 +431,19 @@ export function LibraryDetail({
               />
             </div>
           )}
+
+          {/* Year (all types) */}
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.year}</label>
+            <input
+              type="number"
+              className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
+              placeholder="2024"
+              value={yearDraft}
+              onChange={(e) => setYearDraft(e.target.value === "" ? "" : Number(e.target.value))}
+              onBlur={handleYearBlur}
+            />
+          </div>
 
           {/* Rating */}
           {(item.status === "finished" || item.status === "dropped") && (
@@ -481,15 +532,30 @@ export function LibraryDetail({
           />
         </div>
 
+        {/* Add to Library button (new items only) */}
+        {isNew && (
+          <div className="mb-10">
+            <button
+              onClick={handleCreate}
+              disabled={!titleDraft.trim()}
+              className="rounded-md bg-foreground text-background px-4 py-2 text-sm font-medium disabled:opacity-30 hover:opacity-80 transition-opacity"
+            >
+              {t.library.addToLibrary}
+            </button>
+          </div>
+        )}
+
         {/* Content */}
-        <MarkdownEditor
-          key={item.id}
-          value={contentDraft}
-          onChange={setContentDraft}
-          onBlur={handleContentBlur}
-          placeholder="Notes..."
-          className="text-base sm:text-[17px] leading-[1.9] text-foreground/85"
-        />
+        {!isNew && (
+          <MarkdownEditor
+            key={item.id}
+            value={contentDraft}
+            onChange={setContentDraft}
+            onBlur={handleContentBlur}
+            placeholder="Notes..."
+            className="text-base sm:text-[17px] leading-[1.9] text-foreground/85"
+          />
+        )}
 
         {/* Thought log */}
         {item.notes.length > 0 && (

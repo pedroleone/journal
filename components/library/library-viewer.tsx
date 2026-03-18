@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LibraryDetail, type LibraryDetailData } from "@/components/library/library-detail";
+import { LibraryTypePicker } from "@/components/library/library-type-picker";
 import { useLocale } from "@/hooks/use-locale";
+import type { MediaType } from "@/lib/library";
 export const NEW_ITEM_ID = "__new__";
 
 interface LibraryViewerProps {
@@ -12,11 +14,11 @@ interface LibraryViewerProps {
   onItemsChanged: () => Promise<void>;
 }
 
-function buildDraftItem(): LibraryDetailData {
+function buildDraftItem(type: MediaType): LibraryDetailData {
   const now = new Date().toISOString();
   return {
     id: NEW_ITEM_ID,
-    type: "book",
+    type,
     title: "",
     creator: null,
     url: null,
@@ -39,6 +41,7 @@ function buildDraftItem(): LibraryDetailData {
 export function LibraryViewer(props: LibraryViewerProps) {
   const [item, setItem] = useState<LibraryDetailData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pendingType, setPendingType] = useState<MediaType | null>(null);
   const itemRef = useRef<LibraryDetailData | null>(null);
   const selectedIdRef = useRef<string | null>(props.itemId);
   const requestIdRef = useRef(0);
@@ -85,14 +88,19 @@ export function LibraryViewer(props: LibraryViewerProps) {
 
   useEffect(() => {
     abortRef.current?.abort();
-    if (!props.itemId) { setLoading(false); setItem(null); return; }
-    if (props.itemId === NEW_ITEM_ID) { setLoading(false); setItem(buildDraftItem()); return; }
+    if (!props.itemId) { setLoading(false); setItem(null); setPendingType(null); return; }
+    if (props.itemId === NEW_ITEM_ID) { setLoading(false); setItem(null); setPendingType(null); return; }
     void loadItem(props.itemId);
   }, [loadItem, props.itemId]);
 
   useEffect(() => {
     return () => { abortRef.current?.abort(); };
   }, []);
+
+  function handleTypeSelect(type: MediaType) {
+    setPendingType(type);
+    setItem(buildDraftItem(type));
+  }
 
   async function refreshCurrent(targetId: string, options?: { showLoading?: boolean }) {
     if (targetId === NEW_ITEM_ID) return;
@@ -130,6 +138,7 @@ export function LibraryViewer(props: LibraryViewerProps) {
       const created = await res.json();
       setLoading(true);
       setItem(null);
+      setPendingType(null);
       await props.onItemsChanged();
       await props.onCreated(created.id);
       return;
@@ -160,6 +169,7 @@ export function LibraryViewer(props: LibraryViewerProps) {
 
     setLoading(false);
     setItem(null);
+    setPendingType(null);
     await props.onDeleted();
   }
 
@@ -240,6 +250,11 @@ export function LibraryViewer(props: LibraryViewerProps) {
         <p className="text-sm text-muted-foreground">{t.library.loading}</p>
       </div>
     );
+  }
+
+  // Step 1: type picker for new items
+  if (props.itemId === NEW_ITEM_ID && pendingType === null) {
+    return <LibraryTypePicker onSelect={handleTypeSelect} />;
   }
 
   if (!item) {

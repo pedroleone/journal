@@ -155,6 +155,9 @@ export type Translations = {
     selectAll: string;
     updateStatus: string;
     nSelected: (n: number) => string;
+    year: string;
+    selectType: string;
+    addToLibrary: string;
   };
   settings: {
     settings: string;
@@ -364,6 +367,9 @@ export const en: Translations = {
     selectAll: "Select all",
     updateStatus: "Update status",
     nSelected: (n) => `${n} selected`,
+    year: "Year",
+    selectType: "What are you adding?",
+    addToLibrary: "Add to Library",
   },
   settings: {
     settings: "Settings",
@@ -579,6 +585,9 @@ export const ptBr: Translations = {
     selectAll: "Selecionar todos",
     updateStatus: "Atualizar status",
     nSelected: (n) => `${n} selecionados`,
+    year: "Ano",
+    selectType: "O que você está adicionando?",
+    addToLibrary: "Adicionar à Biblioteca",
   },
   settings: {
     settings: "Configura\u00e7\u00f5es",
