@@ -315,14 +315,25 @@ export function LibraryDetail({
           )
         )}
 
-        {/* Title */}
+        {/* Title / Album Name */}
         <input
           className="w-full bg-transparent font-display text-4xl sm:text-5xl font-semibold tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground mb-5"
-          placeholder={t.library.title}
+          placeholder={item.type === "album" ? t.library.albumName : t.library.title}
           value={titleDraft}
           onChange={(e) => setTitleDraft(e.target.value)}
           onBlur={handleTitleBlur}
         />
+
+        {/* Promoted artist field for albums */}
+        {item.type === "album" && (
+          <input
+            className="w-full bg-transparent font-display text-2xl sm:text-3xl font-medium tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground/70 mb-5"
+            placeholder={t.library.artistName}
+            value={creatorDraft}
+            onChange={(e) => setCreatorDraft(e.target.value)}
+            onBlur={handleCreatorBlur}
+          />
+        )}
 
         {/* Metadata grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mb-8">
@@ -355,29 +366,33 @@ export function LibraryDetail({
             </select>
           </div>
 
-          {/* Creator */}
-          <div>
-            <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{creatorLabel}</label>
-            <input
-              className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
-              placeholder={creatorLabel}
-              value={creatorDraft}
-              onChange={(e) => setCreatorDraft(e.target.value)}
-              onBlur={handleCreatorBlur}
-            />
-          </div>
+          {/* Creator (hidden for albums — shown as promoted field above) */}
+          {item.type !== "album" && (
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{creatorLabel}</label>
+              <input
+                className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
+                placeholder={creatorLabel}
+                value={creatorDraft}
+                onChange={(e) => setCreatorDraft(e.target.value)}
+                onBlur={handleCreatorBlur}
+              />
+            </div>
+          )}
 
-          {/* URL */}
-          <div>
-            <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.url}</label>
-            <input
-              className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
-              placeholder="https://..."
-              value={urlDraft}
-              onChange={(e) => setUrlDraft(e.target.value)}
-              onBlur={handleUrlBlur}
-            />
-          </div>
+          {/* URL (hidden for albums) */}
+          {item.type !== "album" && (
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.url}</label>
+              <input
+                className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
+                placeholder="https://..."
+                value={urlDraft}
+                onChange={(e) => setUrlDraft(e.target.value)}
+                onBlur={handleUrlBlur}
+              />
+            </div>
+          )}
 
           {/* Rating */}
           <div>

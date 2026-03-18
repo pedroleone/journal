@@ -119,11 +119,11 @@ export default function LibraryBrowsePage() {
     if (isMobile) setSidebarOpen(false);
   }
 
-  async function handleQuickAdd(type: MediaType, title: string) {
+  async function handleQuickAdd(type: MediaType, title: string, creator?: string) {
     const res = await fetch("/api/library", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, title }),
+      body: JSON.stringify({ type, title, ...(creator && { creator }) }),
     });
     if (!res.ok) return;
     const { id } = await res.json();
