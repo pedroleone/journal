@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { mediaItems } from "@/lib/schema";
 import { encryptServerText } from "@/lib/server-crypto";
+import { computeStatusTimestamps } from "@/lib/library";
 import { createMediaItemSchema, mediaItemListQuerySchema } from "@/lib/validators";
 
 export async function GET(request: NextRequest) {
@@ -123,6 +124,7 @@ export async function POST(request: NextRequest) {
     added_at: now,
     started_at: null,
     finished_at: null,
+    ...computeStatusTimestamps(parsed.data.status, { started_at: null, finished_at: null }, now),
     created_at: now,
     updated_at: now,
   });

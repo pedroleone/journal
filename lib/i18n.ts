@@ -143,6 +143,15 @@ export type Translations = {
     ratingAndAbove: (n: number) => string;
     anyRating: string;
     noItemsForFilters: string;
+    addCover: string;
+    changeCover: string;
+    removeCover: string;
+    quickAdd: string;
+    titlePlaceholder: string;
+    select: string;
+    selectAll: string;
+    updateStatus: string;
+    nSelected: (n: number) => string;
   };
   settings: {
     settings: string;
@@ -340,6 +349,15 @@ export const en: Translations = {
     ratingAndAbove: (n) => `${n}+ stars`,
     anyRating: "Any rating",
     noItemsForFilters: "No items match your filters.",
+    addCover: "Add cover",
+    changeCover: "Change",
+    removeCover: "Remove cover",
+    quickAdd: "Quick add",
+    titlePlaceholder: "Title...",
+    select: "Select",
+    selectAll: "Select all",
+    updateStatus: "Update status",
+    nSelected: (n) => `${n} selected`,
   },
   settings: {
     settings: "Settings",
@@ -351,7 +369,7 @@ export const en: Translations = {
     openExportTools: "Open export tools",
     restoreBackup: "Restore backup",
     restoreBackupDesc:
-      "Restore from a version 2 backup JSON file. Existing entry IDs are skipped.",
+      "Restore from a backup JSON file (V2 or V3). Existing entry IDs are skipped.",
     restoring: "Restoring\u2026",
     restoreFailed: "Restore failed.",
     importedResult: (journal, food, images) =>
@@ -543,6 +561,15 @@ export const ptBr: Translations = {
     ratingAndAbove: (n) => `${n}+ estrelas`,
     anyRating: "Qualquer avalia\u00e7\u00e3o",
     noItemsForFilters: "Nenhum item corresponde aos seus filtros.",
+    addCover: "Adicionar capa",
+    changeCover: "Alterar",
+    removeCover: "Remover capa",
+    quickAdd: "Adicionar rápido",
+    titlePlaceholder: "Título...",
+    select: "Selecionar",
+    selectAll: "Selecionar todos",
+    updateStatus: "Atualizar status",
+    nSelected: (n) => `${n} selecionados`,
   },
   settings: {
     settings: "Configura\u00e7\u00f5es",
@@ -555,7 +582,7 @@ export const ptBr: Translations = {
     openExportTools: "Abrir ferramentas de exporta\u00e7\u00e3o",
     restoreBackup: "Restaurar backup",
     restoreBackupDesc:
-      "Restaurar de um arquivo JSON de backup vers\u00e3o 2. IDs de entradas existentes s\u00e3o ignorados.",
+      "Restaurar de um arquivo JSON de backup (V2 ou V3). IDs de entradas existentes são ignorados.",
     restoring: "Restaurando\u2026",
     restoreFailed: "Falha na restaura\u00e7\u00e3o.",
     importedResult: (journal, food, images) =>

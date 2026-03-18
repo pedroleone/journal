@@ -25,6 +25,7 @@ function buildDraftItem(): LibraryDetailData {
     reactions: null,
     genres: null,
     metadata: null,
+    cover_image: null,
     content: null,
     added_at: now,
     started_at: null,
@@ -203,6 +204,36 @@ export function LibraryViewer(props: LibraryViewerProps) {
     ]);
   }
 
+  async function handleUploadCover(file: File) {
+    const current = itemRef.current;
+    if (!current || current.id === NEW_ITEM_ID) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`/api/library/${current.id}/cover`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) return;
+
+    await Promise.all([
+      props.onItemsChanged(),
+      refreshCurrent(current.id, { showLoading: false }),
+    ]);
+  }
+
+  async function handleDeleteCover() {
+    const current = itemRef.current;
+    if (!current || current.id === NEW_ITEM_ID) return;
+
+    await fetch(`/api/library/${current.id}/cover`, { method: "DELETE" });
+    await Promise.all([
+      props.onItemsChanged(),
+      refreshCurrent(current.id, { showLoading: false }),
+    ]);
+  }
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -228,6 +259,8 @@ export function LibraryViewer(props: LibraryViewerProps) {
       onUpdateNote={handleUpdateNote}
       onDelete={handleDelete}
       onDeleteNote={handleDeleteNote}
+      onUploadCover={handleUploadCover}
+      onDeleteCover={handleDeleteCover}
     />
   );
 }

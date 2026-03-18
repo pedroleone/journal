@@ -50,3 +50,44 @@ export interface BackupPayloadV2 {
   food_entries: BackupFoodEntry[];
   image_blobs: BackupImageBlob[];
 }
+
+export interface BackupLibraryItem {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  creator: string | null;
+  url: string | null;
+  status: string;
+  rating: number | null;
+  reactions: string[] | null;
+  genres: string[] | null;
+  metadata: Record<string, unknown> | null;
+  cover_image: string | null;
+  content: string | null;
+  added_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BackupLibraryNote {
+  id: string;
+  mediaItemId: string;
+  userId: string;
+  content: string;
+  images: string[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BackupPayloadV3 {
+  version: 3;
+  exported_at: string;
+  journal_entries: BackupJournalEntry[];
+  food_entries: BackupFoodEntry[];
+  image_blobs: BackupImageBlob[];
+  library_items: BackupLibraryItem[];
+  library_notes: BackupLibraryNote[];
+}

@@ -197,6 +197,11 @@ export const updateMediaItemNoteSchema = z
     message: "At least one of content or images must be provided",
   });
 
+export const bulkStatusUpdateSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(100),
+  status: mediaStatusEnum,
+});
+
 export const vocabularyQuerySchema = z.object({
   field: z.enum(["reactions", "genres", "platform"]),
 });
@@ -251,10 +256,54 @@ const backupFoodEntrySchema = z.object({
   updated_at: z.string().min(1),
 });
 
-export const backupPayloadSchema = z.object({
-  version: z.literal(2),
+const backupLibraryItemSchema = z.object({
+  id: z.string().min(1),
+  userId: z.string().min(1),
+  type: z.string().min(1),
+  title: z.string().min(1),
+  creator: z.string().nullable(),
+  url: z.string().nullable(),
+  status: z.string().min(1),
+  rating: z.number().int().min(1).max(5).nullable(),
+  reactions: z.array(z.string()).nullable(),
+  genres: z.array(z.string()).nullable(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+  cover_image: z.string().nullable(),
+  content: z.string().nullable(),
+  added_at: z.string().min(1),
+  started_at: z.string().nullable(),
+  finished_at: z.string().nullable(),
+  created_at: z.string().min(1),
+  updated_at: z.string().min(1),
+});
+
+const backupLibraryNoteSchema = z.object({
+  id: z.string().min(1),
+  mediaItemId: z.string().min(1),
+  userId: z.string().min(1),
+  content: z.string(),
+  images: z.array(z.string()).nullable(),
+  created_at: z.string().min(1),
+  updated_at: z.string().min(1),
+});
+
+const baseBackupFields = {
   exported_at: z.string().min(1),
   journal_entries: z.array(backupJournalEntrySchema),
   food_entries: z.array(backupFoodEntrySchema),
   image_blobs: z.array(backupImageBlobSchema),
+};
+
+const backupPayloadV2Schema = z.object({
+  version: z.literal(2),
+  ...baseBackupFields,
 });
+
+const backupPayloadV3Schema = z.object({
+  version: z.literal(3),
+  ...baseBackupFields,
+  library_items: z.array(backupLibraryItemSchema).optional().default([]),
+  library_notes: z.array(backupLibraryNoteSchema).optional().default([]),
+});
+
+export const backupPayloadSchema = z.union([backupPayloadV2Schema, backupPayloadV3Schema]);

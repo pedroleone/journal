@@ -4,7 +4,7 @@ import { base64ToBytes } from "@/lib/base64";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { putEncryptedObject } from "@/lib/r2";
-import { entries, foodEntries } from "@/lib/schema";
+import { entries, foodEntries, mediaItems, mediaItemNotes } from "@/lib/schema";
 import { encryptServerBuffer, encryptServerText } from "@/lib/server-crypto";
 import { backupPayloadSchema } from "@/lib/validators";
 
@@ -126,6 +126,63 @@ export async function POST(request: Request) {
     }
   }
 
+  // Library items & notes (V3)
+  const skippedLibraryIds: string[] = [];
+  let importedLibrary = 0;
+  let importedLibraryNotes = 0;
+
+  const libraryItems = "library_items" in parsed.data ? parsed.data.library_items : [];
+  const libraryNotes = "library_notes" in parsed.data ? parsed.data.library_notes : [];
+
+  for (const item of libraryItems) {
+    const existing = await db
+      .select({ id: mediaItems.id })
+      .from(mediaItems)
+      .where(and(eq(mediaItems.userId, userId), eq(mediaItems.id, item.id)));
+
+    if (existing.length > 0) {
+      skippedLibraryIds.push(item.id);
+      continue;
+    }
+
+    const { content, cover_image, type, status, ...restItem } = item;
+    let encrypted_content: string | null = null;
+    let iv: string | null = null;
+    if (content) {
+      const enc = await encryptServerText(content);
+      encrypted_content = enc.ciphertext;
+      iv = enc.iv;
+    }
+
+    const remappedCover = cover_image ? (imageKeyMap.get(cover_image) ?? cover_image) : null;
+
+    await db.insert(mediaItems).values({
+      ...restItem,
+      type: type as "book" | "album" | "movie" | "game" | "video" | "misc",
+      status: status as "backlog" | "in_progress" | "finished" | "dropped",
+      userId,
+      cover_image: remappedCover,
+      encrypted_content,
+      iv,
+    });
+    importedLibrary += 1;
+  }
+
+  for (const note of libraryNotes) {
+    const enc = await encryptServerText(note.content);
+    const { content, ...restNote } = note;
+    void content;
+
+    await db.insert(mediaItemNotes).values({
+      ...restNote,
+      userId,
+      encrypted_content: enc.ciphertext,
+      iv: enc.iv,
+      images: note.images?.map((k) => imageKeyMap.get(k) ?? k) ?? null,
+    });
+    importedLibraryNotes += 1;
+  }
+
   return jsonNoStore({
     imported_journal: importedJournal,
     skipped_journal_ids: skippedJournalIds,
@@ -133,5 +190,8 @@ export async function POST(request: Request) {
     skipped_food_ids: skippedFoodIds,
     imported_images: importedImages,
     skipped_image_keys: skippedImageKeys,
+    imported_library: importedLibrary,
+    skipped_library_ids: skippedLibraryIds,
+    imported_library_notes: importedLibraryNotes,
   });
 }

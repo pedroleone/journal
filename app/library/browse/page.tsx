@@ -8,7 +8,7 @@ import { NEW_ITEM_ID, LibraryViewer } from "@/components/library/library-viewer"
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
 import { useLocale } from "@/hooks/use-locale";
-import { EMPTY_FILTERS, type LibraryFilters } from "@/components/library/filter-bar";
+import type { LibraryFilters } from "@/components/library/filter-bar";
 import type { MediaType, MediaStatus } from "@/lib/library";
 
 interface VocabEntry {
@@ -119,6 +119,29 @@ export default function LibraryBrowsePage() {
     if (isMobile) setSidebarOpen(false);
   }
 
+  async function handleQuickAdd(type: MediaType, title: string) {
+    const res = await fetch("/api/library", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, title }),
+    });
+    if (!res.ok) return;
+    const { id } = await res.json();
+    await loadItems(filters);
+    setSelectedItemId(id);
+    if (isMobile) setSidebarOpen(false);
+  }
+
+  async function handleBulkStatus(ids: string[], status: MediaStatus) {
+    const res = await fetch("/api/library/bulk-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, status }),
+    });
+    if (!res.ok) return;
+    await loadItems(filters);
+  }
+
   const showContent = isMobile ? !sidebarOpen : true;
 
   return (
@@ -131,6 +154,8 @@ export default function LibraryBrowsePage() {
           onSelect={handleSelectItem}
           onFilterChange={setFilter}
           onNew={handleNew}
+          onQuickAdd={handleQuickAdd}
+          onBulkStatus={handleBulkStatus}
           genres={genres}
           reactions={reactions}
           platforms={platforms}

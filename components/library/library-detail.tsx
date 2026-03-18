@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Trash2, Plus, Star } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Trash2, Plus, Star, ImagePlus, X as XIcon } from "lucide-react";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { VocabularyInput } from "@/components/library/vocabulary-input";
 import { useLocale } from "@/hooks/use-locale";
@@ -27,6 +27,7 @@ export interface LibraryDetailData {
   reactions: string[] | null;
   genres: string[] | null;
   metadata: Record<string, unknown> | null;
+  cover_image: string | null;
   content: string | null;
   added_at: string;
   started_at: string | null;
@@ -43,6 +44,8 @@ interface LibraryDetailProps {
   onUpdateNote: (noteId: string, content: string) => Promise<void>;
   onDelete: () => Promise<void>;
   onDeleteNote: (noteId: string) => Promise<void>;
+  onUploadCover?: (file: File) => Promise<void>;
+  onDeleteCover?: () => Promise<void>;
 }
 
 function formatDate(iso: string): string {
@@ -141,6 +144,8 @@ export function LibraryDetail({
   onUpdateNote,
   onDelete,
   onDeleteNote,
+  onUploadCover,
+  onDeleteCover,
 }: LibraryDetailProps) {
   const [titleDraft, setTitleDraft] = useState(item.title);
   const [creatorDraft, setCreatorDraft] = useState(item.creator ?? "");
@@ -151,6 +156,8 @@ export function LibraryDetail({
   const [newNoteContent, setNewNoteContent] = useState("");
   const [submittingNote, setSubmittingNote] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const isNew = item.id === "__new__";
   const { t } = useLocale();
 
@@ -222,6 +229,18 @@ export function LibraryDetail({
 
   const creatorLabel = CREATOR_LABELS[item.type];
 
+  async function handleCoverFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadCover) return;
+    setUploadingCover(true);
+    try {
+      await onUploadCover(file);
+    } finally {
+      setUploadingCover(false);
+      if (coverInputRef.current) coverInputRef.current.value = "";
+    }
+  }
+
   return (
     <div className="relative flex flex-col min-h-full">
       <div className="sticky top-0 z-10 flex items-center justify-between px-10 py-3 bg-background/80 backdrop-blur-sm border-b border-border/40">
@@ -251,6 +270,51 @@ export function LibraryDetail({
       </div>
 
       <div className="flex-1 px-10 sm:px-16 md:px-24 lg:px-32 xl:px-40 py-12 max-w-4xl w-full mx-auto">
+        {/* Cover image */}
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleCoverFileChange}
+        />
+        {!isNew && (
+          item.cover_image ? (
+            <div className="group relative mb-8 rounded-lg overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/images/${item.cover_image}`}
+                alt=""
+                className="w-full max-h-64 object-cover"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+                <button
+                  onClick={() => coverInputRef.current?.click()}
+                  disabled={uploadingCover}
+                  className="text-xs font-medium text-white bg-white/20 backdrop-blur-sm rounded px-3 py-1.5 hover:bg-white/30 transition-colors"
+                >
+                  {t.library.changeCover}
+                </button>
+                <button
+                  onClick={onDeleteCover}
+                  className="text-xs font-medium text-white bg-white/20 backdrop-blur-sm rounded px-3 py-1.5 hover:bg-red-500/50 transition-colors"
+                >
+                  <XIcon className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              disabled={uploadingCover}
+              className="mb-8 w-full rounded-lg border-2 border-dashed border-border/50 py-8 flex items-center justify-center gap-2 text-sm text-muted-foreground/50 hover:text-muted-foreground hover:border-border transition-colors"
+            >
+              <ImagePlus className="h-4 w-4" />
+              {uploadingCover ? t.library.saving : t.library.addCover}
+            </button>
+          )
+        )}
+
         {/* Title */}
         <input
           className="w-full bg-transparent font-display text-4xl sm:text-5xl font-semibold tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground mb-5"

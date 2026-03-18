@@ -74,7 +74,11 @@ describe("backup routes", () => {
           created_at: "2026-03-07T12:00:00.000Z",
           updated_at: "2026-03-07T12:00:00.000Z",
         },
-      ]);
+      ])
+      // library items
+      .mockResolvedValueOnce([])
+      // library notes
+      .mockResolvedValueOnce([]);
     vi.mocked(getEncryptedObject).mockResolvedValue({
       body: new Uint8Array([1, 2, 3]),
       iv: "image-iv",
@@ -86,7 +90,7 @@ describe("backup routes", () => {
 
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data.version).toBe(2);
+    expect(data.version).toBe(3);
     expect(data.journal_entries).toHaveLength(1);
     expect(data.food_entries).toHaveLength(1);
     expect(data.image_blobs).toHaveLength(1);
