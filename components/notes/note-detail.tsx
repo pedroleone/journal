@@ -174,7 +174,11 @@ export function NoteDetail({
     setSavingContent(false);
     setSubmittingSubnote(false);
     setUploadingImage(false);
-  }, [note.id, note.title, note.content, note.tags]);
+    // Only reset drafts on note switch — not when server returns updated fields
+    // for the current note, which would wipe in-progress input (e.g. tag typing).
+    // The component is keyed by note.id so it remounts on switch anyway.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [note.id]);
 
   async function handleTitleBlur() {
     const newTitle = titleDraft.trim() || null;
