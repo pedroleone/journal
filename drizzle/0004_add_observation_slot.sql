@@ -1,1 +1,0 @@
--- Add "observation" as a valid meal_slot value (SQLite does not enforce enum constraints)
