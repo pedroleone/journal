@@ -22,7 +22,6 @@ It also includes:
 - Authentication and app entry
 - Export and encrypted backup tools
 - Settings and personal preferences
-- Telegram connection for supported capture workflows
 - Mobile-friendly behavior and installable PWA support
 - Language and theme support
 
@@ -39,7 +38,6 @@ The product must support these jobs:
 - Export readable versions of content
 - Download and restore encrypted backups
 - Use the product comfortably on desktop and mobile
-- Connect Telegram for supported capture workflows
 - Adjust personal preferences such as language, theme, and startup view
 
 ## Functional Requirements
@@ -99,7 +97,7 @@ The food domain must support:
 - Editing an existing food entry
 - Deleting an existing food entry
 - Representing intentionally skipped meal slots
-- Supporting both app-created and Telegram-created food entries
+- Supporting food entries created through the product's capture flows
 
 Current meal-slot structure includes:
 
@@ -217,41 +215,13 @@ The product must support:
 - Changing theme
 - Choosing a default landing area after entering the app
 - Opening export and backup tools
-- Connecting Telegram
-- Disconnecting Telegram
-- Viewing guidance for how Telegram capture works
 
 Current implemented preferences to preserve include:
 
 - English and Brazilian Portuguese language support
 - Light and dark theme support
 
-### 8. Telegram Integration
-
-Telegram support currently applies to food capture workflows.
-
-The product must support:
-
-- Connecting a Telegram account/chat to the app
-- Confirming when Telegram is connected
-- Disconnecting Telegram
-- Explaining how Telegram capture works
-- Integrating Telegram-created food entries into the broader food workflow
-
-Current implemented connection behavior also includes:
-
-- Generating a temporary connection code
-- Opening or directing the user to the Telegram bot with that code
-- Waiting for confirmation that the link is complete
-
-The redesign should also respect current scope boundaries:
-
-- Telegram supports food capture
-- Telegram does not currently support journal capture
-- Telegram does not currently support notes capture
-- Telegram does not currently support library capture
-
-### 9. Global Navigation And Cross-Product Movement
+### 8. Global Navigation And Cross-Product Movement
 
 The product must support movement across these major areas:
 
@@ -264,7 +234,7 @@ The product must support movement across these major areas:
 
 The redesign may completely rethink how this navigation works, but it must preserve fast access to the full product surface on both desktop and mobile.
 
-### 10. Responsive And Installed-App Use
+### 9. Responsive And Installed-App Use
 
 The redesign must support:
 
@@ -330,7 +300,7 @@ Important edge cases the redesign must preserve:
 - Calm, focused reading and writing
 - Easy movement between capture and organization
 - Strong orientation so the user always understands where they are and what actions are available
-- Reduced cognitive overhead for export, backup/restore, and Telegram connection flows
+- Reduced cognitive overhead for export and backup/restore flows
 
 ### Sensitive UX Areas
 
@@ -338,7 +308,6 @@ Important edge cases the redesign must preserve:
 - Delete actions should be clear and deliberate
 - Offline states should not feel like data loss
 - Privacy messaging should build confidence without overwhelming the experience
-- Telegram-linked content should feel integrated without implying identical behavior across all content types
 
 ## Current Scope Boundaries
 
@@ -353,16 +322,9 @@ Included in current scope:
 - Export
 - Encrypted backup download and restore
 - Settings and preferences
-- Telegram linking and food capture support
 - Theme support
 - Language support
 - Installable PWA support
-
-Not currently in scope:
-
-- Telegram capture for journal
-- Telegram capture for notes
-- Telegram capture for library
 
 This section is meant to prevent accidental over-design into unsupported domains, not to limit structural redesign inside the existing product surface.
 
@@ -372,7 +334,7 @@ Expected design outputs:
 
 - A new information architecture for the product
 - A navigation model that works across desktop and mobile
-- Key user flows covering capture, browse, edit, organize, export, restore, and settings/integrations
+- Key user flows covering capture, browse, edit, organize, export, restore, and settings
 - Core screen concepts or templates covering the full product surface
 - Treatment for major states including empty, loading, success, error, offline, confirmation, destructive, and read-only
 - A rationale for how the redesign improves clarity, speed, and coherence without losing capability coverage
