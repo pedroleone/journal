@@ -8,7 +8,7 @@ import { getModeFromPathname } from "@/lib/mode-context";
 
 function getDomain(pathname: string): Mode | "settings" | null {
   if (pathname === "/") return null;
-  if (pathname.startsWith("/settings")) return "settings";
+  if (pathname.startsWith("/settings") || pathname.startsWith("/export")) return "settings";
   if (pathname.startsWith("/login")) return null;
   return getModeFromPathname(pathname);
 }

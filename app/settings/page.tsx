@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/hooks/use-locale";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState("");
   const { t, locale, setLocale } = useLocale();
+  const { theme, toggleTheme } = useTheme();
   async function handleRestore(file: File | null) {
     if (!file) return;
 
@@ -73,6 +75,27 @@ export default function SettingsPage() {
             onClick={() => setLocale("pt-br")}
           >
             Português (BR)
+          </Button>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-border/60 bg-card/30 p-6">
+        <h2 className="font-display text-2xl tracking-tight">Theme</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Choose light or dark mode.</p>
+        <div className="mt-4 flex gap-2">
+          <Button
+            variant={theme === "light" ? "default" : "outline"}
+            size="sm"
+            onClick={() => { if (theme !== "light") toggleTheme(); }}
+          >
+            Light
+          </Button>
+          <Button
+            variant={theme === "dark" ? "default" : "outline"}
+            size="sm"
+            onClick={() => { if (theme !== "dark") toggleTheme(); }}
+          >
+            Dark
           </Button>
         </div>
       </section>
