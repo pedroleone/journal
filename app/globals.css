@@ -50,6 +50,17 @@
 
 :root {
   --radius: 0.5rem;
+  /* Domain accent colors */
+  --journal: #7c7cff;
+  --journal-dim: rgba(124, 124, 255, 0.15);
+  --food: #4caf93;
+  --food-dim: rgba(76, 175, 147, 0.15);
+  --notes: #b07cff;
+  --notes-dim: rgba(176, 124, 255, 0.15);
+  --library: #ff7c7c;
+  --library-dim: rgba(255, 124, 124, 0.15);
+  --inbox: #c9a96e;
+  --inbox-dim: rgba(201, 169, 110, 0.15);
   /* Warm parchment palette */
   --background: oklch(0.975 0.005 80);
   --foreground: oklch(0.16 0.02 50);
@@ -85,6 +96,10 @@
 }
 
 .dark {
+  /* Dashboard surface layers */
+  --bg-quad: oklch(0.22 0.012 60);
+  --bg-topbar: oklch(0.16 0.008 60);
+  --bg-surface: oklch(0.24 0.014 60);
   --background: oklch(0.19 0.01 60);
   --foreground: oklch(0.92 0.008 75);
   --card: oklch(0.23 0.012 60);

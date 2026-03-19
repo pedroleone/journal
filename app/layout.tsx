@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Fraunces, DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AppShell } from "@/components/app-shell";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { ModeProvider } from "@/lib/mode-context";
 import { LocaleProvider } from "@/hooks/use-locale";
@@ -79,7 +79,7 @@ export default function RootLayout({
           <ThemeProvider>
             <LocaleProvider>
               <ModeProvider>
-                <AppShell>{children}</AppShell>
+                <DashboardShell>{children}</DashboardShell>
               </ModeProvider>
             </LocaleProvider>
           </ThemeProvider>

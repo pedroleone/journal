@@ -1,87 +1,13 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import {
-  LockKeyhole,
-  Utensils,
-  StickyNote,
-  FileText,
-  WifiOff,
-} from "lucide-react";
-
-const features = [
-  {
-    icon: LockKeyhole,
-    title: "Encrypted Journal",
-    description:
-      "Entries written in markdown and encrypted at rest. One entry per day.",
-  },
-  {
-    icon: Utensils,
-    title: "Food Log",
-    description: "Track meals from the web with quick logging and browse tools.",
-  },
-  {
-    icon: StickyNote,
-    title: "Notes",
-    description:
-      "Notes with subnotes and tags, organized in a two-pane view.",
-  },
-  {
-    icon: FileText,
-    title: "Markdown",
-    description: "Full markdown editing with live preview.",
-  },
-  {
-    icon: WifiOff,
-    title: "Offline",
-    description: "Installable PWA. Works without a network connection.",
-  },
-];
+import { AuthPage } from "@/components/auth/auth-page";
+import { DashboardHome } from "./dashboard-home";
 
 export default async function Home() {
   const session = await auth();
-  if (session?.user?.id) {
-    redirect("/home");
+
+  if (!session?.user?.id) {
+    return <AuthPage />;
   }
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-24">
-        <div className="max-w-2xl w-full mx-auto space-y-20">
-          {/* Hero */}
-          <div className="animate-page space-y-8 text-center">
-            <div className="space-y-3">
-              <h1 className="font-display text-5xl tracking-tight">Journal</h1>
-              <p className="max-w-sm mx-auto text-base text-muted-foreground">
-                A private place for your thoughts, meals, and notes — encrypted
-                by default.
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <GoogleSignInButton />
-            </div>
-          </div>
-
-          {/* Features grid */}
-          <div className="grid grid-cols-2 gap-px bg-border rounded-lg overflow-hidden">
-            {features.map(({ icon: Icon, title, description }) => (
-              <div key={title} className="bg-background p-6 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{title}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="py-8 text-center">
-        <p className="text-sm text-muted-foreground">Private by design.</p>
-      </footer>
-    </div>
-  );
+  return <DashboardHome />;
 }

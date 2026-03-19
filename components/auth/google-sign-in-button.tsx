@@ -10,7 +10,7 @@ export function GoogleSignInButton() {
 
   async function handleSignIn() {
     setLoading(true);
-    await signIn("google", { redirectTo: "/journal/browse" });
+    await signIn("google", { redirectTo: "/" });
   }
 
   return (
