@@ -27,6 +27,20 @@ It also includes:
 
 The product is privacy-first. The experience should consistently communicate trust, clarity, and personal ownership.
 
+## Technology Context
+
+This section is included only to provide lightweight implementation context for design handoff. It should not be treated as a constraint on information architecture or visual structure.
+
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Drizzle ORM
+- Turso / libSQL
+- Cloudflare R2
+- Installable PWA support
+- Google authentication via Auth.js
+
 ## Core User Jobs
 
 The product must support these jobs:
