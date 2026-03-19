@@ -128,7 +128,7 @@ export function AppNav() {
             return (
               <div
                 key={section.key}
-                className="flex shrink-0 overflow-hidden rounded-md border border-border/60 bg-background/80"
+                className="flex overflow-hidden rounded-md border border-border/60 bg-background/80"
               >
                 <button
                   onClick={section.onBrowse}

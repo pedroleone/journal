@@ -135,4 +135,3 @@ Same model as notes:
 - [ ] Quick-add flow (minimal fields: type + title → backlog)
 - [ ] Bulk status updates
 - [ ] Export/backup integration
-- [ ] Telegram integration (`/book Title` creates backlog entry)

@@ -133,4 +133,10 @@ describe("AppNav", () => {
     expect(screen.getByRole("button", { name: "Open notes" }).getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("button", { name: "Open journal" }).getAttribute("aria-current")).toBeNull();
   });
+
+  it("keeps section button groups shrinkable on narrow screens", () => {
+    render(<AppNav />);
+
+    expect(screen.getByRole("button", { name: "Open library" }).parentElement?.className).not.toContain("shrink-0");
+  });
 });

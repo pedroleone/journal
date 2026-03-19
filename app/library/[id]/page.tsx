@@ -140,7 +140,7 @@ export default function LibraryDetailPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto lg:overflow-hidden">
         {loading ? (
           <div className="flex h-full items-center justify-center">
             <p className="text-sm text-muted-foreground">{t.library.loading}</p>
