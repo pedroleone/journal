@@ -83,7 +83,7 @@ export default function LibraryNewPage() {
   async function noop() {}
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex flex-col">
+    <div className="h-full flex flex-col">
       <div className="px-6 pt-3">
         <button
           onClick={() => router.push("/library/browse")}

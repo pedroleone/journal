@@ -123,7 +123,7 @@ export function LibraryBrowse({
   const hasActiveFilters = filters.status || filters.genre || filters.reaction || filters.platform || filters.rating;
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)]">
+    <div className="min-h-full">
       {/* Search bar */}
       <div className="sticky top-14 z-20 bg-background border-b border-border/60">
         <div className="max-w-6xl mx-auto px-6 py-3">

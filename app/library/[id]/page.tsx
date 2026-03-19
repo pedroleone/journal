@@ -127,7 +127,7 @@ export default function LibraryDetailPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex flex-col">
+    <div className="h-full flex flex-col">
       {/* Back button */}
       <div className="px-6 pt-3">
         <button

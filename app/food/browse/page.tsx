@@ -377,7 +377,7 @@ export default function FoodBrowsePage() {
   const unassignedForDay = dayEntries.filter((e) => !e.meal_slot);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-full">
       <CollapsibleSidebar visible={sidebarOpen}>
         <div className="flex h-full flex-col">
           <ScrollArea className="flex-1">

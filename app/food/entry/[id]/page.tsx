@@ -172,7 +172,7 @@ export default function FoodEntryPage({
 
   if (!isOnline && !readyForViewing) {
     return (
-      <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-md items-center justify-center px-6">
+      <div className="mx-auto flex min-h-full max-w-md items-center justify-center px-6">
         <div className="space-y-2 text-center">
           <h1 className="font-display text-2xl tracking-tight">Connection required</h1>
           <p className="text-sm text-muted-foreground">

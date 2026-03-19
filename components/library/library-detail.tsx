@@ -376,7 +376,7 @@ export function LibraryDetail({
       {/* Two-column layout */}
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Left column: cover, title, metadata */}
-        <div className="lg:w-1/3 lg:min-w-[280px] lg:max-w-[400px] lg:border-r border-border/40 p-6 lg:p-8 space-y-6 lg:overflow-y-auto lg:h-[calc(100vh-3.5rem-49px)]">
+        <div className="lg:w-1/3 lg:min-w-[280px] lg:max-w-[400px] lg:border-r border-border/40 p-6 lg:p-8 space-y-6 lg:overflow-y-auto lg:h-[calc(100%-49px)]">
           {/* Cover image */}
           <input
             ref={coverInputRef}
@@ -588,7 +588,7 @@ export function LibraryDetail({
         </div>
 
         {/* Right column: reactions, content, thoughts */}
-        <div className="flex-1 overflow-y-auto lg:h-[calc(100vh-3.5rem-49px)] p-6 lg:p-8 lg:pl-10">
+        <div className="flex-1 overflow-y-auto lg:h-[calc(100%-49px)] p-6 lg:p-8 lg:pl-10">
           <div className="max-w-3xl">
             {/* Reactions */}
             <div className="mb-8">
