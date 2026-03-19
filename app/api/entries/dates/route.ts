@@ -1,13 +1,10 @@
 import { eq } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import { withAuth } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { entries } from "@/lib/schema";
 
-export async function GET() {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
+export const GET = withAuth(async (userId) => {
   const result = await db
     .select({
       id: entries.id,
@@ -22,4 +19,4 @@ export async function GET() {
   result.reverse();
 
   return jsonNoStore(result);
-}
+});

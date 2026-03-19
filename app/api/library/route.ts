@@ -1,31 +1,23 @@
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import {
+  withAuth,
+  parseBody,
+  parseQuery,
+  encryptContentFields,
+} from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { mediaItems } from "@/lib/schema";
-import { encryptServerText } from "@/lib/server-crypto";
 import { computeStatusTimestamps } from "@/lib/library";
 import { createMediaItemSchema, mediaItemListQuerySchema } from "@/lib/validators";
 
-export async function GET(request: NextRequest) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { searchParams } = request.nextUrl;
-  const parsed = mediaItemListQuerySchema.safeParse({
-    type: searchParams.get("type") ?? undefined,
-    status: searchParams.get("status") ?? undefined,
-    genre: searchParams.get("genre") ?? undefined,
-    reaction: searchParams.get("reaction") ?? undefined,
-    platform: searchParams.get("platform") ?? undefined,
-    rating: searchParams.get("rating") ?? undefined,
-    search: searchParams.get("search") ?? undefined,
-  });
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid query" }, { status: 400 });
-  }
+export const GET = withAuth(async (userId, request: NextRequest) => {
+  const parsed = parseQuery(request, mediaItemListQuerySchema, [
+    "type", "status", "genre", "reaction", "platform", "rating", "search",
+  ]);
+  if (!parsed.success) return parsed.response;
 
   const conditions = [eq(mediaItems.userId, userId)];
   if (parsed.data.type) {
@@ -84,17 +76,11 @@ export async function GET(request: NextRequest) {
     .orderBy(desc(mediaItems.updated_at));
 
   return jsonNoStore(result);
-}
+});
 
-export async function POST(request: NextRequest) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const body = await request.json();
-  const parsed = createMediaItemSchema.safeParse(body);
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid input", details: parsed.error.issues }, { status: 400 });
-  }
+export const POST = withAuth(async (userId, request) => {
+  const parsed = await parseBody(request, createMediaItemSchema);
+  if (!parsed.success) return parsed.response;
 
   const now = new Date().toISOString();
   const id = nanoid();
@@ -102,8 +88,8 @@ export async function POST(request: NextRequest) {
   let encrypted_content: string | null = null;
   let iv: string | null = null;
   if (parsed.data.content) {
-    const encrypted = await encryptServerText(parsed.data.content);
-    encrypted_content = encrypted.ciphertext;
+    const encrypted = await encryptContentFields(parsed.data.content);
+    encrypted_content = encrypted.encrypted_content;
     iv = encrypted.iv;
   }
 
@@ -131,4 +117,4 @@ export async function POST(request: NextRequest) {
   });
 
   return jsonNoStore({ id }, { status: 201 });
-}
+});

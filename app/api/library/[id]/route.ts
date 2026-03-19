@@ -1,36 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
 import { and, asc, eq } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import {
+  withAuth,
+  parseBody,
+  findOwned,
+  notFoundResponse,
+  deleteNoContent,
+  encryptContentFields,
+  decryptRecords,
+} from "@/lib/api-helpers";
 import { db } from "@/lib/db";
-import { NO_STORE_HEADERS, jsonNoStore } from "@/lib/http";
+import { jsonNoStore } from "@/lib/http";
 import { mediaItems, mediaItemNotes } from "@/lib/schema";
-import { decryptServerText, encryptServerText } from "@/lib/server-crypto";
+import { decryptServerText } from "@/lib/server-crypto";
 import { computeStatusTimestamps } from "@/lib/library";
 import { updateMediaItemSchema } from "@/lib/validators";
 import { deleteEncryptedObjectsWithBackup } from "@/lib/entry-images";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { id } = await params;
-
-  const [item] = await db
-    .select()
-    .from(mediaItems)
-    .where(and(eq(mediaItems.id, id), eq(mediaItems.userId, userId)));
-
-  if (!item) {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
+export const GET = withAuth<{ id: string }>(async (userId, _request, { params }) => {
+  const item = await findOwned(mediaItems, params.id, userId);
+  if (!item) return notFoundResponse();
 
   const noteResults = await db
     .select()
     .from(mediaItemNotes)
-    .where(and(eq(mediaItemNotes.mediaItemId, id), eq(mediaItemNotes.userId, userId)))
+    .where(and(eq(mediaItemNotes.mediaItemId, params.id), eq(mediaItemNotes.userId, userId)))
     .orderBy(asc(mediaItemNotes.created_at));
 
   const { encrypted_content, iv, ...fields } = item;
@@ -38,29 +31,14 @@ export async function GET(
     ? await decryptServerText(encrypted_content, iv)
     : null;
 
-  const decryptedNotes = await Promise.all(
-    noteResults.map(async ({ encrypted_content: nc, iv: niv, ...note }) => ({
-      ...note,
-      content: await decryptServerText(nc, niv),
-    })),
-  );
+  const decryptedNotes = await decryptRecords(noteResults);
 
   return jsonNoStore({ ...fields, content, notes: decryptedNotes });
-}
+});
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { id } = await params;
-  const body = await request.json();
-  const parsed = updateMediaItemSchema.safeParse(body);
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid input", details: parsed.error.issues }, { status: 400 });
-  }
+export const PUT = withAuth<{ id: string }>(async (userId, request, { params }) => {
+  const parsed = await parseBody(request, updateMediaItemSchema);
+  if (!parsed.success) return parsed.response;
 
   const now = new Date().toISOString();
   const updateData: Record<string, unknown> = { updated_at: now };
@@ -70,7 +48,7 @@ export async function PUT(
     const [current] = await db
       .select({ started_at: mediaItems.started_at, finished_at: mediaItems.finished_at })
       .from(mediaItems)
-      .where(and(eq(mediaItems.id, id), eq(mediaItems.userId, userId)));
+      .where(and(eq(mediaItems.id, params.id), eq(mediaItems.userId, userId)));
     if (current) {
       const autoTs = computeStatusTimestamps(
         parsed.data.status,
@@ -95,45 +73,28 @@ export async function PUT(
   if ("finished_at" in parsed.data) updateData.finished_at = parsed.data.finished_at ?? null;
 
   if (parsed.data.content !== undefined) {
-    const encrypted = await encryptServerText(parsed.data.content);
-    updateData.encrypted_content = encrypted.ciphertext;
-    updateData.iv = encrypted.iv;
+    const encrypted = await encryptContentFields(parsed.data.content);
+    Object.assign(updateData, encrypted);
   }
 
   const result = await db
     .update(mediaItems)
     .set(updateData)
-    .where(and(eq(mediaItems.id, id), eq(mediaItems.userId, userId)));
+    .where(and(eq(mediaItems.id, params.id), eq(mediaItems.userId, userId)));
 
-  if (result.rowsAffected === 0) {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
+  if (result.rowsAffected === 0) return notFoundResponse();
 
   return jsonNoStore({ ok: true });
-}
+});
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { id } = await params;
-
-  const [itemRecord] = await db
-    .select()
-    .from(mediaItems)
-    .where(and(eq(mediaItems.id, id), eq(mediaItems.userId, userId)));
-
-  if (!itemRecord) {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
+export const DELETE = withAuth<{ id: string }>(async (userId, _request, { params }) => {
+  const itemRecord = await findOwned(mediaItems, params.id, userId);
+  if (!itemRecord) return notFoundResponse();
 
   const noteRecords = await db
     .select()
     .from(mediaItemNotes)
-    .where(and(eq(mediaItemNotes.mediaItemId, id), eq(mediaItemNotes.userId, userId)));
+    .where(and(eq(mediaItemNotes.mediaItemId, params.id), eq(mediaItemNotes.userId, userId)));
 
   const allImageKeys = [
     ...(itemRecord.cover_image ? [itemRecord.cover_image] : []),
@@ -142,13 +103,11 @@ export async function DELETE(
 
   const deleteResult = await db
     .delete(mediaItems)
-    .where(and(eq(mediaItems.id, id), eq(mediaItems.userId, userId)));
+    .where(and(eq(mediaItems.id, params.id), eq(mediaItems.userId, userId)));
 
-  if (deleteResult.rowsAffected === 0) {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
+  if (deleteResult.rowsAffected === 0) return notFoundResponse();
 
   await deleteEncryptedObjectsWithBackup(allImageKeys).catch(() => undefined);
 
-  return new NextResponse(null, { status: 204, headers: NO_STORE_HEADERS });
-}
+  return deleteNoContent();
+});

@@ -1,14 +1,11 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import { withAuth } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { foodEntries } from "@/lib/schema";
 import { suggestMealSlot } from "@/lib/food";
 
-export async function POST() {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
+export const POST = withAuth(async (userId) => {
   const pending = await db
     .select({
       id: foodEntries.id,
@@ -39,4 +36,4 @@ export async function POST() {
   }
 
   return jsonNoStore({ updated: pending.length });
-}
+});

@@ -1,23 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { and, eq } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import {
+  withAuth,
+  findOwned,
+  notFoundResponse,
+  deleteNoContent,
+} from "@/lib/api-helpers";
 import { db } from "@/lib/db";
-import { NO_STORE_HEADERS, jsonNoStore } from "@/lib/http";
+import { jsonNoStore } from "@/lib/http";
 import { MAX_IMAGE_UPLOAD_BYTES } from "@/lib/image-upload-policy";
 import { deleteEncryptedObject, putEncryptedObject } from "@/lib/r2";
 import { mediaItems } from "@/lib/schema";
 import { encryptServerBuffer } from "@/lib/server-crypto";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { id } = await params;
-
+export const POST = withAuth<{ id: string }>(async (userId, request, { params }) => {
   const formData = await request.formData();
   const file = formData.get("file");
 
@@ -33,16 +29,13 @@ export async function POST(
     return jsonNoStore({ error: "Image exceeds 5 MB limit" }, { status: 413 });
   }
 
-  const [item] = await db
-    .select({ id: mediaItems.id, cover_image: mediaItems.cover_image })
-    .from(mediaItems)
-    .where(and(eq(mediaItems.id, id), eq(mediaItems.userId, userId)));
+  const item = await findOwned(mediaItems, params.id, userId, {
+    id: mediaItems.id,
+    cover_image: mediaItems.cover_image,
+  });
+  if (!item) return notFoundResponse();
 
-  if (!item) {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
-
-  const key = `${userId}/library/${id}/${nanoid()}.enc`;
+  const key = `${userId}/library/${params.id}/${nanoid()}.enc`;
   const body = new Uint8Array(await file.arrayBuffer());
   const encrypted = await encryptServerBuffer(body);
 
@@ -57,7 +50,7 @@ export async function POST(
   await db
     .update(mediaItems)
     .set({ cover_image: key, updated_at: now })
-    .where(and(eq(mediaItems.id, id), eq(mediaItems.userId, userId)));
+    .where(and(eq(mediaItems.id, params.id), eq(mediaItems.userId, userId)));
 
   // Delete old cover if existed
   if (item.cover_image) {
@@ -65,25 +58,14 @@ export async function POST(
   }
 
   return jsonNoStore({ key }, { status: 201 });
-}
+});
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { id } = await params;
-
-  const [item] = await db
-    .select({ id: mediaItems.id, cover_image: mediaItems.cover_image })
-    .from(mediaItems)
-    .where(and(eq(mediaItems.id, id), eq(mediaItems.userId, userId)));
-
-  if (!item) {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
+export const DELETE = withAuth<{ id: string }>(async (userId, _request, { params }) => {
+  const item = await findOwned(mediaItems, params.id, userId, {
+    id: mediaItems.id,
+    cover_image: mediaItems.cover_image,
+  });
+  if (!item) return notFoundResponse();
 
   if (!item.cover_image) {
     return jsonNoStore({ error: "No cover image" }, { status: 404 });
@@ -95,7 +77,7 @@ export async function DELETE(
   await db
     .update(mediaItems)
     .set({ cover_image: null, updated_at: now })
-    .where(and(eq(mediaItems.id, id), eq(mediaItems.userId, userId)));
+    .where(and(eq(mediaItems.id, params.id), eq(mediaItems.userId, userId)));
 
-  return new NextResponse(null, { status: 204, headers: NO_STORE_HEADERS });
-}
+  return deleteNoContent();
+});

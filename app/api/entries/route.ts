@@ -1,25 +1,21 @@
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import {
+  withAuth,
+  parseBody,
+  parseQuery,
+  encryptContentFields,
+  decryptRecords,
+} from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { entries } from "@/lib/schema";
-import { decryptServerText, encryptServerText } from "@/lib/server-crypto";
 import { createEntrySchema, browseQuerySchema } from "@/lib/validators";
 
-export async function POST(request: NextRequest) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const body = await request.json();
-  const parsed = createEntrySchema.safeParse(body);
-  if (!parsed.success) {
-    return jsonNoStore(
-      { error: "Invalid input", details: parsed.error.issues },
-      { status: 400 },
-    );
-  }
+export const POST = withAuth(async (userId, request) => {
+  const parsed = await parseBody(request, createEntrySchema);
+  if (!parsed.success) return parsed.response;
 
   const existing = await db
     .select({ id: entries.id })
@@ -45,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   const now = new Date().toISOString();
   const id = nanoid();
-  const encrypted = await encryptServerText(parsed.data.content);
+  const encrypted = await encryptContentFields(parsed.data.content);
 
   await db.insert(entries).values({
     id,
@@ -55,8 +51,7 @@ export async function POST(request: NextRequest) {
     month: parsed.data.month,
     day: parsed.data.day,
     hour: parsed.data.hour ?? null,
-    encrypted_content: encrypted.ciphertext,
-    iv: encrypted.iv,
+    ...encrypted,
     images: parsed.data.images ?? null,
     tags: null,
     created_at: now,
@@ -64,22 +59,11 @@ export async function POST(request: NextRequest) {
   });
 
   return jsonNoStore({ id }, { status: 201 });
-}
+});
 
-export async function GET(request: NextRequest) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { searchParams } = request.nextUrl;
-  const parsed = browseQuerySchema.safeParse({
-    year: searchParams.get("year") ?? undefined,
-    month: searchParams.get("month") ?? undefined,
-    day: searchParams.get("day") ?? undefined,
-  });
-
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid query" }, { status: 400 });
-  }
+export const GET = withAuth(async (userId, request: NextRequest) => {
+  const parsed = parseQuery(request, browseQuerySchema, ["year", "month", "day"]);
+  if (!parsed.success) return parsed.response;
 
   const conditions = [eq(entries.userId, userId)];
   if (parsed.data.year !== undefined) conditions.push(eq(entries.year, parsed.data.year));
@@ -92,15 +76,7 @@ export async function GET(request: NextRequest) {
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(entries.year, entries.month, entries.day);
 
-  // Reverse for desc order
   result.reverse();
 
-  const decryptedEntries = await Promise.all(
-    result.map(async ({ encrypted_content, iv, ...entry }) => ({
-      ...entry,
-      content: await decryptServerText(encrypted_content, iv),
-    })),
-  );
-
-  return jsonNoStore(decryptedEntries);
-}
+  return jsonNoStore(await decryptRecords(result));
+});

@@ -1,23 +1,15 @@
 import { NextRequest } from "next/server";
 import { sql } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import { withAuth, parseQuery } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { mediaItems } from "@/lib/schema";
 import { vocabularyQuerySchema } from "@/lib/validators";
 import { DEFAULT_REACTIONS } from "@/lib/library";
 
-export async function GET(request: NextRequest) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { searchParams } = request.nextUrl;
-  const parsed = vocabularyQuerySchema.safeParse({
-    field: searchParams.get("field"),
-  });
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid query" }, { status: 400 });
-  }
+export const GET = withAuth(async (userId, request: NextRequest) => {
+  const parsed = parseQuery(request, vocabularyQuerySchema, ["field"]);
+  if (!parsed.success) return parsed.response;
 
   const { field } = parsed.data;
 
@@ -54,4 +46,4 @@ export async function GET(request: NextRequest) {
   }
 
   return jsonNoStore(results);
-}
+});

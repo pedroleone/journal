@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
@@ -27,7 +28,8 @@ describe("POST /api/food/assign-all", () => {
     mockAuth.mockResolvedValueOnce(null);
 
     const { POST } = await import("@/app/api/food/assign-all/route");
-    const res = await POST();
+    const req = new NextRequest("http://localhost/api/food/assign-all", { method: "POST" });
+    const res = await POST(req);
     expect(res.status).toBe(401);
   });
 
@@ -41,7 +43,8 @@ describe("POST /api/food/assign-all", () => {
       .mockResolvedValueOnce(undefined);
 
     const { POST } = await import("@/app/api/food/assign-all/route");
-    const res = await POST();
+    const req = new NextRequest("http://localhost/api/food/assign-all", { method: "POST" });
+    const res = await POST(req);
     expect(res.status).toBe(200);
 
     const data = await res.json();

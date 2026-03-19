@@ -1,22 +1,20 @@
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import {
+  withAuth,
+  parseBody,
+  parseQuery,
+  encryptContentFields,
+} from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { notes } from "@/lib/schema";
-import { encryptServerText } from "@/lib/server-crypto";
 import { createNoteSchema, noteTagQuerySchema } from "@/lib/validators";
 
-export async function GET(request: NextRequest) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { searchParams } = request.nextUrl;
-  const parsed = noteTagQuerySchema.safeParse({ tag: searchParams.get("tag") ?? undefined });
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid query" }, { status: 400 });
-  }
+export const GET = withAuth(async (userId, request: NextRequest) => {
+  const parsed = parseQuery(request, noteTagQuerySchema, ["tag"]);
+  if (!parsed.success) return parsed.response;
 
   const conditions = [eq(notes.userId, userId)];
   if (parsed.data.tag) {
@@ -39,21 +37,15 @@ export async function GET(request: NextRequest) {
     .orderBy(desc(notes.updated_at));
 
   return jsonNoStore(result);
-}
+});
 
-export async function POST(request: NextRequest) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const body = await request.json();
-  const parsed = createNoteSchema.safeParse(body);
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid input", details: parsed.error.issues }, { status: 400 });
-  }
+export const POST = withAuth(async (userId, request) => {
+  const parsed = await parseBody(request, createNoteSchema);
+  if (!parsed.success) return parsed.response;
 
   const now = new Date().toISOString();
   const id = nanoid();
-  const encrypted = await encryptServerText(parsed.data.content);
+  const encrypted = await encryptContentFields(parsed.data.content);
 
   await db.insert(notes).values({
     id,
@@ -61,11 +53,10 @@ export async function POST(request: NextRequest) {
     title: parsed.data.title ?? null,
     tags: parsed.data.tags ?? null,
     images: parsed.data.images ?? null,
-    encrypted_content: encrypted.ciphertext,
-    iv: encrypted.iv,
+    ...encrypted,
     created_at: now,
     updated_at: now,
   });
 
   return jsonNoStore({ id }, { status: 201 });
-}
+});

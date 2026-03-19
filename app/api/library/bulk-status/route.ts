@@ -1,21 +1,14 @@
-import { NextRequest } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import { withAuth, parseBody } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { computeStatusTimestamps } from "@/lib/library";
 import { mediaItems } from "@/lib/schema";
 import { bulkStatusUpdateSchema } from "@/lib/validators";
 
-export async function POST(request: NextRequest) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const body = await request.json();
-  const parsed = bulkStatusUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid input", details: parsed.error.issues }, { status: 400 });
-  }
+export const POST = withAuth(async (userId, request) => {
+  const parsed = await parseBody(request, bulkStatusUpdateSchema);
+  if (!parsed.success) return parsed.response;
 
   const { ids, status } = parsed.data;
   const now = new Date().toISOString();
@@ -52,4 +45,4 @@ export async function POST(request: NextRequest) {
   }
 
   return jsonNoStore({ updated });
-}
+});

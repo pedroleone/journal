@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
@@ -23,7 +24,8 @@ describe("GET /api/food/dates", () => {
     mockAuth.mockResolvedValueOnce(null);
 
     const { GET } = await import("@/app/api/food/dates/route");
-    const res = await GET();
+    const req = new NextRequest("http://localhost/api/food/dates");
+    const res = await GET(req);
     expect(res.status).toBe(401);
   });
 
@@ -40,7 +42,8 @@ describe("GET /api/food/dates", () => {
     mockDb.orderBy.mockResolvedValue(rows);
 
     const { GET } = await import("@/app/api/food/dates/route");
-    const res = await GET();
+    const req = new NextRequest("http://localhost/api/food/dates");
+    const res = await GET(req);
     expect(res.status).toBe(200);
 
     const data = await res.json();

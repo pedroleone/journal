@@ -1,61 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import {
+  withAuth,
+  parseBody,
+  findOwned,
+  notFoundResponse,
+  deleteNoContent,
+  encryptContentFields,
+  decryptRecord,
+} from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { deleteOwnerEntryAndImages } from "@/lib/entry-images";
-import { NO_STORE_HEADERS, jsonNoStore } from "@/lib/http";
+import { jsonNoStore } from "@/lib/http";
 import { entries } from "@/lib/schema";
-import { decryptServerText, encryptServerText } from "@/lib/server-crypto";
 import { updateEntrySchema } from "@/lib/validators";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
+export const GET = withAuth<{ id: string }>(async (userId, _request, { params }) => {
+  const record = await findOwned(entries, params.id, userId);
+  if (!record) return notFoundResponse();
 
-  const { id } = await params;
-  const result = await db
-    .select()
-    .from(entries)
-    .where(and(eq(entries.id, id), eq(entries.userId, userId)));
+  return jsonNoStore(await decryptRecord(record));
+});
 
-  if (result.length === 0) {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
-
-  const { encrypted_content, iv, ...entry } = result[0];
-  const content = await decryptServerText(encrypted_content, iv);
-
-  return jsonNoStore({ ...entry, content });
-}
-
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
-  const { id } = await params;
-  const body = await request.json();
-  const parsed = updateEntrySchema.safeParse(body);
-
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid input" }, { status: 400 });
-  }
+export const PUT = withAuth<{ id: string }>(async (userId, request, { params }) => {
+  const parsed = await parseBody(request, updateEntrySchema);
+  if (!parsed.success) return parsed.response;
 
   const now = new Date().toISOString();
-  const encrypted = await encryptServerText(parsed.data.content);
+  const encrypted = await encryptContentFields(parsed.data.content);
   const updateData: {
     encrypted_content: string;
     iv: string;
     updated_at: string;
     images?: string[] | null;
   } = {
-    encrypted_content: encrypted.ciphertext,
-    iv: encrypted.iv,
+    ...encrypted,
     updated_at: now,
   };
 
@@ -66,32 +45,21 @@ export async function PUT(
   const result = await db
     .update(entries)
     .set(updateData)
-    .where(and(eq(entries.id, id), eq(entries.userId, userId)));
+    .where(and(eq(entries.id, params.id), eq(entries.userId, userId)));
 
-  if (result.rowsAffected === 0) {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
+  if (result.rowsAffected === 0) return notFoundResponse();
 
   return jsonNoStore({ ok: true });
-}
+});
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
+export const DELETE = withAuth<{ id: string }>(async (userId, _request, { params }) => {
+  const result = await deleteOwnerEntryAndImages(userId, "journal", params.id);
 
-  const { id } = await params;
-  const result = await deleteOwnerEntryAndImages(userId, "journal", id);
-
-  if (!result.ok && result.reason === "not_found") {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
+  if (!result.ok && result.reason === "not_found") return notFoundResponse();
 
   if (!result.ok) {
     return jsonNoStore({ error: "Failed to delete entry images" }, { status: 500 });
   }
 
-  return new NextResponse(null, { status: 204, headers: NO_STORE_HEADERS });
-}
+  return deleteNoContent();
+});

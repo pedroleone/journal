@@ -1,35 +1,22 @@
-import { NextRequest } from "next/server";
 import { and, eq } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import {
+  withAuth,
+  parseBody,
+  findOwned,
+  notFoundResponse,
+} from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import type { MealSlot } from "@/lib/food";
 import { jsonNoStore } from "@/lib/http";
 import { foodEntries } from "@/lib/schema";
 import { assignFoodEntrySchema } from "@/lib/validators";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
+export const PATCH = withAuth<{ id: string }>(async (userId, request, { params }) => {
+  const parsed = await parseBody(request, assignFoodEntrySchema);
+  if (!parsed.success) return parsed.response;
 
-  const { id } = await params;
-  const body = await request.json();
-  const parsed = assignFoodEntrySchema.safeParse(body);
-
-  if (!parsed.success) {
-    return jsonNoStore({ error: "Invalid input" }, { status: 400 });
-  }
-
-  const existing = await db
-    .select({ id: foodEntries.id })
-    .from(foodEntries)
-    .where(and(eq(foodEntries.id, id), eq(foodEntries.userId, userId)));
-
-  if (existing.length === 0) {
-    return jsonNoStore({ error: "Not found" }, { status: 404 });
-  }
+  const existing = await findOwned(foodEntries, params.id, userId, { id: foodEntries.id });
+  if (!existing) return notFoundResponse();
 
   const now = new Date().toISOString();
   const updateData: {
@@ -58,7 +45,7 @@ export async function PATCH(
   await db
     .update(foodEntries)
     .set(updateData)
-    .where(and(eq(foodEntries.id, id), eq(foodEntries.userId, userId)));
+    .where(and(eq(foodEntries.id, params.id), eq(foodEntries.userId, userId)));
 
   return jsonNoStore({ ok: true });
-}
+});

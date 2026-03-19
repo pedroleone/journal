@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
@@ -30,7 +31,8 @@ describe("GET /api/entries/dates", () => {
     mockAuth.mockResolvedValueOnce(null);
 
     const { GET } = await import("@/app/api/entries/dates/route");
-    const res = await GET();
+    const req = new NextRequest("http://localhost/api/entries/dates");
+    const res = await GET(req);
 
     expect(res.status).toBe(401);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
@@ -42,7 +44,8 @@ describe("GET /api/entries/dates", () => {
     ]);
 
     const { GET } = await import("@/app/api/entries/dates/route");
-    const res = await GET();
+    const req = new NextRequest("http://localhost/api/entries/dates");
+    const res = await GET(req);
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe("no-store");

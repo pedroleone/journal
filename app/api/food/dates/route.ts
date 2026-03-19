@@ -1,13 +1,10 @@
 import { desc, eq, sql } from "drizzle-orm";
-import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
+import { withAuth } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { foodEntries } from "@/lib/schema";
 
-export async function GET() {
-  const userId = await getRequiredUserId();
-  if (!userId) return unauthorizedResponse();
-
+export const GET = withAuth(async (userId) => {
   const result = await db
     .select({
       year: foodEntries.year,
@@ -25,4 +22,4 @@ export async function GET() {
     );
 
   return jsonNoStore(result);
-}
+});
