@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Dashboard — Concept D</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept D</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html" class="active">Dashboard</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <!-- Dashboard -->
+  <div class="dashboard-wrapper">
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="top-bar-nav">
+        <button class="nav-arrow" aria-label="Previous day">&#8592;</button>
+        <span class="date-neighbor prev">Mar 18</span>
+        <span class="date-label">Wednesday, March 19</span>
+        <span class="date-neighbor next">Mar 20</span>
+        <button class="nav-arrow" aria-label="Next day">&#8594;</button>
+      </div>
+      <div class="top-bar-actions">
+        <button class="top-bar-btn" title="Calendar">&#128197;</button>
+        <button class="top-bar-btn" title="Settings" onclick="location.href='settings.html'">&#9881;&#65039;</button>
+      </div>
+    </div>
+
+    <!-- 2×2 Quadrant Grid -->
+    <div class="quadrant-grid">
+
+      <!-- Journal Quadrant -->
+      <div class="quadrant journal-q" onclick="location.href='journal.html'">
+        <div class="quadrant-header">
+          <div class="quadrant-label">
+            <span class="accent-dot" style="background:var(--journal)"></span>
+            <span>Journal</span>
+          </div>
+          <div class="quadrant-actions">
+            <button class="q-action-btn primary" onclick="event.stopPropagation(); location.href='journal.html'">
+              &#9998; Write
+            </button>
+            <button class="q-expand-btn" title="Expand" onclick="event.stopPropagation(); location.href='journal.html'">&#8599;</button>
+          </div>
+        </div>
+        <div class="quadrant-content">
+          <p class="journal-preview">
+            Today felt like a turning point. The conversation with Maria about the project direction was exactly what I needed to hear. She has this way of cutting through the noise and getting to what actually matters. I keep thinking about what she said about intention — that most of what we call planning is just anxiety wearing a calendar.
+          </p>
+        </div>
+        <div class="quadrant-footer">
+          <span>324 words</span>
+          <span>&#183;</span>
+          <span>2 images</span>
+          <span>&#183;</span>
+          <span>&#10003; saved</span>
+        </div>
+      </div>
+
+      <!-- Food Quadrant -->
+      <div class="quadrant food-q" onclick="location.href='food.html'">
+        <div class="quadrant-header">
+          <div class="quadrant-label">
+            <span class="accent-dot" style="background:var(--food)"></span>
+            <span>Food</span>
+          </div>
+          <div class="quadrant-actions">
+            <span class="inbox-badge">&#128393; 4 unsorted</span>
+            <button class="q-expand-btn" title="Expand" onclick="event.stopPropagation(); location.href='food.html'">&#8599;</button>
+          </div>
+        </div>
+        <div class="quadrant-content">
+          <div class="meal-rows">
+            <div class="meal-row">
+              <span class="meal-slot-name">Breakfast</span>
+              <span class="meal-desc">Oatmeal with banana</span>
+              <span class="meal-time">8:30</span>
+            </div>
+            <div class="meal-row skipped">
+              <span class="meal-slot-name">AM Snack</span>
+              <span class="meal-desc">Skipped</span>
+            </div>
+            <div class="meal-row">
+              <span class="meal-slot-name">Lunch</span>
+              <span class="meal-desc">Chicken salad</span>
+              <span class="meal-time">12:45</span>
+            </div>
+            <div class="meal-row">
+              <span class="meal-slot-name">PM Snack</span>
+              <span class="meal-desc">Apple + coffee</span>
+              <span class="meal-time">3:15</span>
+            </div>
+            <div class="meal-row empty">
+              <span class="meal-slot-name">Dinner</span>
+              <span class="meal-desc">Not logged yet</span>
+            </div>
+          </div>
+        </div>
+        <div class="quadrant-footer">
+          <span>4 of 7 slots filled</span>
+        </div>
+      </div>
+
+      <!-- Notes Quadrant -->
+      <div class="quadrant notes-q" onclick="location.href='notes.html'">
+        <div class="quadrant-header">
+          <div class="quadrant-label">
+            <span class="accent-dot" style="background:var(--notes)"></span>
+            <span>Notes</span>
+          </div>
+          <div class="quadrant-actions">
+            <button class="q-action-btn" style="border-color:var(--notes);color:var(--notes)" onclick="event.stopPropagation(); location.href='notes.html'">
+              + New
+            </button>
+            <button class="q-expand-btn" title="Expand" onclick="event.stopPropagation(); location.href='notes.html'">&#8599;</button>
+          </div>
+        </div>
+        <div class="quadrant-content">
+          <div class="note-rows">
+            <div class="note-row">
+              <span class="note-title">API rate limits for migration</span>
+              <span class="note-tag">work</span>
+            </div>
+            <div class="note-row">
+              <span class="note-title">Gift ideas for Ana</span>
+              <span class="note-tag">personal</span>
+            </div>
+            <div class="note-row">
+              <span class="note-title">Sourdough starter schedule</span>
+              <span class="note-tag">recipes</span>
+            </div>
+          </div>
+        </div>
+        <div class="quadrant-footer">
+          <span>12 notes</span>
+          <span>&#183;</span>
+          <span>3 tags</span>
+        </div>
+      </div>
+
+      <!-- Library Quadrant -->
+      <div class="quadrant library-q" onclick="location.href='library.html'">
+        <div class="quadrant-header">
+          <div class="quadrant-label">
+            <span class="accent-dot" style="background:var(--library)"></span>
+            <span>Library</span>
+          </div>
+          <div class="quadrant-actions">
+            <button class="q-action-btn" style="border-color:var(--library);color:var(--library)" onclick="event.stopPropagation(); location.href='library.html'">
+              + Add
+            </button>
+            <button class="q-expand-btn" title="Expand" onclick="event.stopPropagation(); location.href='library.html'">&#8599;</button>
+          </div>
+        </div>
+        <div class="quadrant-content">
+          <div class="library-rows">
+            <div class="lib-section-label">In Progress</div>
+            <div class="lib-item">
+              <div class="lib-cover">IMG</div>
+              <div class="lib-meta">
+                <div class="lib-title">Dune Messiah</div>
+                <div class="lib-sub">Book</div>
+              </div>
+              <span class="lib-status-pill in-progress">Reading</span>
+            </div>
+            <div class="lib-item">
+              <div class="lib-cover">IMG</div>
+              <div class="lib-meta">
+                <div class="lib-title">Elden Ring</div>
+                <div class="lib-sub">Game · PS5</div>
+              </div>
+              <span class="lib-status-pill in-progress">Playing</span>
+            </div>
+            <div class="lib-section-label" style="margin-top:6px">Recently Finished</div>
+            <div class="lib-item finished">
+              <div class="lib-cover">IMG</div>
+              <div class="lib-meta">
+                <div class="lib-title">Dune</div>
+                <div class="lib-sub">Book</div>
+              </div>
+              <span style="font-size:11px;color:var(--inbox)">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+            </div>
+          </div>
+        </div>
+        <div class="quadrant-footer">
+          <span>47 items</span>
+          <span>&#183;</span>
+          <span>2 active</span>
+        </div>
+      </div>
+
+    </div><!-- /quadrant-grid -->
+  </div><!-- /dashboard-wrapper -->
+
+</body>
+</html>

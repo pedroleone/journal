@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept C — Workspace / Notes</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Notes-specific layout */
+    .notes-split {
+      display: flex;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .notes-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-base);
+      overflow: hidden;
+    }
+
+    .notes-sidebar-header {
+      flex-shrink: 0;
+      padding: 12px 12px 8px;
+      border-bottom: 1px solid var(--border-dim);
+    }
+
+    .notes-sidebar-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .notes-sidebar-list::-webkit-scrollbar { width: 4px; }
+    .notes-sidebar-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .tag-chips {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .notes-editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-surface);
+    }
+
+    .notes-editor-header {
+      flex-shrink: 0;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-base);
+    }
+
+    .notes-editor-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin-bottom: 10px;
+    }
+
+    .notes-editor-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .notes-editor-body::-webkit-scrollbar { width: 6px; }
+    .notes-editor-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .notes-editor-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 640px;
+    }
+
+    .followups-section {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .followups-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .notes-editor-footer {
+      flex-shrink: 0;
+      padding: 8px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-base);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Prototype Nav -->
+<nav class="prototype-nav">
+  <a href="../index.html" class="nav-back">← All Concepts</a>
+  <span>·</span>
+  <span class="nav-label">C:</span>
+  <a href="auth.html">Auth</a>
+  <span>·</span>
+  <a href="index.html">Journal</a>
+  <span>·</span>
+  <a href="food.html">Food</a>
+  <span>·</span>
+  <a href="notes.html" class="active">Notes</a>
+  <span>·</span>
+  <a href="library.html">Library</a>
+  <span>·</span>
+  <a href="settings.html">Settings</a>
+</nav>
+
+<div class="app">
+  <!-- Icon Rail — Notes active -->
+  <nav class="icon-rail">
+    <a href="journal.html" class="rail-btn" title="Journal">📓</a>
+    <a href="food.html" class="rail-btn" title="Food">🍽️</a>
+    <a href="notes.html" class="rail-btn active-notes" title="Notes">📝</a>
+    <a href="library.html" class="rail-btn" title="Library">📚</a>
+    <div class="rail-spacer"></div>
+    <a href="settings.html" class="rail-btn" title="Settings">⚙️</a>
+  </nav>
+
+  <!-- Full-width panel with internal split -->
+  <div class="panel-area">
+    <div class="panel panel-full">
+
+      <!-- Panel Header -->
+      <div class="panel-header">
+        <span class="panel-title panel-title-notes">Notes</span>
+        <div class="panel-header-gap"></div>
+        <button class="btn btn-notes btn-sm">+ New note</button>
+        <span class="badge badge-notes">12 notes</span>
+      </div>
+
+      <!-- Internal split: sidebar + editor -->
+      <div class="notes-split">
+
+        <!-- Sidebar: search + tags + list -->
+        <div class="notes-sidebar">
+          <div class="notes-sidebar-header">
+            <input type="text" class="search-bar" placeholder="Search notes…" value="">
+            <div class="tag-chips">
+              <span class="chip chip-active" style="background:var(--tint-notes);color:var(--color-notes);border-color:rgba(176,124,255,0.3)">All</span>
+              <span class="chip">work</span>
+              <span class="chip">personal</span>
+              <span class="chip">recipes</span>
+            </div>
+          </div>
+
+          <div class="notes-sidebar-list">
+            <!-- Note 1 — selected -->
+            <div class="note-list-item selected">
+              <div class="note-title">API rate limits for migration</div>
+              <div class="note-preview">Need to check the new Anthropic rate limits before we kick off the data migration…</div>
+              <span class="note-tag">work</span>
+            </div>
+
+            <!-- Note 2 -->
+            <div class="note-list-item">
+              <div class="note-title">Gift ideas for Ana</div>
+              <div class="note-preview">Book on type design, the Figma subscription upgrade, or maybe the…</div>
+              <span class="note-tag">personal</span>
+            </div>
+
+            <!-- Note 3 -->
+            <div class="note-list-item">
+              <div class="note-title">Sourdough starter schedule</div>
+              <div class="note-preview">Feed at 8am and 8pm with equal parts flour and water. Discard…</div>
+              <span class="note-tag">recipes</span>
+            </div>
+          </div>
+        </div><!-- /notes-sidebar -->
+
+        <!-- Editor: title + tags + body + followups -->
+        <div class="notes-editor">
+          <div class="notes-editor-header">
+            <div class="notes-editor-title">API rate limits for migration</div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <span class="chip chip-active" style="background:var(--tint-notes);color:var(--color-notes);border-color:rgba(176,124,255,0.3)">work</span>
+              <button class="chip" style="color:var(--color-notes)">+ tag</button>
+              <div class="panel-header-gap"></div>
+              <button class="btn btn-ghost btn-sm">···</button>
+            </div>
+          </div>
+
+          <div class="notes-editor-body">
+            <div class="notes-editor-text" contenteditable="true" style="outline:none">
+              <p>Need to check the new Anthropic rate limits before we kick off the data migration. The current plan might be too aggressive for the batch processing we have planned.</p>
+              <p style="margin-top:1em">Key things to verify:</p>
+              <ul style="padding-left:1.2em;margin-top:0.5em;line-height:2">
+                <li>Requests per minute for Claude API</li>
+                <li>Token limits per request vs. total per day</li>
+                <li>Whether batch API has different limits</li>
+                <li>Cost implications of throttling strategy</li>
+              </ul>
+              <p style="margin-top:1em">Pedro mentioned the new tier might give us 10x the rate limit — worth confirming before we design the retry logic.</p>
+            </div>
+
+            <!-- Image thumbnail placeholder -->
+            <div style="margin-top:16px;display:flex;gap:8px;align-items:center">
+              <div class="img-placeholder img-tray">IMG</div>
+              <button class="btn btn-ghost btn-sm" style="color:var(--color-notes)">+ Add image</button>
+            </div>
+
+            <!-- Follow-ups section -->
+            <div class="followups-section">
+              <div class="followups-title">Follow-ups</div>
+              <div class="subnote">Confirm with Pedro: does the new rate limit tier apply to all orgs automatically or do we need to opt in?</div>
+              <button class="btn btn-ghost btn-sm" style="color:var(--color-notes);margin-top:6px">+ Add follow-up</button>
+            </div>
+
+          </div><!-- /notes-editor-body -->
+
+          <div class="notes-editor-footer">
+            <span class="status-dot dot-saved"></span>
+            <span>Saved</span>
+            <div style="flex:1"></div>
+            <span style="color:var(--text-dim)">12 notes total</span>
+          </div>
+        </div><!-- /notes-editor -->
+
+      </div><!-- /notes-split -->
+
+    </div><!-- /panel -->
+  </div><!-- /panel-area -->
+</div><!-- /app -->
+
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept G — Notebook / Notes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <strong>Concept G</strong>
+    <span class="sep">·</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html" class="active">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="notebook-wrapper">
+    <div class="notebook">
+
+      <!-- Spine -->
+      <div class="spine"></div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <a href="index.html"   class="tab-btn tab-journal">Journal</a>
+        <a href="food.html"    class="tab-btn tab-food">Food</a>
+        <a href="notes.html"   class="tab-btn active tab-notes">Notes</a>
+        <a href="library.html" class="tab-btn tab-library">Library</a>
+      </div>
+
+      <!-- Page -->
+      <div class="page">
+
+        <!-- Page Header — no date nav for notes -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <span style="font-family:var(--font-serif);font-size:16px;font-weight:bold;color:var(--text-primary);">Notes</span>
+            <span style="font-family:var(--font-sans);font-size:11px;color:var(--text-muted);margin-left:4px;">12 total</span>
+          </div>
+          <div class="page-header-right">
+            <button class="header-btn primary" style="background:var(--notes);border-color:transparent;color:#fff;">+ New note</button>
+            <a href="settings.html"><button class="gear-btn" title="Settings">⚙</button></a>
+          </div>
+        </div>
+
+        <!-- Notes Layout — no lined paper -->
+        <div class="page-content" style="display:flex;overflow:hidden;padding:0;height:100%;">
+          <div class="notes-layout" style="flex:1;overflow:hidden;">
+
+            <!-- Sidebar -->
+            <div class="notes-sidebar">
+
+              <!-- Search -->
+              <div class="notes-search">
+                <input type="search" placeholder="Search notes…" value="">
+              </div>
+
+              <!-- Tags -->
+              <div class="notes-tags">
+                <span class="tag-chip active">All (12)</span>
+                <span class="tag-chip">work</span>
+                <span class="tag-chip">personal</span>
+                <span class="tag-chip">recipes</span>
+                <span class="tag-chip">ideas</span>
+                <span class="tag-chip">health</span>
+              </div>
+
+              <!-- Note list -->
+              <div class="notes-list">
+
+                <div class="note-item active">
+                  <div class="note-item-title">API rate limits</div>
+                  <div class="note-item-preview">Figma: 100 req/min. GitHub: 5000/hr…</div>
+                  <div class="note-item-tags">
+                    <span class="note-tag">work</span>
+                  </div>
+                </div>
+
+                <div class="note-item">
+                  <div class="note-item-title">Gift ideas for Ana</div>
+                  <div class="note-item-preview">Pottery class, travel journal, linen…</div>
+                  <div class="note-item-tags">
+                    <span class="note-tag">personal</span>
+                  </div>
+                </div>
+
+                <div class="note-item">
+                  <div class="note-item-title">Sourdough starter</div>
+                  <div class="note-item-preview">100g flour, 100g water. Feed every 24h…</div>
+                  <div class="note-item-tags">
+                    <span class="note-tag">recipes</span>
+                  </div>
+                </div>
+
+                <div class="note-item">
+                  <div class="note-item-title">Reading list 2026</div>
+                  <div class="note-item-preview">Piranesi, Project Hail Mary, The…</div>
+                  <div class="note-item-tags">
+                    <span class="note-tag">personal</span>
+                    <span class="note-tag">ideas</span>
+                  </div>
+                </div>
+
+                <div class="note-item">
+                  <div class="note-item-title">Home workout routine</div>
+                  <div class="note-item-preview">Mon: push. Wed: pull. Fri: legs…</div>
+                  <div class="note-item-tags">
+                    <span class="note-tag">health</span>
+                  </div>
+                </div>
+
+                <div class="note-item">
+                  <div class="note-item-title">Project retro notes</div>
+                  <div class="note-item-preview">What went well: async standups, clear…</div>
+                  <div class="note-item-tags">
+                    <span class="note-tag">work</span>
+                  </div>
+                </div>
+
+                <div class="note-item">
+                  <div class="note-item-title">Moroccan tagine recipe</div>
+                  <div class="note-item-preview">1 lb chicken, preserved lemons…</div>
+                  <div class="note-item-tags">
+                    <span class="note-tag">recipes</span>
+                  </div>
+                </div>
+
+                <div class="note-item" style="color:var(--text-muted);font-family:var(--font-sans);font-size:11px;padding:10px 16px;text-align:center;">
+                  + 5 more notes
+                </div>
+
+              </div><!-- /notes-list -->
+            </div><!-- /notes-sidebar -->
+
+            <!-- Note Detail -->
+            <div class="note-detail">
+              <h1 class="note-detail-title">API rate limits</h1>
+              <div class="note-detail-tags">
+                <span class="note-detail-tag">work</span>
+              </div>
+
+              <div class="note-detail-body">
+                <p>Keeping track of the limits I hit most often.</p>
+                <br>
+                <p><strong>Figma REST API</strong><br>
+                100 requests/min per team. File reads are cheap; writes count more. Webhooks don't count against REST quota.</p>
+                <br>
+                <p><strong>GitHub API</strong><br>
+                5,000 req/hr for authenticated requests. Search API is separate: 30 req/min. GraphQL has point-based limits — simple queries ~1pt, complex can be 100+.</p>
+                <br>
+                <p><strong>OpenAI</strong><br>
+                TPM (tokens per minute) varies by tier. Tier 1 is tight on GPT-4. Batch API has 24hr window but much higher limits — good for non-realtime jobs.</p>
+                <br>
+                <p>General rule: build in exponential backoff from the start. Don't treat rate limits as edge cases.</p>
+              </div>
+
+              <!-- Image placeholder -->
+              <div style="margin:16px 0;">
+                <div class="img-placeholder" style="width:100%;max-width:420px;height:120px;">IMG — rate limit diagram</div>
+              </div>
+
+              <!-- Follow-ups section -->
+              <div class="note-detail-section">
+                <div class="note-detail-section-label">Follow-ups</div>
+
+                <div class="followup-item">
+                  Check if Figma webhooks have their own quota separate from REST
+                </div>
+                <div class="followup-item">
+                  Benchmark our current GitHub usage — are we near the limit on CI?
+                </div>
+                <div class="followup-item">
+                  Explore OpenAI Batch API for the weekly digest generation job
+                </div>
+
+                <button class="header-btn" style="margin-top:10px;font-size:11px;">+ Add follow-up</button>
+              </div>
+
+            </div><!-- /note-detail -->
+
+          </div><!-- /notes-layout -->
+        </div><!-- /page-content -->
+
+      </div><!-- /page -->
+    </div><!-- /notebook -->
+  </div><!-- /notebook-wrapper -->
+
+  <!-- Mobile nav -->
+  <nav class="mobile-nav-bar">
+    <a href="index.html"   class="mobile-nav-btn">J<span>Journal</span></a>
+    <a href="food.html"    class="mobile-nav-btn">F<span>Food</span></a>
+    <a href="notes.html"   class="mobile-nav-btn active-n">N<span>Notes</span></a>
+    <a href="library.html" class="mobile-nav-btn">L<span>Library</span></a>
+  </nav>
+
+</body>
+</html>

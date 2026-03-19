@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept J — The Dock</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype nav -->
+  <nav class="prototype-nav">
+    <span>J · Dock</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html" class="active-page">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="app">
+    <div class="app-inner">
+
+      <!-- Top Bar — Journal controls -->
+      <header class="top-bar">
+        <nav class="top-bar-date-nav">
+          <a href="#" class="nav-arrow">‹</a>
+          <span class="date-side left">Mar 18</span>
+          <span class="date-label">Wednesday, March 19</span>
+          <span class="date-side right">Mar 20</span>
+          <a href="#" class="nav-arrow">›</a>
+        </nav>
+
+        <div class="top-bar-spacer"></div>
+
+        <button class="top-bar-btn">
+          📎 2
+        </button>
+        <span class="top-bar-status saved">auto-saved</span>
+        <button class="top-bar-btn icon-only" title="Settings">⚙</button>
+      </header>
+
+      <!-- Full-screen writing surface -->
+      <main class="content">
+        <div class="content-centered">
+
+          <div class="journal-meta">
+            <span class="date-chip">Wednesday, March 19, 2026</span>
+            <span class="word-count">324 words</span>
+          </div>
+
+          <div class="journal-body">
+            <p>Today felt like a turning point. Not in any dramatic sense — nothing exploded or resolved — but there was this quiet shift I noticed somewhere around noon, when I stepped outside for a few minutes and realized I wasn't dreading the afternoon the way I usually do.</p>
+
+            <p>It started small. I actually made breakfast instead of just coffee. Sat down with it. Read a bit. The morning had this different texture to it, unhurried in a way that felt almost unfamiliar.</p>
+
+            <p>Work was the same pile of things it always is, but I moved through it differently. Less friction. I'm not sure if something changed on the outside or if I just decided to stop fighting everything. Probably the second one.</p>
+
+            <p>Called my mom in the evening. Longer than usual. She mentioned the garden — she's growing tomatoes again this year. I told her I'd visit in May and I actually meant it this time.<span class="cursor"></span></p>
+          </div>
+
+        </div>
+      </main>
+
+      <!-- Image tray sits between content and dock -->
+      <div class="image-tray">
+        <div class="image-tray-thumb">IMG</div>
+        <div class="image-tray-thumb">IMG</div>
+        <div class="image-tray-add">+</div>
+      </div>
+
+    </div>
+
+    <!-- Dock — Journal ACTIVE (indigo glow + dot) -->
+    <footer class="dock">
+
+      <a href="journal.html" class="dock-slot active-journal">
+        <span class="slot-label">
+          <span class="full-label">Journal</span>
+          <span class="short-label">J</span>
+        </span>
+        <span class="slot-metric">324 words today</span>
+      </a>
+
+      <a href="food.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Food</span>
+          <span class="short-label">F</span>
+        </span>
+        <span class="slot-metric">
+          4/7 · 4 unsorted
+          <span class="badge">4</span>
+        </span>
+      </a>
+
+      <a href="notes.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Notes</span>
+          <span class="short-label">N</span>
+        </span>
+        <span class="slot-metric">12 notes</span>
+      </a>
+
+      <a href="library.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Library</span>
+          <span class="short-label">L</span>
+        </span>
+        <span class="slot-metric">2 in progress</span>
+      </a>
+
+    </footer>
+  </div>
+
+</body>
+</html>

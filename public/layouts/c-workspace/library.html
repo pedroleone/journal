@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept C — Workspace / Library</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .library-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .library-toolbar {
+      flex-shrink: 0;
+    }
+
+    .library-body {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--bg-surface);
+      padding: 16px;
+    }
+
+    .library-body::-webkit-scrollbar { width: 6px; }
+    .library-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* Detail expanded view */
+    .detail-expanded {
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 8px;
+    }
+
+    .detail-expanded-top {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-cover {
+      width: 80px;
+      height: 110px;
+      background: var(--bg-active);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+
+    .detail-meta { flex: 1; }
+    .detail-meta-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    .detail-meta-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .thoughts-section {
+      margin-top: 16px;
+    }
+
+    .thoughts-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .thoughts-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      min-height: 60px;
+    }
+
+    @media (max-width: 768px) {
+      .lib-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Prototype Nav -->
+<nav class="prototype-nav">
+  <a href="../index.html" class="nav-back">← All Concepts</a>
+  <span>·</span>
+  <span class="nav-label">C:</span>
+  <a href="auth.html">Auth</a>
+  <span>·</span>
+  <a href="index.html">Journal</a>
+  <span>·</span>
+  <a href="food.html">Food</a>
+  <span>·</span>
+  <a href="notes.html">Notes</a>
+  <span>·</span>
+  <a href="library.html" class="active">Library</a>
+  <span>·</span>
+  <a href="settings.html">Settings</a>
+</nav>
+
+<div class="app">
+  <!-- Icon Rail — Library active -->
+  <nav class="icon-rail">
+    <a href="journal.html" class="rail-btn" title="Journal">📓</a>
+    <a href="food.html" class="rail-btn" title="Food">🍽️</a>
+    <a href="notes.html" class="rail-btn" title="Notes">📝</a>
+    <a href="library.html" class="rail-btn active-library" title="Library">📚</a>
+    <div class="rail-spacer"></div>
+    <a href="settings.html" class="rail-btn" title="Settings">⚙️</a>
+  </nav>
+
+  <div class="panel-area">
+    <div class="panel panel-full">
+
+      <!-- Panel Header -->
+      <div class="panel-header">
+        <span class="panel-title panel-title-library">Library</span>
+        <div class="panel-header-gap"></div>
+        <button class="btn btn-library btn-sm">+ Add</button>
+      </div>
+
+      <!-- Type Tab Bar -->
+      <div class="library-toolbar">
+        <div class="tab-bar">
+          <div class="tab-item active-tab">All</div>
+          <div class="tab-item">📖 Books</div>
+          <div class="tab-item">💿 Albums</div>
+          <div class="tab-item">🎬 Movies</div>
+          <div class="tab-item">🎮 Games</div>
+          <div class="tab-item">📺 Videos</div>
+          <div class="tab-item">Misc</div>
+        </div>
+
+        <!-- Filter Row -->
+        <div class="filter-row">
+          <select class="filter-select">
+            <option>Status ▾</option>
+            <option>Backlog</option>
+            <option>In Progress</option>
+            <option>Finished</option>
+            <option>Dropped</option>
+          </select>
+          <select class="filter-select">
+            <option>Genre ▾</option>
+          </select>
+          <select class="filter-select">
+            <option>Rating ▾</option>
+          </select>
+          <select class="filter-select">
+            <option>Reaction ▾</option>
+          </select>
+          <input type="text" class="filter-search" placeholder="Search library…">
+        </div>
+      </div>
+
+      <!-- Library Body -->
+      <div class="library-body">
+
+        <!-- Card Grid -->
+        <div class="lib-grid">
+
+          <!-- Dune Messiah — in progress -->
+          <div class="lib-card">
+            <div class="card-cover">IMG</div>
+            <div class="card-body">
+              <div class="card-title">Dune Messiah</div>
+              <div class="card-sub">📖 Book · Frank Herbert</div>
+              <span class="card-status status-inprogress">In Progress</span>
+            </div>
+          </div>
+
+          <!-- Elden Ring — in progress -->
+          <div class="lib-card">
+            <div class="card-cover">IMG</div>
+            <div class="card-body">
+              <div class="card-title">Elden Ring</div>
+              <div class="card-sub">🎮 Game · PS5</div>
+              <span class="card-status status-inprogress">In Progress</span>
+            </div>
+          </div>
+
+          <!-- Dune — finished -->
+          <div class="lib-card">
+            <div class="card-cover">IMG</div>
+            <div class="card-body">
+              <div class="card-title">Dune</div>
+              <div class="card-sub">📖 Book · Frank Herbert</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                <span class="card-status status-finished">Finished</span>
+                <span class="stars">★★★★★</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Blade Runner 2049 — finished -->
+          <div class="lib-card">
+            <div class="card-cover">IMG</div>
+            <div class="card-body">
+              <div class="card-title">Blade Runner 2049</div>
+              <div class="card-sub">🎬 Movie · Denis Villeneuve</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                <span class="card-status status-finished">Finished</span>
+                <span class="stars">★★★★</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dark Side of the Moon — finished -->
+          <div class="lib-card">
+            <div class="card-cover">IMG</div>
+            <div class="card-body">
+              <div class="card-title">Dark Side of the Moon</div>
+              <div class="card-sub">💿 Album · Pink Floyd</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                <span class="card-status status-finished">Finished</span>
+                <span class="stars">★★★★★</span>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /lib-grid -->
+
+        <!-- Detail View: Dune (expanded) -->
+        <div style="margin-top:24px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px">Detail View</div>
+
+          <div class="detail-expanded">
+            <div class="detail-expanded-top">
+              <div class="detail-cover">IMG</div>
+              <div class="detail-meta">
+                <div class="detail-meta-title">Dune</div>
+                <div class="detail-meta-sub">Frank Herbert · 1965</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <span class="card-status status-finished">Finished</span>
+                  <span class="stars">★★★★★</span>
+                  <span class="badge badge-dim">📖 Book</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-subtle btn-sm">Edit</button>
+                <button class="btn btn-danger btn-sm">Delete</button>
+              </div>
+            </div>
+
+            <!-- Meta fields -->
+            <div class="detail-field">
+              <span class="detail-field-label">Type</span>
+              <span class="detail-field-value">Book</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field-label">Status</span>
+              <span class="detail-field-value">Finished</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field-label">Rating</span>
+              <span class="detail-field-value stars">★★★★★</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field-label">Genre</span>
+              <span class="detail-field-value">Science Fiction</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field-label">Pages</span>
+              <span class="detail-field-value">412</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field-label">Finished</span>
+              <span class="detail-field-value">February 12, 2026</span>
+            </div>
+
+            <!-- Thoughts section -->
+            <div class="thoughts-section">
+              <div class="thoughts-title">Your Thoughts</div>
+              <div class="thoughts-text" contenteditable="true" style="outline:none">
+                Exceptional. The world-building is unmatched and the political intrigue holds up completely. Paul's arc is far more tragic than I remembered — the whole thing reads as a cautionary tale about saviors and the systems that create them. Already started Dune Messiah.
+              </div>
+              <button class="btn btn-ghost btn-sm" style="color:var(--color-library);margin-top:10px">+ Add thought</button>
+            </div>
+
+          </div><!-- /detail-expanded -->
+        </div>
+
+      </div><!-- /library-body -->
+
+    </div><!-- /panel -->
+  </div><!-- /panel-area -->
+</div><!-- /app -->
+
+</body>
+</html>

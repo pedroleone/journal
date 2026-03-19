@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept J — Dock · Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype nav -->
+  <nav class="prototype-nav">
+    <span>J · Dock</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html" class="active-page">Settings</a>
+  </nav>
+
+  <div class="app">
+    <div class="app-inner">
+
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <span class="top-bar-title">Settings</span>
+        <div class="top-bar-spacer"></div>
+        <button class="top-bar-btn icon-only">⚙</button>
+      </header>
+
+      <!-- Settings content -->
+      <main class="content">
+        <div style="max-width: 560px; margin: 0 auto;">
+
+          <!-- Preferences -->
+          <div class="settings-group">
+            <div class="settings-group-title">Preferences</div>
+
+            <div class="settings-row">
+              <span class="row-icon">🌐</span>
+              <div class="settings-row-content">
+                <div class="row-label">Language</div>
+              </div>
+              <span class="row-value">English <span class="chevron">›</span></span>
+            </div>
+
+            <div class="settings-row">
+              <span class="row-icon">🎨</span>
+              <div class="settings-row-content">
+                <div class="row-label">Theme</div>
+              </div>
+              <span class="row-value">Dark <span class="chevron">›</span></span>
+            </div>
+
+            <div class="settings-row">
+              <span class="row-icon">🏠</span>
+              <div class="settings-row-content">
+                <div class="row-label">Default landing area</div>
+                <div class="row-sub">Where you land after opening the app</div>
+              </div>
+              <span class="row-value">Journal <span class="chevron">›</span></span>
+            </div>
+          </div>
+
+          <!-- Export -->
+          <div class="settings-group">
+            <div class="settings-group-title">Export</div>
+
+            <div class="settings-row">
+              <span class="row-icon">📄</span>
+              <div class="settings-row-content">
+                <div class="row-label">Export journal &amp; food</div>
+                <div class="row-sub">Markdown, plain text, or print-friendly PDF</div>
+              </div>
+              <button class="settings-btn">Export…</button>
+            </div>
+
+            <div class="settings-row">
+              <span class="row-icon">📦</span>
+              <div class="settings-row-content">
+                <div class="row-label">Download encrypted backup</div>
+                <div class="row-sub">Full data export — keep this file safe</div>
+              </div>
+              <button class="settings-btn">Download</button>
+            </div>
+
+            <div class="settings-row">
+              <span class="row-icon">🔁</span>
+              <div class="settings-row-content">
+                <div class="row-label">Restore from backup</div>
+                <div class="row-sub">Will replace all current data — cannot be undone</div>
+              </div>
+              <button class="settings-btn danger">Restore…</button>
+            </div>
+          </div>
+
+          <!-- App -->
+          <div class="settings-group">
+            <div class="settings-group-title">App</div>
+
+            <div class="settings-row">
+              <span class="row-icon">📲</span>
+              <div class="settings-row-content">
+                <div class="row-label">Install as app</div>
+                <div class="row-sub">Add to Home Screen for offline-capable access</div>
+              </div>
+              <button class="settings-btn">Install</button>
+            </div>
+
+            <div class="settings-row">
+              <span class="row-icon">🔔</span>
+              <div class="settings-row-content">
+                <div class="row-label">Daily reminder</div>
+                <div class="row-sub">Prompt to write at 9 PM</div>
+              </div>
+              <div class="toggle"></div>
+            </div>
+
+            <div class="settings-row">
+              <span class="row-icon">🔒</span>
+              <div class="settings-row-content">
+                <div class="row-label">Require auth on resume</div>
+              </div>
+              <div class="toggle off"></div>
+            </div>
+          </div>
+
+          <!-- Account -->
+          <div class="settings-group">
+            <div class="settings-group-title">Account</div>
+
+            <div class="settings-row">
+              <span class="row-icon">👤</span>
+              <div class="settings-row-content">
+                <div class="row-label">pedro@example.com</div>
+                <div class="row-sub">Signed in with Google</div>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <span class="row-icon" style="font-size:14px; color: #ff6060;">↩</span>
+              <div class="settings-row-content">
+                <div class="row-label" style="color: #ff6060;">Sign out</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: center; color: var(--text-dim); font-size: 11px; margin-top: 8px; margin-bottom: 16px;">
+            v0.9.4 · Private &amp; encrypted
+          </div>
+
+        </div>
+      </main>
+
+    </div>
+
+    <!-- Dock — NO active slot (settings page) -->
+    <footer class="dock">
+
+      <a href="journal.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Journal</span>
+          <span class="short-label">J</span>
+        </span>
+        <span class="slot-metric">324 words today</span>
+      </a>
+
+      <a href="food.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Food</span>
+          <span class="short-label">F</span>
+        </span>
+        <span class="slot-metric">
+          4/7 · 4 unsorted
+          <span class="badge">4</span>
+        </span>
+      </a>
+
+      <a href="notes.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Notes</span>
+          <span class="short-label">N</span>
+        </span>
+        <span class="slot-metric">12 notes</span>
+      </a>
+
+      <a href="library.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Library</span>
+          <span class="short-label">L</span>
+        </span>
+        <span class="slot-metric">2 in progress</span>
+      </a>
+
+    </footer>
+  </div>
+
+</body>
+</html>

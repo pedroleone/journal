@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Library Room — Concept F: The Rooms</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Room Switcher (desktop) -->
+  <nav class="room-switcher">
+    <div class="switcher-brand">📓</div>
+
+    <a href="index.html"   class="switcher-icon" data-label="Journal">✦</a>
+    <a href="food.html"    class="switcher-icon" data-label="Food">🥗</a>
+    <a href="notes.html"   class="switcher-icon" data-label="Notes">📝</a>
+    <a href="library.html" class="switcher-icon active-library" data-label="Library">📚</a>
+
+    <div class="switcher-spacer"></div>
+    <a href="settings.html" class="switcher-icon" data-label="Settings">⚙</a>
+  </nav>
+
+  <!-- Mobile Bottom Tabs -->
+  <nav class="room-switcher-mobile">
+    <a href="index.html"   class="mobile-tab"><span>✦</span><span class="mobile-tab-label">Journal</span></a>
+    <a href="food.html"    class="mobile-tab"><span>🥗</span><span class="mobile-tab-label">Food</span></a>
+    <a href="notes.html"   class="mobile-tab"><span>📝</span><span class="mobile-tab-label">Notes</span></a>
+    <a href="library.html" class="mobile-tab active-library"><span>📚</span><span class="mobile-tab-label">Library</span></a>
+    <a href="settings.html" class="mobile-tab"><span>⚙</span><span class="mobile-tab-label">Settings</span></a>
+  </nav>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept F</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html">Journal</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html">Journal Room</a>
+    <a href="food.html">Food Room</a>
+    <a href="notes.html">Notes Room</a>
+    <a href="library.html" class="active">Library Room</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <!-- Library Room — The Catalog -->
+  <div class="room-wrapper room-library" style="display:flex;flex-direction:column;height:100vh;">
+    <div class="library-room" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+
+      <!-- Toolbar: type tabs + filter chips -->
+      <div class="library-toolbar">
+        <div class="type-tabs">
+          <span class="type-tab active">All</span>
+          <span class="type-tab">Books</span>
+          <span class="type-tab">Albums</span>
+          <span class="type-tab">Movies</span>
+          <span class="type-tab">Games</span>
+          <span class="type-tab">Videos</span>
+          <span class="type-tab">Misc</span>
+        </div>
+        <div class="library-filter-row">
+          <button class="filter-chip">Status ▾</button>
+          <button class="filter-chip">Genre ▾</button>
+          <button class="filter-chip">Rating ▾</button>
+          <button class="filter-chip">Reaction ▾</button>
+          <div class="library-search-add">
+            <input class="lib-search" type="text" placeholder="Search catalog…" />
+            <button class="add-item-btn">+ Add</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content: grid + detail -->
+      <div class="library-content" style="flex:1;overflow:hidden;">
+
+        <!-- Catalog grid -->
+        <div class="catalog-section">
+          <div class="catalog-grid">
+
+            <!-- Dune Messiah — in progress, selected -->
+            <div class="catalog-card selected">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-inprogress">Reading</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">Dune Messiah</div>
+                <div class="card-type">Book</div>
+              </div>
+            </div>
+
+            <!-- Elden Ring — in progress -->
+            <div class="catalog-card">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-inprogress">Playing</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">Elden Ring</div>
+                <div class="card-type">Game · PS5</div>
+              </div>
+            </div>
+
+            <!-- Dune — finished -->
+            <div class="catalog-card">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-finished">Done</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">Dune</div>
+                <div class="card-type">Book</div>
+                <div class="card-rating">★★★★★</div>
+              </div>
+            </div>
+
+            <!-- Blade Runner 2049 — finished -->
+            <div class="catalog-card">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-finished">Done</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">Blade Runner 2049</div>
+                <div class="card-type">Movie</div>
+                <div class="card-rating">★★★★</div>
+              </div>
+            </div>
+
+            <!-- Dark Side — finished -->
+            <div class="catalog-card">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-finished">Done</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">Dark Side of the Moon</div>
+                <div class="card-type">Album</div>
+                <div class="card-rating">★★★★★</div>
+              </div>
+            </div>
+
+            <!-- Filler backlog items -->
+            <div class="catalog-card" style="opacity:0.5">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-backlog">Backlog</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">Children of Dune</div>
+                <div class="card-type">Book</div>
+              </div>
+            </div>
+
+            <div class="catalog-card" style="opacity:0.5">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-backlog">Backlog</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">Annihilation</div>
+                <div class="card-type">Movie</div>
+              </div>
+            </div>
+
+            <div class="catalog-card" style="opacity:0.5">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-backlog">Backlog</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">OK Computer</div>
+                <div class="card-type">Album</div>
+              </div>
+            </div>
+
+            <div class="catalog-card" style="opacity:0.5">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-backlog">Backlog</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">Shadow of the Colossus</div>
+                <div class="card-type">Game</div>
+              </div>
+            </div>
+
+            <div class="catalog-card" style="opacity:0.5">
+              <div class="card-cover">
+                <div class="card-cover-inner">IMG</div>
+                <span class="card-cover-status status-backlog">Backlog</span>
+              </div>
+              <div class="card-meta">
+                <div class="card-title">Solaris</div>
+                <div class="card-type">Book</div>
+              </div>
+            </div>
+
+          </div>
+        </div><!-- /catalog-section -->
+
+        <!-- Item detail panel -->
+        <div class="item-detail">
+          <div class="detail-cover">IMG — Dune Messiah cover</div>
+          <div class="detail-title">Dune Messiah</div>
+          <div class="detail-sub">Book by Frank Herbert</div>
+
+          <div class="detail-meta-row">
+            <div class="detail-meta-item">
+              <span class="detail-meta-label">Status</span>
+              <span class="detail-status-pill status-inprogress">In Progress</span>
+            </div>
+            <div class="detail-meta-item">
+              <span class="detail-meta-label">Rating</span>
+              <span class="detail-meta-value" style="color:var(--inbox)">—</span>
+            </div>
+            <div class="detail-meta-item">
+              <span class="detail-meta-label">Genre</span>
+              <span class="detail-meta-value">Sci-fi</span>
+            </div>
+            <div class="detail-meta-item">
+              <span class="detail-meta-label">Pages</span>
+              <span class="detail-meta-value">331</span>
+            </div>
+            <div class="detail-meta-item">
+              <span class="detail-meta-label">Started</span>
+              <span class="detail-meta-value">Mar 12, 2026</span>
+            </div>
+            <div class="detail-meta-item">
+              <span class="detail-meta-label">Reaction</span>
+              <span class="detail-meta-value">—</span>
+            </div>
+          </div>
+
+          <div class="detail-thoughts-label">Your Thoughts</div>
+          <div class="detail-thoughts-text">
+            Much denser than the first book. Herbert isn't interested in making it easy — the whole thing feels like a political treatise dressed as fiction. Still pulling me along though.
+          </div>
+        </div><!-- /item-detail -->
+
+      </div><!-- /library-content -->
+
+    </div>
+  </div>
+
+</body>
+</html>

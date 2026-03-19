@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept C — Workspace / Journal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Prototype Nav -->
+<nav class="prototype-nav">
+  <a href="../index.html" class="nav-back">← All Concepts</a>
+  <span>·</span>
+  <span class="nav-label">C:</span>
+  <a href="auth.html">Auth</a>
+  <span>·</span>
+  <a href="journal.html" class="active">Journal</a>
+  <span>·</span>
+  <a href="food.html">Food</a>
+  <span>·</span>
+  <a href="notes.html">Notes</a>
+  <span>·</span>
+  <a href="library.html">Library</a>
+  <span>·</span>
+  <a href="settings.html">Settings</a>
+</nav>
+
+<div class="app">
+  <!-- Icon Rail — Journal active -->
+  <nav class="icon-rail">
+    <a href="journal.html" class="rail-btn active-journal" title="Journal">📓</a>
+    <a href="food.html" class="rail-btn" title="Food">🍽️</a>
+    <a href="notes.html" class="rail-btn" title="Notes">📝</a>
+    <a href="library.html" class="rail-btn" title="Library">📚</a>
+    <div class="rail-spacer"></div>
+    <a href="settings.html" class="rail-btn" title="Settings">⚙️</a>
+  </nav>
+
+  <!-- Panel Area: Journal (60%) + Food context (40%) -->
+  <div class="panel-area">
+
+    <!-- Journal Panel (main) -->
+    <div class="panel panel-60">
+      <div class="panel-header">
+        <span class="panel-title panel-title-journal">Journal</span>
+        <div class="date-nav">
+          <button class="date-nav-btn">‹</button>
+          <span class="date-label">Wednesday, March 19</span>
+          <button class="date-nav-btn">›</button>
+        </div>
+        <div class="panel-header-gap"></div>
+        <span class="badge badge-dim">2 images</span>
+        <button class="btn btn-ghost btn-sm">···</button>
+        <span class="status-dot dot-saved" title="Saved"></span>
+      </div>
+
+      <div class="panel-body">
+        <div class="journal-date-heading">Wednesday, March 19, 2026</div>
+
+        <!-- Full journal content — markdown editor surface -->
+        <div class="journal-content" contenteditable="true" style="outline:none; min-height: 300px;">
+          <p>Today felt like a turning point. The conversation with Maria about the project direction was exactly what I needed to hear. She has this way of cutting through the noise and getting to what actually matters.</p>
+          <p style="margin-top:1em">I think the key insight was that we've been optimizing for the wrong metric entirely. Not revenue per user, but time to first meaningful action. That reframing changes everything about how we should think about onboarding.</p>
+          <p style="margin-top:1em">We spent an hour going through the user research and I kept finding myself nodding — the signals were there all along, we just weren't asking the right questions. Maria pointed out three specific moments in the onboarding flow where people hesitate, and in each case the hesitation isn't about capability, it's about confidence. They don't know if they're doing it right.</p>
+          <p style="margin-top:1em">So the redesign isn't really about the surface. It's about trust signals. Small things: confirmation of progress, clear reversibility, showing that nothing is permanent until it needs to be.</p>
+          <p style="margin-top:1em">Left the meeting feeling genuinely energized. That doesn't happen often. There's something about clarity of purpose that cuts through the usual fog of too many parallel priorities. I want to hold onto this feeling — and more importantly, the specific reframe — before it gets buried under the next thing.</p>
+          <p style="margin-top:1em">Note to self: write up the "time to first meaningful action" framing properly. It deserves a real document, not just a sticky note in my head.</p>
+        </div>
+
+        <!-- Image Tray -->
+        <div class="image-tray">
+          <div class="img-placeholder img-tray">IMG</div>
+          <div class="img-placeholder img-tray">IMG</div>
+          <div class="image-tray-add" title="Add image">+</div>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <span>324 words</span>
+        <span style="color:var(--text-dim)">·</span>
+        <span class="status-dot dot-saved"></span>
+        <span>auto-saved</span>
+        <div class="panel-footer-gap"></div>
+        <span style="color:var(--text-dim)">Markdown</span>
+        <button class="btn btn-ghost btn-sm">Preview</button>
+      </div>
+    </div>
+
+    <!-- Food Context Panel (40%) -->
+    <div class="panel panel-40">
+      <div class="panel-header">
+        <span class="panel-title panel-title-food">Food</span>
+        <div class="date-nav">
+          <button class="date-nav-btn">‹</button>
+          <span class="date-label">Mar 19</span>
+          <button class="date-nav-btn">›</button>
+        </div>
+        <div class="panel-header-gap"></div>
+        <button class="btn btn-ghost btn-sm">+ Add</button>
+        <span class="badge badge-inbox">Inbox 4</span>
+      </div>
+
+      <div class="panel-body">
+        <div class="meal-slot-compact filled">
+          <span class="slot-name">Breakfast</span>
+          <span class="slot-desc">Oatmeal with blueberries</span>
+          <span class="slot-time">8:30</span>
+        </div>
+        <div class="meal-slot-compact skipped">
+          <span class="slot-name">AM Snack</span>
+          <span class="slot-desc" style="font-style:italic;color:var(--text-dim)">Skipped</span>
+        </div>
+        <div class="meal-slot-compact filled">
+          <span class="slot-name">Lunch</span>
+          <span class="slot-desc">Grilled chicken salad</span>
+          <span class="slot-time">12:45</span>
+        </div>
+        <div class="meal-slot-compact filled">
+          <span class="slot-name">PM Snack</span>
+          <span class="slot-desc">Apple + coffee</span>
+          <span class="slot-time">3:15</span>
+        </div>
+        <div class="meal-slot-compact empty">
+          <span class="slot-name">Dinner</span>
+          <span class="slot-desc">—</span>
+        </div>
+        <div class="meal-slot-compact empty">
+          <span class="slot-name">Midnight</span>
+          <span class="slot-desc">—</span>
+        </div>
+        <div class="meal-slot-compact empty">
+          <span class="slot-name">Observation</span>
+          <span class="slot-desc">—</span>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <span>4 logged · 1 skipped</span>
+        <div class="panel-footer-gap"></div>
+        <a href="food.html" class="btn btn-ghost btn-sm" style="font-size:11px">Expand →</a>
+      </div>
+    </div>
+
+  </div><!-- /panel-area -->
+</div><!-- /app -->
+
+</body>
+</html>

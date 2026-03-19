@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notes — Concept D</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept D</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html">Dashboard</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html" class="active">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="expanded-wrapper">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-bar">
+      <a href="index.html" class="breadcrumb-back notes-link">&#8592; Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Notes</span>
+    </div>
+
+    <!-- Split layout -->
+    <div class="expanded-content" style="overflow:hidden">
+      <div class="notes-expanded">
+
+        <!-- Sidebar -->
+        <div class="notes-sidebar">
+
+          <div class="notes-search">
+            <input class="search-input" type="text" placeholder="Search notes…" />
+          </div>
+
+          <div class="notes-tags">
+            <button class="tag-chip active">All</button>
+            <button class="tag-chip">work</button>
+            <button class="tag-chip">personal</button>
+            <button class="tag-chip">recipes</button>
+          </div>
+
+          <div class="notes-list">
+            <div class="note-item active">
+              <div class="note-item-title">API rate limits for migration</div>
+              <div class="note-item-preview">Need to check the new endpoint caps before…</div>
+            </div>
+            <div class="note-item">
+              <div class="note-item-title">Gift ideas for Ana</div>
+              <div class="note-item-preview">Books, the ceramic set she mentioned, maybe…</div>
+            </div>
+            <div class="note-item">
+              <div class="note-item-title">Sourdough starter schedule</div>
+              <div class="note-item-preview">Feed every 12h for first week, then taper…</div>
+            </div>
+            <div class="note-item">
+              <div class="note-item-title">Desk setup wishlist</div>
+              <div class="note-item-preview">Monitor arm, better keyboard tray, cable…</div>
+            </div>
+            <div class="note-item">
+              <div class="note-item-title">Reading list Q2</div>
+              <div class="note-item-preview">Finish Dune Messiah, then Piranesi or…</div>
+            </div>
+            <div class="note-item">
+              <div class="note-item-title">Weekly review template</div>
+              <div class="note-item-preview">What went well, what drained energy…</div>
+            </div>
+          </div>
+
+          <div class="notes-sidebar-footer">
+            <span class="notes-count">12 notes</span>
+            <button class="new-note-btn">+ New</button>
+          </div>
+        </div>
+
+        <!-- Editor pane -->
+        <div class="notes-editor">
+
+          <div class="note-editor-header">
+            <input class="note-editor-title" type="text" value="API rate limits for migration" />
+            <div class="note-editor-tags">
+              <span class="note-tag">work</span>
+              <button style="font-size:11px;color:var(--text-muted);background:transparent;border:1px dashed var(--border);border-radius:100px;padding:2px 8px;cursor:pointer">+ tag</button>
+            </div>
+          </div>
+
+          <div class="note-editor-body">
+            <div class="note-body-text">
+              <p style="margin-bottom:1em">Need to revisit the migration plan once we confirm the new API rate limits for the v3 endpoint. Current assumption is 500 req/min but that may have changed since the last update.</p>
+              <p style="margin-bottom:1em">Key questions to answer before we schedule the cutover window:</p>
+              <ul style="padding-left:20px;margin-bottom:1em;line-height:1.8">
+                <li>What's the per-user vs. global cap?</li>
+                <li>Does batch mode count differently?</li>
+                <li>Is there a retry-after header in 429 responses?</li>
+              </ul>
+              <p>Ping Carlos on Slack — he dealt with this in the last migration cycle.</p>
+            </div>
+
+            <!-- Images -->
+            <div class="note-images">
+              <div class="img-placeholder thumb">IMG</div>
+              <button class="add-image-btn" style="width:40px;height:40px;font-size:16px" title="Add image">+</button>
+            </div>
+
+            <!-- Follow-ups / Subnotes -->
+            <div class="note-section-label">Follow-ups</div>
+            <div class="follow-up-item">
+              <span class="follow-up-icon">&#8627;</span>
+              <span>Check API docs for v3 rate limit headers</span>
+            </div>
+            <div class="follow-up-item">
+              <span class="follow-up-icon">&#8627;</span>
+              <span>Ask Carlos about retry strategy from last migration</span>
+            </div>
+            <button style="display:flex;align-items:center;gap:5px;background:transparent;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:5px 10px;color:var(--text-muted);font-size:12px;cursor:pointer;margin-top:4px">
+              + Add follow-up
+            </button>
+          </div>
+
+        </div><!-- /notes-editor -->
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

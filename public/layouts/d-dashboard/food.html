@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food — Concept D</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept D</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html">Dashboard</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html">Journal</a>
+    <a href="food.html" class="active">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="expanded-wrapper">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-bar">
+      <a href="index.html" class="breadcrumb-back food-link">&#8592; Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Food</span>
+      <span class="breadcrumb-date">Wed, Mar 19</span>
+    </div>
+
+    <!-- Content -->
+    <div class="expanded-content">
+      <div class="food-expanded">
+
+        <!-- Header actions -->
+        <div class="food-header">
+          <button class="food-header-btn">
+            &#9889; Quick Add
+          </button>
+          <button class="food-header-btn inbox-btn">
+            &#128393; Inbox (4)
+          </button>
+          <button class="food-header-btn">
+            &#128197; Calendar
+          </button>
+        </div>
+
+        <!-- 7 Meal Slot Cards -->
+        <div class="meal-grid">
+
+          <!-- Breakfast -->
+          <div class="meal-card">
+            <div class="meal-card-header">
+              <span class="meal-card-slot">Breakfast</span>
+              <span class="meal-card-time">8:30 AM</span>
+            </div>
+            <div class="meal-card-desc">Oatmeal with banana and a drizzle of honey</div>
+            <div class="meal-card-photo">
+              <div class="img-placeholder cover">IMG</div>
+            </div>
+          </div>
+
+          <!-- Morning Snack (Skipped) -->
+          <div class="meal-card skipped">
+            <div class="meal-card-header">
+              <span class="meal-card-slot">Morning Snack</span>
+            </div>
+            <div class="meal-skipped-label">Skipped</div>
+          </div>
+
+          <!-- Lunch -->
+          <div class="meal-card">
+            <div class="meal-card-header">
+              <span class="meal-card-slot">Lunch</span>
+              <span class="meal-card-time">12:45 PM</span>
+            </div>
+            <div class="meal-card-desc">Chicken salad with lemon dressing, side of bread</div>
+            <div class="meal-card-photo">
+              <div class="img-placeholder cover">IMG</div>
+            </div>
+          </div>
+
+          <!-- Afternoon Snack -->
+          <div class="meal-card">
+            <div class="meal-card-header">
+              <span class="meal-card-slot">Afternoon Snack</span>
+              <span class="meal-card-time">3:15 PM</span>
+            </div>
+            <div class="meal-card-desc">Apple + black coffee</div>
+          </div>
+
+          <!-- Dinner (Empty) -->
+          <div class="meal-card empty">
+            <span class="meal-empty-label">Dinner</span>
+            <button class="meal-empty-btn" title="Add dinner">+</button>
+          </div>
+
+          <!-- Midnight Snack (Empty) -->
+          <div class="meal-card empty">
+            <span class="meal-empty-label">Midnight Snack</span>
+            <button class="meal-empty-btn" title="Add midnight snack">+</button>
+          </div>
+
+          <!-- Observation (Empty) -->
+          <div class="meal-card empty">
+            <span class="meal-empty-label">Observation</span>
+            <button class="meal-empty-btn" title="Add observation">+</button>
+          </div>
+
+        </div><!-- /meal-grid -->
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

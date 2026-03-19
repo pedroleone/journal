@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — Concept D</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept D</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html">Dashboard</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html" class="active">Settings</a>
+  </nav>
+
+  <div class="expanded-wrapper">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-bar">
+      <a href="index.html" class="breadcrumb-back" style="color:var(--text-secondary)">&#8592; Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Settings</span>
+    </div>
+
+    <div class="expanded-content">
+      <div class="settings-expanded">
+
+        <!-- ===== Preferences ===== -->
+        <div class="settings-section">
+          <div class="settings-section-title">Preferences</div>
+
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Language</div>
+              <div class="settings-desc">Interface and date formatting language</div>
+            </div>
+            <div class="settings-control">
+              <div class="seg-control">
+                <button class="seg-btn active">EN</button>
+                <button class="seg-btn">PT-BR</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Theme</div>
+              <div class="settings-desc">App appearance</div>
+            </div>
+            <div class="settings-control">
+              <div class="seg-control">
+                <button class="seg-btn">Light</button>
+                <button class="seg-btn active">Dark</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Default landing</div>
+              <div class="settings-desc">Where the app opens after sign-in</div>
+            </div>
+            <div class="settings-control">
+              <select class="select-control">
+                <option selected>Today's Dashboard</option>
+                <option>Journal</option>
+                <option>Food</option>
+                <option>Notes</option>
+                <option>Library</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Export ===== -->
+        <div class="settings-section">
+          <div class="settings-section-title">Export</div>
+
+          <div class="export-grid">
+            <div class="export-field">
+              <label>Content</label>
+              <select>
+                <option>Journal + Food</option>
+                <option>Journal only</option>
+                <option>Food only</option>
+              </select>
+            </div>
+            <div class="export-field">
+              <label>Format</label>
+              <select>
+                <option>Markdown</option>
+                <option>Plain text</option>
+                <option>Print / PDF</option>
+              </select>
+            </div>
+            <div class="export-field">
+              <label>From</label>
+              <input type="date" value="2026-01-01" />
+            </div>
+            <div class="export-field">
+              <label>To</label>
+              <input type="date" value="2026-03-19" />
+            </div>
+          </div>
+
+          <button class="download-btn">
+            &#8595; Download Export
+          </button>
+        </div>
+
+        <!-- ===== Backup ===== -->
+        <div class="settings-section">
+          <div class="settings-section-title">Backup</div>
+
+          <div class="backup-actions">
+            <button class="backup-btn">
+              &#128190; Create Backup
+            </button>
+          </div>
+
+          <!-- Restore zone -->
+          <div class="restore-zone">
+            <div class="restore-zone-icon">&#128449;&#65039;</div>
+            <div class="restore-zone-title">Restore from backup</div>
+            <div class="restore-zone-desc">
+              Choose an encrypted backup file (.jbak) to restore your data. This will replace all current content — the action cannot be undone.
+            </div>
+            <button style="margin-top:8px;padding:7px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-surface);color:var(--text-secondary);font-size:13px;font-weight:500;cursor:pointer">
+              Choose file…
+            </button>
+
+            <!-- Confirmation (shown after file is chosen) -->
+            <div class="restore-confirm-box" style="width:100%">
+              <div class="restore-confirm-text">
+                <strong style="display:block;margin-bottom:3px">backup-2026-03-15.jbak</strong>
+                This will replace all current data. This cannot be undone.
+              </div>
+              <button class="restore-confirm-btn">RESTORE</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PWA Install ===== -->
+        <div class="settings-section">
+          <div class="settings-section-title">App Install</div>
+          <div class="pwa-install-card">
+            <div class="pwa-icon">&#128221;</div>
+            <div class="pwa-meta">
+              <div class="pwa-title">Install as app</div>
+              <div class="pwa-desc">Add to home screen for fast access and offline use</div>
+            </div>
+            <button class="pwa-install-btn">Install</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

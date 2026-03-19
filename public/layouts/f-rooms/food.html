@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food Room — Concept F: The Rooms</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Room Switcher (desktop) -->
+  <nav class="room-switcher">
+    <div class="switcher-brand">📓</div>
+
+    <a href="index.html"   class="switcher-icon" data-label="Journal">✦</a>
+    <a href="food.html"    class="switcher-icon active-food" data-label="Food">🥗</a>
+    <a href="notes.html"   class="switcher-icon" data-label="Notes">📝</a>
+    <a href="library.html" class="switcher-icon" data-label="Library">📚</a>
+
+    <div class="switcher-spacer"></div>
+    <a href="settings.html" class="switcher-icon" data-label="Settings">⚙</a>
+  </nav>
+
+  <!-- Mobile Bottom Tabs -->
+  <nav class="room-switcher-mobile">
+    <a href="index.html"   class="mobile-tab"><span>✦</span><span class="mobile-tab-label">Journal</span></a>
+    <a href="food.html"    class="mobile-tab active-food"><span>🥗</span><span class="mobile-tab-label">Food</span></a>
+    <a href="notes.html"   class="mobile-tab"><span>📝</span><span class="mobile-tab-label">Notes</span></a>
+    <a href="library.html" class="mobile-tab"><span>📚</span><span class="mobile-tab-label">Library</span></a>
+    <a href="settings.html" class="mobile-tab"><span>⚙</span><span class="mobile-tab-label">Settings</span></a>
+  </nav>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept F</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html">Journal</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html">Journal Room</a>
+    <a href="food.html" class="active">Food Room</a>
+    <a href="notes.html">Notes Room</a>
+    <a href="library.html">Library Room</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <!-- Food Room — The Meal Tracker -->
+  <div class="room-wrapper room-food" style="display:flex;flex-direction:column;height:100vh;">
+
+    <!-- Room header -->
+    <div class="food-room-header">
+      <div class="food-date-nav">
+        <a href="#" class="date-arrow">←</a>
+        <span class="date-neighbor">Mar 18</span>
+        <span class="date-current">Wednesday, March 19</span>
+        <span class="date-neighbor">Mar 20</span>
+        <a href="#" class="date-arrow">→</a>
+      </div>
+      <div class="food-header-actions">
+        <button class="quick-add-btn">+ Quick Add</button>
+      </div>
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="food-columns" style="flex:1;overflow:hidden;">
+
+      <!-- LEFT: Meal timeline -->
+      <div class="meal-timeline">
+
+        <!-- Breakfast — filled -->
+        <div class="meal-slot">
+          <div class="meal-time-col"><span class="meal-time-val">8:30</span></div>
+          <div class="meal-accent-bar"></div>
+          <div class="meal-slot-body">
+            <div class="meal-slot-name">Bkfst</div>
+            <div class="meal-slot-desc">Oatmeal with banana and a drizzle of honey</div>
+            <div class="meal-inline-photos">
+              <div class="meal-inline-photo">IMG</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AM Snack — skipped -->
+        <div class="meal-slot skipped">
+          <div class="meal-time-col"><span class="meal-time-empty">—</span></div>
+          <div class="meal-accent-bar"></div>
+          <div class="meal-slot-body">
+            <div class="meal-slot-name">AM Snk</div>
+            <div class="meal-slot-desc">Skipped</div>
+          </div>
+        </div>
+
+        <!-- Lunch — filled -->
+        <div class="meal-slot">
+          <div class="meal-time-col"><span class="meal-time-val">12:45</span></div>
+          <div class="meal-accent-bar"></div>
+          <div class="meal-slot-body">
+            <div class="meal-slot-name">Lunch</div>
+            <div class="meal-slot-desc">Chicken salad with lemon dressing and sourdough</div>
+            <div class="meal-inline-photos">
+              <div class="meal-inline-photo">IMG</div>
+              <div class="meal-inline-photo">IMG</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PM Snack — filled -->
+        <div class="meal-slot">
+          <div class="meal-time-col"><span class="meal-time-val">3:15</span></div>
+          <div class="meal-accent-bar"></div>
+          <div class="meal-slot-body">
+            <div class="meal-slot-name">PM Snk</div>
+            <div class="meal-slot-desc">Apple + coffee (black)</div>
+          </div>
+        </div>
+
+        <!-- Dinner — empty -->
+        <div class="meal-slot empty-slot">
+          <div class="meal-time-col"><span class="meal-time-empty">—</span></div>
+          <div class="meal-accent-bar"></div>
+          <div class="meal-slot-body">
+            <div class="meal-slot-name">Dinner</div>
+            <span class="meal-slot-empty-hint">+ Log dinner</span>
+          </div>
+        </div>
+
+        <!-- Midnight Snack — empty -->
+        <div class="meal-slot empty-slot">
+          <div class="meal-time-col"><span class="meal-time-empty">—</span></div>
+          <div class="meal-accent-bar"></div>
+          <div class="meal-slot-body">
+            <div class="meal-slot-name">M-Snk</div>
+            <span class="meal-slot-empty-hint">+ Log midnight snack</span>
+          </div>
+        </div>
+
+        <!-- Observation — empty -->
+        <div class="meal-slot empty-slot">
+          <div class="meal-time-col"><span class="meal-time-empty">—</span></div>
+          <div class="meal-accent-bar"></div>
+          <div class="meal-slot-body">
+            <div class="meal-slot-name">Obs</div>
+            <span class="meal-slot-empty-hint">+ Add observation</span>
+          </div>
+        </div>
+
+      </div><!-- /meal-timeline -->
+
+      <!-- RIGHT: Inbox panel -->
+      <div class="inbox-panel">
+        <div class="inbox-panel-header">
+          <span class="inbox-title">Inbox</span>
+          <span class="inbox-count-badge">4 items</span>
+        </div>
+
+        <div class="inbox-items">
+
+          <div class="inbox-card inbox-img-card">
+            <div class="inbox-card-img">IMG</div>
+            <div class="inbox-card-time">Today, 7:58 AM</div>
+          </div>
+
+          <div class="inbox-card">
+            <div class="inbox-card-text">Greek yogurt with granola — grabbed on the way out</div>
+            <div class="inbox-card-time">Today, 9:12 AM</div>
+          </div>
+
+          <div class="inbox-card">
+            <div class="inbox-card-text">Espresso, double shot</div>
+            <div class="inbox-card-time">Today, 11:30 AM</div>
+          </div>
+
+          <div class="inbox-card inbox-img-card">
+            <div class="inbox-card-img">IMG</div>
+            <div class="inbox-card-text">Takeout from the Thai place</div>
+            <div class="inbox-card-time">Today, 2:04 PM</div>
+          </div>
+
+        </div>
+
+        <div class="inbox-panel-footer">
+          <button class="sort-all-btn">Sort all by time ↕</button>
+        </div>
+      </div><!-- /inbox-panel -->
+
+    </div><!-- /food-columns -->
+
+  </div><!-- /room-wrapper -->
+
+</body>
+</html>

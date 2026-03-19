@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept C — Workspace / Food</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Prototype Nav -->
+<nav class="prototype-nav">
+  <a href="../index.html" class="nav-back">← All Concepts</a>
+  <span>·</span>
+  <span class="nav-label">C:</span>
+  <a href="auth.html">Auth</a>
+  <span>·</span>
+  <a href="index.html">Journal</a>
+  <span>·</span>
+  <a href="food.html" class="active">Food</a>
+  <span>·</span>
+  <a href="notes.html">Notes</a>
+  <span>·</span>
+  <a href="library.html">Library</a>
+  <span>·</span>
+  <a href="settings.html">Settings</a>
+</nav>
+
+<div class="app">
+  <!-- Icon Rail — Food active -->
+  <nav class="icon-rail">
+    <a href="journal.html" class="rail-btn" title="Journal">📓</a>
+    <a href="food.html" class="rail-btn active-food" title="Food">🍽️</a>
+    <a href="notes.html" class="rail-btn" title="Notes">📝</a>
+    <a href="library.html" class="rail-btn" title="Library">📚</a>
+    <div class="rail-spacer"></div>
+    <a href="settings.html" class="rail-btn" title="Settings">⚙️</a>
+  </nav>
+
+  <!-- Panel Area: Food (60%) + Inbox (40%) -->
+  <div class="panel-area">
+
+    <!-- Food Panel (main) -->
+    <div class="panel panel-60">
+      <div class="panel-header">
+        <span class="panel-title panel-title-food">Food</span>
+        <div class="date-nav">
+          <button class="date-nav-btn">‹</button>
+          <span class="date-label">Wednesday, March 19</span>
+          <button class="date-nav-btn">›</button>
+        </div>
+        <div class="panel-header-gap"></div>
+        <button class="btn btn-food btn-sm">+ Add</button>
+        <span class="badge badge-inbox">Inbox 4</span>
+      </div>
+
+      <div class="panel-body">
+
+        <!-- Breakfast — filled -->
+        <div class="meal-slot meal-slot-filled">
+          <div class="meal-info">
+            <div class="meal-name">Breakfast</div>
+            <div class="meal-desc">Oatmeal with blueberries</div>
+            <div class="meal-time">8:30 am</div>
+          </div>
+          <div class="img-placeholder img-tray">IMG</div>
+        </div>
+
+        <!-- AM Snack — skipped -->
+        <div class="meal-slot meal-slot-skipped">
+          <div class="meal-name">AM Snack</div>
+          <span class="meal-skipped-label">Skipped</span>
+        </div>
+
+        <!-- Lunch — filled -->
+        <div class="meal-slot meal-slot-filled">
+          <div class="meal-info">
+            <div class="meal-name">Lunch</div>
+            <div class="meal-desc">Grilled chicken salad</div>
+            <div class="meal-time">12:45 pm</div>
+          </div>
+          <div class="img-placeholder img-tray">IMG</div>
+        </div>
+
+        <!-- PM Snack — filled -->
+        <div class="meal-slot meal-slot-filled">
+          <div class="meal-info">
+            <div class="meal-name">PM Snack</div>
+            <div class="meal-desc">Apple + coffee</div>
+            <div class="meal-time">3:15 pm</div>
+          </div>
+        </div>
+
+        <!-- Dinner — empty -->
+        <div class="meal-slot meal-slot-empty">
+          <div class="meal-name">Dinner</div>
+          <span class="meal-add">Tap to add…</span>
+        </div>
+
+        <!-- Midnight — empty -->
+        <div class="meal-slot meal-slot-empty">
+          <div class="meal-name">Midnight</div>
+          <span class="meal-add">Tap to add…</span>
+        </div>
+
+        <!-- Observation — empty -->
+        <div class="meal-slot meal-slot-empty">
+          <div class="meal-name">Observation</div>
+          <span class="meal-add">Add a food note…</span>
+        </div>
+
+      </div><!-- /panel-body -->
+
+      <div class="panel-footer">
+        <span>4 logged</span>
+        <span style="color:var(--text-dim)">·</span>
+        <span>1 skipped</span>
+        <span style="color:var(--text-dim)">·</span>
+        <span>2 empty</span>
+        <div class="panel-footer-gap"></div>
+        <span class="badge badge-inbox">4 in inbox</span>
+      </div>
+    </div>
+
+    <!-- Inbox Panel (40%) -->
+    <div class="panel panel-40">
+      <div class="panel-header">
+        <span class="panel-title panel-title-inbox">Inbox</span>
+        <div class="panel-header-gap"></div>
+        <span class="badge badge-inbox">4 items</span>
+      </div>
+
+      <div class="panel-body">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Unsorted food entries — drag to a meal slot or assign manually.</p>
+
+        <!-- Inbox item 1 -->
+        <div class="inbox-item">
+          <div class="img-placeholder img-thumb">IMG</div>
+          <div class="inbox-item-body">
+            <div class="inbox-item-time">Today · 11:42 am</div>
+            <div class="inbox-item-desc">Cold brew from the café on the corner</div>
+            <div class="inbox-item-hint">Drag to meal slot ↑</div>
+          </div>
+        </div>
+
+        <!-- Inbox item 2 -->
+        <div class="inbox-item">
+          <div class="img-placeholder img-thumb">IMG</div>
+          <div class="inbox-item-body">
+            <div class="inbox-item-time">Today · 2:10 pm</div>
+            <div class="inbox-item-desc">Handful of almonds</div>
+            <div class="inbox-item-hint">Drag to meal slot ↑</div>
+          </div>
+        </div>
+
+        <!-- Inbox item 3 -->
+        <div class="inbox-item">
+          <div class="img-placeholder img-thumb">IMG</div>
+          <div class="inbox-item-body">
+            <div class="inbox-item-time">Yesterday · 8:55 pm</div>
+            <div class="inbox-item-desc">Leftover pasta</div>
+            <div class="inbox-item-hint">Drag to meal slot ↑</div>
+          </div>
+        </div>
+
+        <!-- Inbox item 4 -->
+        <div class="inbox-item">
+          <div class="img-placeholder img-thumb">IMG</div>
+          <div class="inbox-item-body">
+            <div class="inbox-item-time">Yesterday · 10:30 pm</div>
+            <div class="inbox-item-desc">Green tea</div>
+            <div class="inbox-item-hint">Drag to meal slot ↑</div>
+          </div>
+        </div>
+
+      </div><!-- /panel-body -->
+
+      <div class="panel-footer">
+        <div class="panel-footer-gap"></div>
+        <button class="btn btn-subtle btn-sm">Sort all by time</button>
+      </div>
+    </div>
+
+  </div><!-- /panel-area -->
+</div><!-- /app -->
+
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept J — Dock · Food</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Food slot wrapper needs relative positioning for popover */
+    .food-slot-wrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+    }
+    .food-slot-wrapper .dock-slot {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Prototype nav -->
+  <nav class="prototype-nav">
+    <span>J · Dock</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html">Journal</a>
+    <a href="food.html" class="active-page">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="app">
+    <div class="app-inner">
+
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <nav class="top-bar-date-nav">
+          <a href="#" class="nav-arrow">‹</a>
+          <span class="date-side left">Mar 18</span>
+          <span class="date-label">Wednesday, March 19</span>
+          <span class="date-side right">Mar 20</span>
+          <a href="#" class="nav-arrow">›</a>
+        </nav>
+
+        <div class="top-bar-spacer"></div>
+
+        <button class="top-bar-btn accent-food">
+          + Quick Add
+        </button>
+        <button class="top-bar-btn accent-amber">
+          Inbox <span class="badge" style="margin-left:3px">4</span>
+        </button>
+        <button class="top-bar-btn icon-only" title="Calendar">📅</button>
+      </header>
+
+      <!-- Meal slots -->
+      <main class="content">
+        <div class="content-wide">
+          <div class="meal-slots">
+
+            <!-- Breakfast — filled -->
+            <div class="meal-slot">
+              <div class="meal-slot-label-col">
+                <span class="slot-name">Breakfast</span>
+                <span class="slot-time">8:30 AM</span>
+              </div>
+              <div class="meal-slot-content">
+                <span class="food-name">Oatmeal with banana</span>
+                <span class="food-note">With brown sugar and a bit of cinnamon</span>
+              </div>
+              <div class="meal-slot-photos">
+                <div class="meal-photo-thumb">IMG</div>
+              </div>
+            </div>
+
+            <!-- Morning Snack — skipped -->
+            <div class="meal-slot skipped">
+              <div class="meal-slot-label-col">
+                <span class="slot-name">AM Snack</span>
+                <span class="slot-time">—</span>
+              </div>
+              <div class="meal-slot-content">
+                <span class="food-name">Skipped</span>
+              </div>
+            </div>
+
+            <!-- Lunch — filled -->
+            <div class="meal-slot">
+              <div class="meal-slot-label-col">
+                <span class="slot-name">Lunch</span>
+                <span class="slot-time">12:45 PM</span>
+              </div>
+              <div class="meal-slot-content">
+                <span class="food-name">Chicken salad</span>
+                <span class="food-note">With avocado and cherry tomatoes, olive oil dressing</span>
+              </div>
+              <div class="meal-slot-photos">
+                <div class="meal-photo-thumb">IMG</div>
+                <div class="meal-photo-thumb">IMG</div>
+              </div>
+            </div>
+
+            <!-- PM Snack — filled -->
+            <div class="meal-slot">
+              <div class="meal-slot-label-col">
+                <span class="slot-name">PM Snack</span>
+                <span class="slot-time">3:15 PM</span>
+              </div>
+              <div class="meal-slot-content">
+                <span class="food-name">Apple + coffee</span>
+                <span class="food-note">Espresso, no milk</span>
+              </div>
+            </div>
+
+            <!-- Dinner — empty -->
+            <div class="meal-slot empty">
+              <div class="meal-slot-label-col">
+                <span class="slot-name">Dinner</span>
+              </div>
+              <div class="meal-slot-content">
+                <span class="food-name">Tap to add dinner</span>
+              </div>
+            </div>
+
+            <!-- Midnight Snack — empty -->
+            <div class="meal-slot empty">
+              <div class="meal-slot-label-col">
+                <span class="slot-name">Midnight</span>
+              </div>
+              <div class="meal-slot-content">
+                <span class="food-name">Tap to add midnight snack</span>
+              </div>
+            </div>
+
+            <!-- Observation — empty -->
+            <div class="meal-slot empty">
+              <div class="meal-slot-label-col">
+                <span class="slot-name">Observation</span>
+              </div>
+              <div class="meal-slot-content">
+                <span class="food-name">Tap to add a note about today's eating</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </main>
+
+    </div>
+
+    <!-- Dock — Food ACTIVE (teal glow + dot) -->
+    <!-- Long-press popover is shown on the Food slot as a static mockup -->
+    <footer class="dock">
+
+      <a href="journal.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Journal</span>
+          <span class="short-label">J</span>
+        </span>
+        <span class="slot-metric">324 words today</span>
+      </a>
+
+      <!-- Food slot with long-press popover mockup -->
+      <div class="food-slot-wrapper">
+
+        <!-- Static long-press popover — shown above the food slot -->
+        <div class="dock-popover">
+          <div class="dock-popover-header">Food</div>
+          <div class="dock-popover-item">
+            <div class="item-icon">📷</div>
+            <span>Photo</span>
+          </div>
+          <div class="dock-popover-item">
+            <div class="item-icon">✏️</div>
+            <span>Text entry</span>
+          </div>
+          <div class="dock-popover-item">
+            <div class="item-icon">📥</div>
+            <span>Sort inbox</span>
+          </div>
+        </div>
+
+        <a href="food.html" class="dock-slot active-food">
+          <span class="slot-label">
+            <span class="full-label">Food</span>
+            <span class="short-label">F</span>
+          </span>
+          <span class="slot-metric">
+            4/7 · 4 unsorted
+            <span class="badge">4</span>
+          </span>
+        </a>
+
+      </div>
+
+      <a href="notes.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Notes</span>
+          <span class="short-label">N</span>
+        </span>
+        <span class="slot-metric">12 notes</span>
+      </a>
+
+      <a href="library.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Library</span>
+          <span class="short-label">L</span>
+        </span>
+        <span class="slot-metric">2 in progress</span>
+      </a>
+
+    </footer>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept J — Dock · Library</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype nav -->
+  <nav class="prototype-nav">
+    <span>J · Dock</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html" class="active-page">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="app">
+    <div class="app-inner">
+
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <!-- Type tabs -->
+        <div class="type-tabs">
+          <span class="type-tab active">All</span>
+          <span class="type-tab">Books</span>
+          <span class="type-tab">Games</span>
+          <span class="type-tab">Albums</span>
+          <span class="type-tab">Movies</span>
+        </div>
+
+        <!-- Filter chips -->
+        <button class="chip" style="font-size:10px; padding: 3px 8px;">In progress</button>
+        <button class="chip" style="font-size:10px; padding: 3px 8px;">★★★★+</button>
+
+        <div class="top-bar-spacer"></div>
+
+        <div class="search-input">
+          <span style="color: var(--text-dim); font-size: 12px;">🔍</span>
+          <input type="text" placeholder="Search library…">
+        </div>
+
+        <button class="top-bar-btn" style="color: var(--library); border-color: var(--library-27); margin-left: 6px;">
+          + Add
+        </button>
+      </header>
+
+      <!-- Library layout: grid + detail panel -->
+      <main class="content">
+        <div class="library-layout">
+
+          <!-- Card grid -->
+          <div class="library-grid">
+            <div class="library-cards">
+
+              <!-- Dune Messiah — in progress, active/selected -->
+              <div class="lib-card active">
+                <div class="lib-card-cover">
+                  <span>IMG</span>
+                  <div class="status-pip"></div>
+                </div>
+                <div class="lib-card-info">
+                  <div class="lib-card-title">Dune Messiah</div>
+                  <div class="lib-card-meta">Book · In progress</div>
+                </div>
+              </div>
+
+              <!-- Elden Ring — in progress -->
+              <div class="lib-card">
+                <div class="lib-card-cover">
+                  <span>IMG</span>
+                  <div class="status-pip" style="background: var(--food);"></div>
+                </div>
+                <div class="lib-card-info">
+                  <div class="lib-card-title">Elden Ring</div>
+                  <div class="lib-card-meta">Game · PS5</div>
+                </div>
+              </div>
+
+              <!-- Dune — finished ★★★★★ -->
+              <div class="lib-card">
+                <div class="lib-card-cover">
+                  <span>IMG</span>
+                </div>
+                <div class="lib-card-info">
+                  <div class="lib-card-title">Dune</div>
+                  <div class="lib-card-meta">Book · Finished</div>
+                  <div class="lib-card-stars">★★★★★</div>
+                </div>
+              </div>
+
+              <!-- Blade Runner 2049 — finished ★★★★ -->
+              <div class="lib-card">
+                <div class="lib-card-cover">
+                  <span>IMG</span>
+                </div>
+                <div class="lib-card-info">
+                  <div class="lib-card-title">Blade Runner 2049</div>
+                  <div class="lib-card-meta">Movie</div>
+                  <div class="lib-card-stars">★★★★</div>
+                </div>
+              </div>
+
+              <!-- Dark Side of the Moon — finished ★★★★★ -->
+              <div class="lib-card">
+                <div class="lib-card-cover" style="aspect-ratio: 1/1;">
+                  <span>IMG</span>
+                </div>
+                <div class="lib-card-info">
+                  <div class="lib-card-title">Dark Side of the Moon</div>
+                  <div class="lib-card-meta">Album · Finished</div>
+                  <div class="lib-card-stars">★★★★★</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Detail panel — Dune Messiah -->
+          <aside class="lib-detail">
+            <div class="lib-detail-cover">IMG</div>
+            <div class="lib-detail-title">Dune Messiah</div>
+            <div class="lib-detail-sub">Frank Herbert · 1969</div>
+
+            <div class="lib-detail-meta-row">
+              <span class="key">Type</span>
+              <span class="value">Book</span>
+            </div>
+            <div class="lib-detail-meta-row">
+              <span class="key">Status</span>
+              <span class="value" style="color: var(--library);">In progress</span>
+            </div>
+            <div class="lib-detail-meta-row">
+              <span class="key">Pages</span>
+              <span class="value">226</span>
+            </div>
+            <div class="lib-detail-meta-row">
+              <span class="key">Genre</span>
+              <span class="value">Science fiction</span>
+            </div>
+            <div class="lib-detail-meta-row">
+              <span class="key">Started</span>
+              <span class="value">Mar 12, 2026</span>
+            </div>
+
+            <div class="lib-detail-thoughts">
+              <div class="lib-detail-thoughts-title">Your thoughts</div>
+              <div class="lib-detail-thoughts-body">
+                Tighter than the first one. Paul feels more trapped than triumphant — the prescience is a prison. About 60 pages in and already more interested than I expected.
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
+              <button class="top-bar-btn" style="flex:1; justify-content:center;">Edit</button>
+              <button class="top-bar-btn" style="flex:1; justify-content:center; color: var(--library); border-color: var(--library-27);">Finish</button>
+            </div>
+          </aside>
+
+        </div>
+      </main>
+
+    </div>
+
+    <!-- Dock — Library ACTIVE (coral glow + dot) -->
+    <footer class="dock">
+
+      <a href="journal.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Journal</span>
+          <span class="short-label">J</span>
+        </span>
+        <span class="slot-metric">324 words today</span>
+      </a>
+
+      <a href="food.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Food</span>
+          <span class="short-label">F</span>
+        </span>
+        <span class="slot-metric">
+          4/7 · 4 unsorted
+          <span class="badge">4</span>
+        </span>
+      </a>
+
+      <a href="notes.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Notes</span>
+          <span class="short-label">N</span>
+        </span>
+        <span class="slot-metric">12 notes</span>
+      </a>
+
+      <a href="library.html" class="dock-slot active-library">
+        <span class="slot-label">
+          <span class="full-label">Library</span>
+          <span class="short-label">L</span>
+        </span>
+        <span class="slot-metric">2 in progress</span>
+      </a>
+
+    </footer>
+  </div>
+
+</body>
+</html>

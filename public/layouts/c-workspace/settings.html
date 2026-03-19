@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept C — Workspace / Settings</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .settings-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .settings-body {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--bg-surface);
+      padding: 24px 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .settings-body::-webkit-scrollbar { width: 6px; }
+    .settings-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .settings-content {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .date-range-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .date-input {
+      flex: 1;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .date-input:focus { outline: none; border-color: var(--color-journal); }
+
+    .restore-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .file-drop-zone {
+      background: var(--bg-base);
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .file-drop-zone:hover { border-color: var(--color-journal); }
+
+    .file-drop-zone-text {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .file-drop-zone-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .pwa-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .settings-body { padding: 16px 12px; }
+      .settings-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Prototype Nav -->
+<nav class="prototype-nav">
+  <a href="../index.html" class="nav-back">← All Concepts</a>
+  <span>·</span>
+  <span class="nav-label">C:</span>
+  <a href="auth.html">Auth</a>
+  <span>·</span>
+  <a href="index.html">Journal</a>
+  <span>·</span>
+  <a href="food.html">Food</a>
+  <span>·</span>
+  <a href="notes.html">Notes</a>
+  <span>·</span>
+  <a href="library.html">Library</a>
+  <span>·</span>
+  <a href="settings.html" class="active">Settings</a>
+</nav>
+
+<div class="app">
+  <!-- Icon Rail — Settings active -->
+  <nav class="icon-rail">
+    <a href="journal.html" class="rail-btn" title="Journal">📓</a>
+    <a href="food.html" class="rail-btn" title="Food">🍽️</a>
+    <a href="notes.html" class="rail-btn" title="Notes">📝</a>
+    <a href="library.html" class="rail-btn" title="Library">📚</a>
+    <div class="rail-spacer"></div>
+    <a href="settings.html" class="rail-btn active-settings" title="Settings">⚙️</a>
+  </nav>
+
+  <div class="panel-area">
+    <div class="panel panel-full settings-panel">
+
+      <!-- Panel Header -->
+      <div class="panel-header">
+        <span class="panel-title" style="color:var(--color-settings)">Settings</span>
+      </div>
+
+      <div class="settings-body">
+        <div class="settings-content">
+
+          <!-- ── Preferences ── -->
+          <div class="settings-section">
+            <div class="settings-section-title">Preferences</div>
+
+            <!-- Language -->
+            <div class="settings-row">
+              <span class="settings-label">Language</span>
+              <div class="toggle-group">
+                <button class="toggle-btn on">EN</button>
+                <button class="toggle-btn">PT-BR</button>
+              </div>
+            </div>
+
+            <!-- Theme -->
+            <div class="settings-row">
+              <span class="settings-label">Theme</span>
+              <div class="toggle-group">
+                <button class="toggle-btn">Light</button>
+                <button class="toggle-btn on">Dark</button>
+              </div>
+            </div>
+
+            <!-- Default landing -->
+            <div class="settings-row">
+              <span class="settings-label">Default landing area</span>
+              <select class="select-field" style="width:auto;min-width:140px">
+                <option selected>Journal</option>
+                <option>Food</option>
+                <option>Notes</option>
+                <option>Library</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ── Export ── -->
+          <div class="settings-section">
+            <div class="settings-section-title">Export</div>
+
+            <!-- Content type -->
+            <div class="settings-row" style="align-items:flex-start">
+              <span class="settings-label">Content</span>
+              <div class="checkbox-group">
+                <label class="checkbox-item">
+                  <input type="checkbox" checked> Journal
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox"> Food
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox"> Both
+                </label>
+              </div>
+            </div>
+
+            <!-- Date range -->
+            <div class="settings-row" style="align-items:flex-start">
+              <span class="settings-label">Date range</span>
+              <div class="date-range-row" style="flex:1;max-width:280px">
+                <input type="text" class="date-input" placeholder="From: Jan 1, 2026">
+                <span style="color:var(--text-dim);font-size:12px">→</span>
+                <input type="text" class="date-input" placeholder="To: today">
+              </div>
+            </div>
+
+            <!-- Format -->
+            <div class="settings-row">
+              <span class="settings-label">Format</span>
+              <div class="toggle-group">
+                <button class="toggle-btn on">Markdown</button>
+                <button class="toggle-btn">Plain text</button>
+                <button class="toggle-btn">PDF</button>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:4px">
+              <button class="btn btn-subtle">Preview &amp; Download</button>
+            </div>
+          </div>
+
+          <!-- ── Backup ── -->
+          <div class="settings-section">
+            <div class="settings-section-title">Backup</div>
+
+            <div style="margin-bottom:14px">
+              <button class="btn btn-subtle btn-lg" style="width:100%;justify-content:center">
+                🔒 Create Encrypted Backup
+              </button>
+              <p style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center">
+                Downloads a full encrypted archive of all your data.
+              </p>
+            </div>
+
+            <div class="divider"></div>
+
+            <div style="font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:10px">Restore from backup</div>
+
+            <!-- File drop zone -->
+            <div class="file-drop-zone">
+              <div class="file-drop-zone-text">Drop backup file here or click to browse</div>
+              <div class="file-drop-zone-sub">.enc backup files only</div>
+            </div>
+
+            <!-- Danger zone: passphrase + confirm -->
+            <div class="danger-zone">
+              <div class="danger-label">Restore — this will overwrite all current data</div>
+
+              <div class="restore-input-group">
+                <input type="password" class="input-field" placeholder="Backup passphrase">
+                <button class="btn btn-subtle btn-sm" style="align-self:flex-start">Preview backup contents</button>
+                <input type="text" class="input-field input-danger" placeholder='Type RESTORE to confirm'>
+                <button class="btn btn-danger" style="align-self:flex-start" disabled>Restore Backup</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── PWA ── -->
+          <div class="settings-section">
+            <div class="settings-section-title">App</div>
+
+            <button class="btn btn-subtle btn-lg" style="width:100%;justify-content:center">
+              📱 Install as App
+            </button>
+            <p class="pwa-hint" style="text-align:center">
+              Install to your home screen for a native app experience.
+            </p>
+          </div>
+
+        </div><!-- /settings-content -->
+      </div><!-- /settings-body -->
+
+    </div><!-- /panel -->
+  </div><!-- /panel-area -->
+</div><!-- /app -->
+
+</body>
+</html>

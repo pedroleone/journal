@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept J — Dock · Notes</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Notes layout fills remaining height */
+    .content.no-padding { padding: 0; }
+    .notes-layout { height: 100%; }
+  </style>
+</head>
+<body>
+
+  <!-- Prototype nav -->
+  <nav class="prototype-nav">
+    <span>J · Dock</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html" class="active-page">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="app">
+    <div class="app-inner">
+
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <span class="top-bar-title">Notes</span>
+
+        <div class="search-input" style="margin-left: 12px; min-width: 200px;">
+          <span style="color: var(--text-dim); font-size: 12px;">🔍</span>
+          <input type="text" placeholder="Search notes…">
+        </div>
+
+        <div class="top-bar-spacer"></div>
+
+        <!-- Tag chips -->
+        <div style="display:flex; gap: 5px; align-items:center;">
+          <button class="chip active">All</button>
+          <button class="chip">work</button>
+          <button class="chip">personal</button>
+          <button class="chip">recipes</button>
+        </div>
+
+        <button class="top-bar-btn" style="color: var(--notes); border-color: var(--notes-27); margin-left: 8px;">
+          + New
+        </button>
+      </header>
+
+      <!-- Notes split layout -->
+      <main class="content no-padding" style="padding: 0;">
+        <div class="notes-layout flex">
+
+          <!-- Note list -->
+          <aside class="notes-list">
+
+            <div class="notes-list-item active">
+              <div class="note-title">API rate limits</div>
+              <div class="note-preview">Need to handle 429 responses gracefully with exponential backoff…</div>
+              <span class="note-tag">work</span>
+            </div>
+
+            <div class="notes-list-item">
+              <div class="note-title">Gift ideas for Ana</div>
+              <div class="note-preview">Cookbook she mentioned, the linen scarf from that shop in Porto…</div>
+              <span class="note-tag" style="color: var(--inbox); background: var(--inbox-15); border-color: rgba(201,169,110,0.25);">personal</span>
+            </div>
+
+            <div class="notes-list-item">
+              <div class="note-title">Sourdough starter</div>
+              <div class="note-preview">Feed 1:1:1 ratio every 12h for first week. Keep at 24–26°C…</div>
+              <span class="note-tag" style="color: var(--food); background: var(--food-08); border-color: rgba(76,175,147,0.25);">recipes</span>
+            </div>
+
+            <div class="notes-list-item">
+              <div class="note-title">Books to read in 2026</div>
+              <div class="note-preview">The Dispossessed, BLDGBLOG Book, A Pattern Language…</div>
+              <span class="note-tag" style="color: var(--inbox); background: var(--inbox-15); border-color: rgba(201,169,110,0.25);">personal</span>
+            </div>
+
+            <div class="notes-list-item">
+              <div class="note-title">Home network setup notes</div>
+              <div class="note-preview">Router is 192.168.1.1, VLAN config for IoT devices…</div>
+              <span class="note-tag">work</span>
+            </div>
+
+          </aside>
+
+          <!-- Note editor -->
+          <section class="note-editor">
+
+            <input class="note-editor-title" type="text" value="API rate limits" readonly>
+
+            <div class="note-editor-tags">
+              <span class="note-editor-tag">work</span>
+              <span class="note-editor-tag" style="color: var(--text-muted); background: var(--surface); border-color: var(--border);">+ Add tag</span>
+            </div>
+
+            <div class="note-editor-body">
+              <p>Need to handle 429 responses gracefully with exponential backoff. Current implementation just throws immediately which causes cascading failures.</p>
+
+              <p style="margin-top: 14px;">Proposed approach:</p>
+              <ul style="padding-left: 20px; margin-top: 8px; color: var(--text-secondary);">
+                <li style="margin-bottom: 6px;">Catch 429 in the base fetch wrapper</li>
+                <li style="margin-bottom: 6px;">Read <code style="font-size:12px; background:#252528; padding:1px 5px; border-radius:4px;">Retry-After</code> header if present</li>
+                <li style="margin-bottom: 6px;">Otherwise: 1s → 2s → 4s → 8s → give up + surface error</li>
+                <li>Log all retries for observability</li>
+              </ul>
+            </div>
+
+            <!-- Image in note -->
+            <div class="note-editor-image">IMG — diagram placeholder</div>
+
+            <!-- Follow-ups / subnotes -->
+            <div class="note-editor-section">
+              <div class="note-editor-section-title">Follow-ups</div>
+              <div class="followup-item">Check if the SDK already has retry logic built in</div>
+              <div class="followup-item">Ask João if this affected the prod outage last month</div>
+              <div class="followup-item">Write unit test for backoff timing</div>
+            </div>
+
+          </section>
+
+        </div>
+      </main>
+
+    </div>
+
+    <!-- Dock — Notes ACTIVE (violet glow + dot) -->
+    <footer class="dock">
+
+      <a href="journal.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Journal</span>
+          <span class="short-label">J</span>
+        </span>
+        <span class="slot-metric">324 words today</span>
+      </a>
+
+      <a href="food.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Food</span>
+          <span class="short-label">F</span>
+        </span>
+        <span class="slot-metric">
+          4/7 · 4 unsorted
+          <span class="badge">4</span>
+        </span>
+      </a>
+
+      <a href="notes.html" class="dock-slot active-notes">
+        <span class="slot-label">
+          <span class="full-label">Notes</span>
+          <span class="short-label">N</span>
+        </span>
+        <span class="slot-metric">12 notes</span>
+      </a>
+
+      <a href="library.html" class="dock-slot">
+        <span class="slot-label">
+          <span class="full-label">Library</span>
+          <span class="short-label">L</span>
+        </span>
+        <span class="slot-metric">2 in progress</span>
+      </a>
+
+    </footer>
+  </div>
+
+</body>
+</html>

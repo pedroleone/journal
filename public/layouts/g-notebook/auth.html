@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept G — Notebook / Sign In</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background: #e8e0d5; }
+    .prototype-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <strong>Concept G</strong>
+    <span class="sep">·</span>
+    <a href="auth.html" class="active">Auth</a>
+    <a href="index.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <!-- Auth Page — no notebook chrome -->
+  <div class="auth-page" style="padding-top: 60px;">
+    <div class="auth-card">
+
+      <!-- App identity -->
+      <div class="auth-app-name">Journal</div>
+      <p class="auth-tagline">Your private space for daily<br>writing, food, and memory.</p>
+
+      <div class="auth-divider"></div>
+
+      <!-- Sign in -->
+      <a href="index.html" class="google-btn">
+        <span class="google-icon">G</span>
+        Continue with Google
+      </a>
+
+      <!-- Footer -->
+      <p class="auth-footer">
+        This is a private, single-user app.<br>
+        Your records are encrypted and never shared.<br>
+        <a href="#">Privacy policy</a>
+      </p>
+
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept G — Notebook / Journal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <strong>Concept G</strong>
+    <span class="sep">·</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html" class="active">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="notebook-wrapper">
+    <div class="notebook">
+
+      <!-- Spine -->
+      <div class="spine"></div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <a href="index.html" class="tab-btn active tab-journal">Journal</a>
+        <a href="food.html"  class="tab-btn tab-food">Food</a>
+        <a href="notes.html" class="tab-btn tab-notes">Notes</a>
+        <a href="library.html" class="tab-btn tab-library">Library</a>
+      </div>
+
+      <!-- Page -->
+      <div class="page">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <div class="date-nav">
+              <button class="date-nav-btn">← Tue</button>
+              <span class="date-nav-current">Wednesday, March 19</span>
+              <button class="date-nav-btn">Thu →</button>
+            </div>
+          </div>
+          <div class="page-header-right">
+            <span class="header-badge saved">✓ Saved</span>
+            <span style="font-family:var(--font-sans);font-size:12px;color:var(--text-muted);">📎 2 images</span>
+            <a href="settings.html"><button class="gear-btn" title="Settings">⚙</button></a>
+          </div>
+        </div>
+
+        <!-- Page Content — lined paper in journal only -->
+        <div class="page-content lined-paper">
+          <div class="journal-area">
+            <div class="entry-date">Wednesday · March 19, 2026</div>
+            <div class="entry-body">Today felt like a turning point. Not in any dramatic way — there was no single moment I could point to and say "that was it." But somewhere between the morning walk and the late conversation with Ana, something quietly shifted.
+
+I've been thinking a lot about what it means to be consistent without being rigid. I started the day with the usual routine — coffee, a few pages of reading, a slow scan of what I actually wanted to do versus what I felt obligated to do. The list was shorter than expected. I'm getting better at that.
+
+The afternoon was slower. I spent an hour working through the API problem I'd been avoiding, and it turned out to be much simpler than the mental weight I'd been giving it. It always is. The dread is almost always worse than the thing. I wrote that down in a note so I'd remember next time, though I know I'll forget anyway.
+
+Ana and I talked for a long time after dinner. Not about anything in particular — just the kind of wandering conversation that covers a lot of ground without landing anywhere specific. She mentioned something about a trip she's been thinking about, somewhere quiet, somewhere without an agenda. I think I want that too.
+
+I keep coming back to this feeling that the most important things don't announce themselves. They just accumulate, slowly, until one day you look back and realize they were happening all along. Today felt like part of that accumulation.
+
+I didn't get everything done. I still have three things on the list I'm carrying over to tomorrow. But I'm writing this and feeling, against my usual habits, reasonably at peace with that. Some days the goal is just to end them honestly.
+
+More tomorrow.</div>
+          </div>
+        </div>
+
+        <!-- Image Tray -->
+        <div class="image-tray">
+          <span class="image-tray-label">Images</span>
+          <div class="img-placeholder lg">IMG</div>
+          <div class="img-placeholder lg">IMG</div>
+          <button class="img-add-btn">+</button>
+        </div>
+
+        <!-- Footer -->
+        <div class="journal-footer">
+          <span>324 words</span>
+          <span>Wednesday, March 19 · 2026</span>
+        </div>
+
+      </div><!-- /page -->
+    </div><!-- /notebook -->
+  </div><!-- /notebook-wrapper -->
+
+  <!-- Mobile nav -->
+  <nav class="mobile-nav-bar">
+    <a href="index.html" class="mobile-nav-btn active-j">J<span>Journal</span></a>
+    <a href="food.html"  class="mobile-nav-btn">F<span>Food</span></a>
+    <a href="notes.html" class="mobile-nav-btn">N<span>Notes</span></a>
+    <a href="library.html" class="mobile-nav-btn">L<span>Library</span></a>
+  </nav>
+
+</body>
+</html>

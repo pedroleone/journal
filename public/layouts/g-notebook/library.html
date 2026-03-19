@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept G — Notebook / Library</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <strong>Concept G</strong>
+    <span class="sep">·</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html" class="active">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="notebook-wrapper">
+    <div class="notebook">
+
+      <!-- Spine -->
+      <div class="spine"></div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <a href="index.html"   class="tab-btn tab-journal">Journal</a>
+        <a href="food.html"    class="tab-btn tab-food">Food</a>
+        <a href="notes.html"   class="tab-btn tab-notes">Notes</a>
+        <a href="library.html" class="tab-btn active tab-library">Library</a>
+      </div>
+
+      <!-- Page -->
+      <div class="page">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <span style="font-family:var(--font-serif);font-size:16px;font-weight:bold;color:var(--text-primary);">Library</span>
+          </div>
+          <div class="page-header-right">
+            <button class="header-btn primary" style="background:var(--library);border-color:transparent;color:#fff;">+ Add</button>
+            <a href="settings.html"><button class="gear-btn" title="Settings">⚙</button></a>
+          </div>
+        </div>
+
+        <!-- Library Layout — no lined paper -->
+        <div class="page-content" style="overflow:hidden;height:100%;display:flex;">
+          <div class="library-layout" style="flex:1;overflow:hidden;">
+
+            <!-- Main: grid -->
+            <div class="library-main">
+
+              <!-- Toolbar: type tabs + filter chips -->
+              <div class="library-toolbar">
+                <span class="type-tab active">All</span>
+                <span class="type-tab">Books</span>
+                <span class="type-tab">Games</span>
+                <span class="type-tab">Movies</span>
+                <span class="type-tab">Albums</span>
+                <span class="type-tab">Videos</span>
+                <span class="sep" style="flex:1;"></span>
+                <span class="filter-chip active">In progress</span>
+                <span class="filter-chip">Finished</span>
+                <span class="filter-chip">Backlog</span>
+                <span class="filter-chip">Dropped</span>
+              </div>
+
+              <!-- Card grid -->
+              <div class="library-grid">
+
+                <!-- Dune Messiah — In Progress -->
+                <div class="library-card selected">
+                  <div class="card-cover">IMG</div>
+                  <div class="card-info">
+                    <div class="card-title">Dune Messiah</div>
+                    <div class="card-creator">Frank Herbert</div>
+                    <div class="card-meta">
+                      <span class="card-type-badge">Book</span>
+                      <span class="card-status">In progress</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Elden Ring — In Progress -->
+                <div class="library-card">
+                  <div class="card-cover">IMG</div>
+                  <div class="card-info">
+                    <div class="card-title">Elden Ring</div>
+                    <div class="card-creator">FromSoftware</div>
+                    <div class="card-meta">
+                      <span class="card-type-badge" style="background:rgba(76,175,147,0.1);color:var(--food);border-color:rgba(76,175,147,0.2);">Game</span>
+                      <span class="card-status">In progress</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dune — Finished ★★★★★ -->
+                <div class="library-card">
+                  <div class="card-cover">IMG</div>
+                  <div class="card-info">
+                    <div class="card-title">Dune</div>
+                    <div class="card-creator">Frank Herbert</div>
+                    <div class="card-meta">
+                      <span class="card-type-badge">Book</span>
+                      <span class="stars">★★★★★</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Blade Runner 2049 — Finished ★★★★ -->
+                <div class="library-card">
+                  <div class="card-cover landscape">IMG</div>
+                  <div class="card-info">
+                    <div class="card-title">Blade Runner 2049</div>
+                    <div class="card-creator">Denis Villeneuve</div>
+                    <div class="card-meta">
+                      <span class="card-type-badge" style="background:rgba(176,124,255,0.1);color:var(--notes);border-color:rgba(176,124,255,0.2);">Movie</span>
+                      <span class="stars">★★★★</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dark Side of the Moon — Finished ★★★★★ -->
+                <div class="library-card">
+                  <div class="card-cover square">IMG</div>
+                  <div class="card-info">
+                    <div class="card-title">The Dark Side of the Moon</div>
+                    <div class="card-creator">Pink Floyd</div>
+                    <div class="card-meta">
+                      <span class="card-type-badge" style="background:rgba(201,169,110,0.1);color:var(--inbox);border-color:rgba(201,169,110,0.2);">Album</span>
+                      <span class="stars">★★★★★</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /library-grid -->
+            </div><!-- /library-main -->
+
+            <!-- Detail panel — Dune Messiah selected -->
+            <div class="library-detail">
+
+              <div class="detail-cover">IMG</div>
+
+              <div>
+                <div class="detail-title">Dune Messiah</div>
+                <div class="detail-creator">Frank Herbert</div>
+              </div>
+
+              <div class="detail-fields">
+                <div class="detail-field">
+                  <span class="detail-field-label">Type</span>
+                  <span class="detail-field-value">Book</span>
+                </div>
+                <div class="detail-field">
+                  <span class="detail-field-label">Status</span>
+                  <span class="detail-field-value" style="color:var(--food);font-weight:600;">In progress</span>
+                </div>
+                <div class="detail-field">
+                  <span class="detail-field-label">Rating</span>
+                  <span class="detail-field-value">—</span>
+                </div>
+                <div class="detail-field">
+                  <span class="detail-field-label">Genre</span>
+                  <span class="detail-field-value">Science fiction</span>
+                </div>
+                <div class="detail-field">
+                  <span class="detail-field-label">Pages</span>
+                  <span class="detail-field-value">272</span>
+                </div>
+                <div class="detail-field">
+                  <span class="detail-field-label">Reaction</span>
+                  <span class="detail-field-value">—</span>
+                </div>
+              </div>
+
+              <div class="detail-thoughts">
+                <div class="detail-thoughts-label">Your thoughts</div>
+                <div class="detail-thoughts-body">
+                  Much darker than Dune. Paul feels trapped by his own prescience — the tragedy of knowing too much. Interesting contrast with the first book's sense of possibility. Pushing through slowly.
+                </div>
+                <button class="header-btn" style="margin-top:8px;font-size:11px;">Edit note</button>
+              </div>
+
+              <div style="display:flex;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid var(--border);">
+                <button class="header-btn" style="flex:1;">Edit</button>
+                <button class="header-btn danger" style="background:#fdf0f0;border-color:#f5c6c6;color:#c04040;">Delete</button>
+              </div>
+
+            </div><!-- /library-detail -->
+
+          </div><!-- /library-layout -->
+        </div><!-- /page-content -->
+
+      </div><!-- /page -->
+    </div><!-- /notebook -->
+  </div><!-- /notebook-wrapper -->
+
+  <!-- Mobile nav -->
+  <nav class="mobile-nav-bar">
+    <a href="index.html"   class="mobile-nav-btn">J<span>Journal</span></a>
+    <a href="food.html"    class="mobile-nav-btn">F<span>Food</span></a>
+    <a href="notes.html"   class="mobile-nav-btn">N<span>Notes</span></a>
+    <a href="library.html" class="mobile-nav-btn active-l">L<span>Library</span></a>
+  </nav>
+
+</body>
+</html>

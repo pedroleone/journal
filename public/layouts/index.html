@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal App — UI/UX Explorations</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d0d14;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 24px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 48px;
+        }
+        .concepts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            max-width: 1000px;
+            width: 100%;
+        }
+        .concept-card {
+            background: #16161e;
+            border: 1px solid #2a2a34;
+            border-radius: 12px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.2s, transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .concept-card:hover {
+            border-color: #555;
+            transform: translateY(-2px);
+        }
+        .concept-card .letter {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+        }
+        .concept-card h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .concept-card p {
+            color: #999;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .concept-card .tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .concept-card .tag {
+            font-size: 10px;
+            color: #888;
+            background: #1e1e28;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        footer {
+            margin-top: 48px;
+            color: #484f58;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Journal App — UI/UX Explorations</h1>
+    <p class="subtitle">5 radically different layout concepts for a private single-user journal app</p>
+
+    <div class="concepts">
+        <a href="c-workspace/index.html" class="concept-card">
+            <div class="letter" style="background:#7c7cff;">C</div>
+            <h2>The Workspace</h2>
+            <p>Multi-pane IDE-style layout. Open Journal and Food side-by-side. Icon rail navigation. Each domain as a resizable panel.</p>
+            <div class="tags">
+                <span class="tag">multi-pane</span>
+                <span class="tag">icon rail</span>
+                <span class="tag">cross-domain context</span>
+            </div>
+        </a>
+
+        <a href="d-dashboard/index.html" class="concept-card">
+            <div class="letter" style="background:#4caf93;">D</div>
+            <h2>The Daily Dashboard</h2>
+            <p>Day-centric 2×2 hub. Today is always home. Each quadrant previews a domain — click to expand into a full view.</p>
+            <div class="tags">
+                <span class="tag">day-centric</span>
+                <span class="tag">2×2 grid</span>
+                <span class="tag">daily snapshot</span>
+            </div>
+        </a>
+
+        <a href="f-rooms/index.html" class="concept-card">
+            <div class="letter" style="background:#b07cff;">F</div>
+            <h2>The Rooms</h2>
+            <p>Each domain is a fully self-contained room with its own layout, color, and personality. The journal room feels like a writing app. The food room feels like a meal tracker.</p>
+            <div class="tags">
+                <span class="tag">unique per domain</span>
+                <span class="tag">full immersion</span>
+                <span class="tag">custom layouts</span>
+            </div>
+        </a>
+
+        <a href="g-notebook/index.html" class="concept-card">
+            <div class="letter" style="background:#c9a96e;">G</div>
+            <h2>The Notebook</h2>
+            <p>Physical notebook metaphor with tabbed section dividers. Warm paper textures, lined writing surface, index-card library. Your personal book.</p>
+            <div class="tags">
+                <span class="tag">analog feel</span>
+                <span class="tag">warm palette</span>
+                <span class="tag">tactile</span>
+            </div>
+        </a>
+
+        <a href="j-dock/index.html" class="concept-card">
+            <div class="letter" style="background:#ff7c7c;">J</div>
+            <h2>The Dock</h2>
+            <p>Content fills the screen. A persistent status bar at the bottom shows live metrics for every domain — you always know what's happening without leaving your current view.</p>
+            <div class="tags">
+                <span class="tag">ambient awareness</span>
+                <span class="tag">maximized content</span>
+                <span class="tag">live status dock</span>
+            </div>
+        </a>
+    </div>
+
+    <footer>Static HTML/CSS prototypes — open any concept to explore</footer>
+</body>
+</html>

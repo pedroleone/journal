@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notes Room — Concept F: The Rooms</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Room Switcher (desktop) -->
+  <nav class="room-switcher">
+    <div class="switcher-brand">📓</div>
+
+    <a href="index.html"   class="switcher-icon" data-label="Journal">✦</a>
+    <a href="food.html"    class="switcher-icon" data-label="Food">🥗</a>
+    <a href="notes.html"   class="switcher-icon active-notes" data-label="Notes">📝</a>
+    <a href="library.html" class="switcher-icon" data-label="Library">📚</a>
+
+    <div class="switcher-spacer"></div>
+    <a href="settings.html" class="switcher-icon" data-label="Settings">⚙</a>
+  </nav>
+
+  <!-- Mobile Bottom Tabs -->
+  <nav class="room-switcher-mobile">
+    <a href="index.html"   class="mobile-tab"><span>✦</span><span class="mobile-tab-label">Journal</span></a>
+    <a href="food.html"    class="mobile-tab"><span>🥗</span><span class="mobile-tab-label">Food</span></a>
+    <a href="notes.html"   class="mobile-tab active-notes"><span>📝</span><span class="mobile-tab-label">Notes</span></a>
+    <a href="library.html" class="mobile-tab"><span>📚</span><span class="mobile-tab-label">Library</span></a>
+    <a href="settings.html" class="mobile-tab"><span>⚙</span><span class="mobile-tab-label">Settings</span></a>
+  </nav>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept F</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html">Journal</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html">Journal Room</a>
+    <a href="food.html">Food Room</a>
+    <a href="notes.html" class="active">Notes Room</a>
+    <a href="library.html">Library Room</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <!-- Notes Room — The Scratchpad -->
+  <div class="room-wrapper room-notes" style="height:100vh;overflow:hidden;">
+    <div class="notes-room">
+
+      <!-- Left sidebar: note list -->
+      <div class="note-list-sidebar">
+        <div class="note-list-header">
+          <input class="note-search" type="text" placeholder="Search notes…" />
+          <div class="tag-chips">
+            <span class="tag-chip active">All</span>
+            <span class="tag-chip">work</span>
+            <span class="tag-chip">personal</span>
+            <span class="tag-chip">recipes</span>
+          </div>
+        </div>
+
+        <div class="note-list-items">
+
+          <div class="note-item selected">
+            <div class="note-item-title">API rate limits</div>
+            <div class="note-item-preview">Check the docs on backoff strategy, then…</div>
+            <div class="note-item-footer">
+              <span class="note-item-tag">work</span>
+              <span class="note-item-date">Mar 19</span>
+            </div>
+          </div>
+
+          <div class="note-item">
+            <div class="note-item-title">Gift ideas for Ana</div>
+            <div class="note-item-preview">Maybe the ceramic set she mentioned, or…</div>
+            <div class="note-item-footer">
+              <span class="note-item-tag" style="background:rgba(201,169,110,0.1);color:var(--inbox)">personal</span>
+              <span class="note-item-date">Mar 17</span>
+            </div>
+          </div>
+
+          <div class="note-item">
+            <div class="note-item-title">Sourdough starter</div>
+            <div class="note-item-preview">Feed 1:1:1 ratio every 12 hours until…</div>
+            <div class="note-item-footer">
+              <span class="note-item-tag" style="background:rgba(76,175,147,0.1);color:var(--food)">recipes</span>
+              <span class="note-item-date">Mar 14</span>
+            </div>
+          </div>
+
+          <!-- Filler items for count -->
+          <div class="note-item" style="opacity:0.45">
+            <div class="note-item-title">Weekly review template</div>
+            <div class="note-item-preview">What went well, what didn't…</div>
+            <div class="note-item-footer">
+              <span class="note-item-tag">work</span>
+              <span class="note-item-date">Mar 10</span>
+            </div>
+          </div>
+
+          <div class="note-item" style="opacity:0.45">
+            <div class="note-item-title">Books to read</div>
+            <div class="note-item-preview">The One Straw Revolution, A Pattern…</div>
+            <div class="note-item-footer">
+              <span class="note-item-tag" style="background:rgba(201,169,110,0.1);color:var(--inbox)">personal</span>
+              <span class="note-item-date">Mar 8</span>
+            </div>
+          </div>
+
+          <div class="note-item" style="opacity:0.35">
+            <div class="note-item-title">Cold brew ratio</div>
+            <div class="note-item-footer">
+              <span class="note-item-tag" style="background:rgba(76,175,147,0.1);color:var(--food)">recipes</span>
+              <span class="note-item-date">Feb 29</span>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /note-list-sidebar -->
+
+      <!-- Right: note editor -->
+      <div class="note-editor">
+        <div class="note-editor-header">
+          <div class="note-editor-title">API rate limits</div>
+          <div class="note-editor-tags">
+            <span class="note-tag-badge">work</span>
+            <button class="add-tag-btn">+ tag</button>
+          </div>
+        </div>
+
+        <div class="note-editor-body">
+          <div class="note-body-text">
+            Check the docs on backoff strategy, then review what we're doing in the migration script. The current implementation doesn't handle 429s gracefully — it just throws and the job dies.
+
+            Need to:
+            — Add exponential backoff with jitter
+            — Log the retry attempts somewhere visible
+            — Set a max retry ceiling (maybe 5?)
+
+            Also worth looking at the rate limit headers to see if we can be smarter about pacing rather than waiting for failures.
+          </div>
+
+          <div class="note-image-block">IMG — screenshot of the API dashboard</div>
+
+          <!-- Follow-ups -->
+          <div class="followups-section">
+            <div class="followups-label">Follow-ups</div>
+            <div class="subnote-item">
+              Check if the SDK has built-in retry handling before rolling our own
+            </div>
+            <button class="add-subnote-btn">+ Add follow-up</button>
+          </div>
+        </div>
+      </div><!-- /note-editor -->
+
+    </div>
+  </div>
+
+</body>
+</html>

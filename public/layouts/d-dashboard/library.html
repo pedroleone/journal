@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Library — Concept D</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept D</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html">Dashboard</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html" class="active">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="expanded-wrapper">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-bar">
+      <a href="index.html" class="breadcrumb-back library-link">&#8592; Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Library</span>
+    </div>
+
+    <div class="expanded-content" style="overflow:hidden">
+      <div class="library-expanded">
+
+        <!-- Left: grid panel -->
+        <div class="library-main">
+
+          <!-- Toolbar -->
+          <div class="library-toolbar">
+            <button class="type-tab active">All</button>
+            <button class="type-tab">Books</button>
+            <button class="type-tab">Games</button>
+            <button class="type-tab">Movies</button>
+            <button class="type-tab">Albums</button>
+            <button class="type-tab">Videos</button>
+            <button class="type-tab">Misc</button>
+            <div class="toolbar-sep"></div>
+            <button class="filter-chip">In Progress</button>
+            <button class="filter-chip">Finished</button>
+            <button class="filter-chip">Backlog</button>
+            <input class="library-search-input" type="text" placeholder="Search library…" />
+            <button class="add-item-btn">+ Add</button>
+          </div>
+
+          <!-- Card grid -->
+          <div class="library-grid-panel">
+            <div class="lib-card-grid">
+
+              <!-- Dune Messiah — selected -->
+              <div class="lib-card selected">
+                <div class="lib-card-cover">IMG</div>
+                <div class="lib-card-title">Dune Messiah</div>
+                <div class="lib-card-sub">Book · Frank Herbert</div>
+                <span class="lib-card-status in-progress">In Progress</span>
+              </div>
+
+              <!-- Elden Ring -->
+              <div class="lib-card">
+                <div class="lib-card-cover">IMG</div>
+                <div class="lib-card-title">Elden Ring</div>
+                <div class="lib-card-sub">Game · PS5</div>
+                <span class="lib-card-status in-progress">In Progress</span>
+              </div>
+
+              <!-- Dune -->
+              <div class="lib-card">
+                <div class="lib-card-cover">IMG</div>
+                <div class="lib-card-title">Dune</div>
+                <div class="lib-card-sub">Book · Frank Herbert</div>
+                <span class="lib-card-status finished">Finished</span>
+                <div class="lib-card-rating">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+              </div>
+
+              <!-- Blade Runner 2049 -->
+              <div class="lib-card">
+                <div class="lib-card-cover">IMG</div>
+                <div class="lib-card-title">Blade Runner 2049</div>
+                <div class="lib-card-sub">Movie · 2017</div>
+                <span class="lib-card-status finished">Finished</span>
+                <div class="lib-card-rating">&#9733;&#9733;&#9733;&#9733;&#9734;</div>
+              </div>
+
+              <!-- Dark Side of the Moon -->
+              <div class="lib-card">
+                <div class="lib-card-cover">IMG</div>
+                <div class="lib-card-title">Dark Side of the Moon</div>
+                <div class="lib-card-sub">Album · Pink Floyd</div>
+                <span class="lib-card-status finished">Finished</span>
+                <div class="lib-card-rating">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+              </div>
+
+              <!-- Piranesi (backlog) -->
+              <div class="lib-card">
+                <div class="lib-card-cover">IMG</div>
+                <div class="lib-card-title">Piranesi</div>
+                <div class="lib-card-sub">Book · Susanna Clarke</div>
+                <span class="lib-card-status backlog">Backlog</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: detail panel (Dune Messiah selected) -->
+        <div class="library-detail">
+
+          <div class="lib-detail-header">
+            <div class="lib-detail-cover">IMG</div>
+            <div class="lib-detail-meta">
+              <div class="lib-detail-title">Dune Messiah</div>
+              <div class="lib-detail-type">Book · Frank Herbert · 1969</div>
+              <span class="lib-card-status in-progress">In Progress</span>
+            </div>
+          </div>
+
+          <div class="lib-detail-body">
+
+            <!-- Metadata rows -->
+            <div class="lib-meta-row">
+              <span class="lib-meta-label">Type</span>
+              <span class="lib-meta-value">Book</span>
+            </div>
+            <div class="lib-meta-row">
+              <span class="lib-meta-label">Status</span>
+              <span class="lib-meta-value" style="color:var(--library)">In Progress</span>
+            </div>
+            <div class="lib-meta-row">
+              <span class="lib-meta-label">Pages</span>
+              <span class="lib-meta-value">331</span>
+            </div>
+            <div class="lib-meta-row">
+              <span class="lib-meta-label">Genre</span>
+              <span class="lib-meta-value">Science Fiction</span>
+            </div>
+            <div class="lib-meta-row">
+              <span class="lib-meta-label">Started</span>
+              <span class="lib-meta-value">Mar 10, 2026</span>
+            </div>
+            <div class="lib-meta-row">
+              <span class="lib-meta-label">Rating</span>
+              <span class="lib-meta-value">—</span>
+            </div>
+
+            <!-- Your Thoughts (item-level notes) -->
+            <div class="thoughts-section">
+              <div class="note-section-label" style="margin-bottom:10px">Your Thoughts</div>
+
+              <div class="thought-item">
+                The shift in tone from the first book is jarring in the best way. Paul isn't a hero anymore — he's a warning.
+                <div class="thought-item-date">Mar 12, 2026</div>
+              </div>
+
+              <div class="thought-item">
+                The Tleilaxu are fascinating. The idea that they grow gholas as a kind of proxy for memory and identity is unsettling in ways I keep returning to.
+                <div class="thought-item-date">Mar 16, 2026</div>
+              </div>
+
+              <button class="add-thought-btn">+ Add thought</button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

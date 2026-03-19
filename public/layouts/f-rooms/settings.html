@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — Concept F: The Rooms</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Room Switcher (desktop) -->
+  <nav class="room-switcher">
+    <div class="switcher-brand">📓</div>
+
+    <a href="index.html"   class="switcher-icon" data-label="Journal">✦</a>
+    <a href="food.html"    class="switcher-icon" data-label="Food">🥗</a>
+    <a href="notes.html"   class="switcher-icon" data-label="Notes">📝</a>
+    <a href="library.html" class="switcher-icon" data-label="Library">📚</a>
+
+    <div class="switcher-spacer"></div>
+    <a href="settings.html" class="switcher-icon active-settings" data-label="Settings">⚙</a>
+  </nav>
+
+  <!-- Mobile Bottom Tabs -->
+  <nav class="room-switcher-mobile">
+    <a href="index.html"   class="mobile-tab"><span>✦</span><span class="mobile-tab-label">Journal</span></a>
+    <a href="food.html"    class="mobile-tab"><span>🥗</span><span class="mobile-tab-label">Food</span></a>
+    <a href="notes.html"   class="mobile-tab"><span>📝</span><span class="mobile-tab-label">Notes</span></a>
+    <a href="library.html" class="mobile-tab"><span>📚</span><span class="mobile-tab-label">Library</span></a>
+    <a href="settings.html" class="mobile-tab active-settings"><span>⚙</span><span class="mobile-tab-label">Settings</span></a>
+  </nav>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept F</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html">Journal</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html">Journal Room</a>
+    <a href="food.html">Food Room</a>
+    <a href="notes.html">Notes Room</a>
+    <a href="library.html">Library Room</a>
+    <a href="settings.html" class="active">Settings</a>
+  </nav>
+
+  <!-- Settings (neutral dark — not a domain room) -->
+  <div class="room-wrapper room-settings">
+    <div class="settings-room">
+
+      <h1 class="settings-room-title">Settings</h1>
+      <p class="settings-room-sub">Preferences and app management</p>
+
+      <!-- Language -->
+      <div class="settings-section">
+        <div class="settings-section-title">Language</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Interface language</div>
+            <div class="settings-row-desc">Affects all text labels and UI copy</div>
+          </div>
+          <select class="settings-select">
+            <option>English</option>
+            <option>Português (BR)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Theme -->
+      <div class="settings-section">
+        <div class="settings-section-title">Appearance</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Theme</div>
+            <div class="settings-row-desc">Light and dark mode support</div>
+          </div>
+          <select class="settings-select">
+            <option>Dark</option>
+            <option>Light</option>
+            <option>System</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Default landing -->
+      <div class="settings-section">
+        <div class="settings-section-title">Navigation</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Default room on open</div>
+            <div class="settings-row-desc">Which room loads when you first open the app</div>
+          </div>
+          <select class="settings-select">
+            <option>Journal</option>
+            <option>Food</option>
+            <option>Notes</option>
+            <option>Library</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div class="settings-section">
+        <div class="settings-section-title">Export</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Export journal &amp; food</div>
+            <div class="settings-row-desc">Download as Markdown, plain text, or print-friendly PDF</div>
+          </div>
+          <button class="settings-btn">Export…</button>
+        </div>
+      </div>
+
+      <!-- Backup & Restore -->
+      <div class="settings-section">
+        <div class="settings-section-title">Backup &amp; Restore</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Download encrypted backup</div>
+            <div class="settings-row-desc">Full data backup — AES-256 encrypted</div>
+          </div>
+          <button class="settings-btn">Download</button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Restore from backup</div>
+            <div class="settings-row-desc">Upload a backup file to restore all data. This will replace your current data.</div>
+          </div>
+          <button class="settings-btn settings-btn-danger">Restore…</button>
+        </div>
+      </div>
+
+      <!-- PWA Install -->
+      <div class="settings-section">
+        <div class="settings-section-title">App Install</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Install as app</div>
+            <div class="settings-row-desc">Add to your home screen for offline access and a native-like experience</div>
+          </div>
+          <button class="settings-btn">Install</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

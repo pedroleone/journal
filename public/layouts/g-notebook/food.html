@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept G — Notebook / Food</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <strong>Concept G</strong>
+    <span class="sep">·</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html">Journal</a>
+    <a href="food.html" class="active">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="notebook-wrapper">
+    <div class="notebook">
+
+      <!-- Spine -->
+      <div class="spine"></div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <a href="index.html"   class="tab-btn tab-journal">Journal</a>
+        <a href="food.html"    class="tab-btn active tab-food">Food</a>
+        <a href="notes.html"   class="tab-btn tab-notes">Notes</a>
+        <a href="library.html" class="tab-btn tab-library">Library</a>
+      </div>
+
+      <!-- Page -->
+      <div class="page">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <div class="date-nav">
+              <button class="date-nav-btn">← Tue</button>
+              <span class="date-nav-current">Wednesday, March 19</span>
+              <button class="date-nav-btn">Thu →</button>
+            </div>
+          </div>
+          <div class="page-header-right">
+            <span class="header-badge inbox">Inbox (4)</span>
+            <button class="header-btn primary">+ Add</button>
+            <a href="settings.html"><button class="gear-btn" title="Settings">⚙</button></a>
+          </div>
+        </div>
+
+        <!-- Food Log — no lined-paper background -->
+        <div class="page-content">
+          <div class="food-log">
+
+            <!-- Breakfast -->
+            <div class="meal-row">
+              <div class="meal-slot-label">Breakfast</div>
+              <div class="meal-content">
+                <span class="meal-desc">Oatmeal with banana and honey</span>
+                <div class="meal-photos">
+                  <div class="img-placeholder" style="width:48px;height:48px;">IMG</div>
+                </div>
+              </div>
+              <div class="meal-time">8:30 am</div>
+            </div>
+
+            <!-- AM Snack -->
+            <div class="meal-row">
+              <div class="meal-slot-label">AM Snack</div>
+              <div class="meal-content">
+                <span class="meal-desc skipped">Skipped</span>
+              </div>
+              <div class="meal-time"></div>
+            </div>
+
+            <!-- Lunch -->
+            <div class="meal-row">
+              <div class="meal-slot-label">Lunch</div>
+              <div class="meal-content">
+                <span class="meal-desc">Grilled chicken salad, olive oil dressing</span>
+                <div class="meal-photos">
+                  <div class="img-placeholder" style="width:48px;height:48px;">IMG</div>
+                  <div class="img-placeholder" style="width:48px;height:48px;">IMG</div>
+                </div>
+              </div>
+              <div class="meal-time">12:45 pm</div>
+            </div>
+
+            <!-- PM Snack -->
+            <div class="meal-row">
+              <div class="meal-slot-label">PM Snack</div>
+              <div class="meal-content">
+                <span class="meal-desc">Apple + black coffee</span>
+              </div>
+              <div class="meal-time">3:15 pm</div>
+            </div>
+
+            <!-- Dinner -->
+            <div class="meal-row">
+              <div class="meal-slot-label">Dinner</div>
+              <div class="meal-content">
+                <span class="meal-desc empty">— not logged yet</span>
+              </div>
+              <div class="meal-time"></div>
+            </div>
+
+            <!-- Midnight Snack -->
+            <div class="meal-row">
+              <div class="meal-slot-label">Midnight</div>
+              <div class="meal-content">
+                <span class="meal-desc empty">— not logged yet</span>
+              </div>
+              <div class="meal-time"></div>
+            </div>
+
+            <!-- Observation -->
+            <div class="meal-row">
+              <div class="meal-slot-label">Observation</div>
+              <div class="meal-content">
+                <span class="meal-desc empty">— no note</span>
+              </div>
+              <div class="meal-time"></div>
+            </div>
+
+          </div><!-- /food-log -->
+
+          <!-- Inbox section -->
+          <div style="padding: 20px 28px 32px; border-top: 1px solid var(--border); margin-top: 8px;">
+            <div class="section-heading" style="margin-bottom:14px;">Inbox — 4 uncategorized</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+
+              <div class="index-card" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:12px;">
+                <div>
+                  <div style="font-family:var(--font-serif);font-size:13px;color:var(--text-primary);">Leftover pasta from yesterday</div>
+                  <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-muted);margin-top:2px;">Captured Mar 18 · 9:40 pm</div>
+                </div>
+                <button class="header-btn" style="white-space:nowrap;font-size:11px;">Assign</button>
+              </div>
+
+              <div class="index-card" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:12px;">
+                <div>
+                  <div style="font-family:var(--font-serif);font-size:13px;color:var(--text-primary);">Quick photo — street food stall</div>
+                  <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-muted);margin-top:2px;">Captured Mar 19 · 1:05 pm · 📷 1 photo</div>
+                </div>
+                <button class="header-btn" style="white-space:nowrap;font-size:11px;">Assign</button>
+              </div>
+
+              <div class="index-card" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:12px;">
+                <div>
+                  <div style="font-family:var(--font-serif);font-size:13px;color:var(--text-primary);">Green juice before gym</div>
+                  <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-muted);margin-top:2px;">Captured Mar 19 · 7:15 am</div>
+                </div>
+                <button class="header-btn" style="white-space:nowrap;font-size:11px;">Assign</button>
+              </div>
+
+              <div class="index-card" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:12px;">
+                <div>
+                  <div style="font-family:var(--font-serif);font-size:13px;color:var(--text-primary);">Protein bar (wrapper photo)</div>
+                  <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-muted);margin-top:2px;">Captured Mar 19 · 4:50 pm · 📷 1 photo</div>
+                </div>
+                <button class="header-btn" style="white-space:nowrap;font-size:11px;">Assign</button>
+              </div>
+
+            </div>
+          </div>
+
+        </div><!-- /page-content -->
+      </div><!-- /page -->
+    </div><!-- /notebook -->
+  </div><!-- /notebook-wrapper -->
+
+  <!-- Mobile nav -->
+  <nav class="mobile-nav-bar">
+    <a href="index.html"   class="mobile-nav-btn">J<span>Journal</span></a>
+    <a href="food.html"    class="mobile-nav-btn active-f">F<span>Food</span></a>
+    <a href="notes.html"   class="mobile-nav-btn">N<span>Notes</span></a>
+    <a href="library.html" class="mobile-nav-btn">L<span>Library</span></a>
+  </nav>
+
+</body>
+</html>

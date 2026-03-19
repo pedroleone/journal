@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journal Room — Concept F: The Rooms</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Room Switcher (desktop) -->
+  <nav class="room-switcher">
+    <div class="switcher-brand">📓</div>
+
+    <a href="index.html"   class="switcher-icon active-journal" data-label="Journal">✦</a>
+    <a href="food.html"    class="switcher-icon" data-label="Food">🥗</a>
+    <a href="notes.html"   class="switcher-icon" data-label="Notes">📝</a>
+    <a href="library.html" class="switcher-icon" data-label="Library">📚</a>
+
+    <div class="switcher-spacer"></div>
+    <a href="settings.html" class="switcher-icon" data-label="Settings">⚙</a>
+  </nav>
+
+  <!-- Mobile Bottom Tabs -->
+  <nav class="room-switcher-mobile">
+    <a href="index.html"   class="mobile-tab active-journal"><span>✦</span><span class="mobile-tab-label">Journal</span></a>
+    <a href="food.html"    class="mobile-tab"><span>🥗</span><span class="mobile-tab-label">Food</span></a>
+    <a href="notes.html"   class="mobile-tab"><span>📝</span><span class="mobile-tab-label">Notes</span></a>
+    <a href="library.html" class="mobile-tab"><span>📚</span><span class="mobile-tab-label">Library</span></a>
+    <a href="settings.html" class="mobile-tab"><span>⚙</span><span class="mobile-tab-label">Settings</span></a>
+  </nav>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <span class="pnav-label">Concept F</span>
+    <a href="../index.html">← All Concepts</a>
+    <span class="pnav-sep">|</span>
+    <a href="index.html">Journal</a>
+    <a href="auth.html">Auth</a>
+    <a href="journal.html" class="active">Journal Room</a>
+    <a href="food.html">Food Room</a>
+    <a href="notes.html">Notes Room</a>
+    <a href="library.html">Library Room</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <!-- Journal Room — The Writing Sanctuary -->
+  <div class="room-wrapper room-journal">
+    <div class="journal-room">
+
+      <!-- Date nav + meta -->
+      <header class="journal-room-header">
+        <div class="journal-date-nav">
+          <a href="#" class="date-arrow">←</a>
+          <span class="date-neighbor">Mar 18</span>
+          <span class="date-current">Wednesday, March 19</span>
+          <span class="date-neighbor">Mar 20</span>
+          <a href="#" class="date-arrow">→</a>
+        </div>
+        <div class="journal-meta-actions">
+          <span class="attach-count">📎 2</span>
+          <span class="journal-saved">✓ saved</span>
+        </div>
+      </header>
+
+      <!-- Writing surface -->
+      <main class="writing-surface">
+        <div class="writing-surface-inner">
+          <div class="writing-body">Today felt like a turning point. The conversation with Maria about the project direction was exactly what I needed to hear. She has this way of cutting through the noise and getting to what actually matters. I keep thinking about what she said about intention — that most of what we call planning is just anxiety wearing a calendar.
+
+I left that meeting feeling lighter than I have in weeks. Something shifted. Not in the project itself, but in how I'm holding it.
+
+Spent the afternoon at the usual corner table. The light was good. Wrote for almost two hours without looking up, which hasn't happened in a long time. The words came out rough but they came out. That's the part that matters right now.
+
+There's a kind of stubbornness to good writing — you have to sit with the blank space long enough that it stops feeling threatening. Today I sat. Today it worked.<span class="writing-cursor"></span>
+          </div>
+          <div class="writing-word-count">324 words</div>
+        </div>
+      </main>
+
+      <!-- Image strip -->
+      <div class="journal-image-strip">
+        <div class="img-thumb">IMG</div>
+        <div class="img-thumb">IMG</div>
+        <button class="img-add-btn" title="Add image">+</button>
+      </div>
+
+      <!-- Past entry (read-only) -->
+      <div class="past-entry-section">
+        <div class="past-entry-divider">
+          <span class="past-entry-label">Earlier entries</span>
+        </div>
+        <div class="past-entry-card">
+          <div class="past-entry-date">
+            <span>Tuesday, March 18</span>
+            <span class="readonly-badge">Read only</span>
+          </div>
+          <div class="past-entry-text">
+            The rain didn't let up all day. I stayed in and made a proper meal for once — pasta with whatever was left in the fridge. It turned out better than it had any right to. There's something deeply satisfying about that kind of improvisation. I think I've been doing too little of it lately, in all areas.
+
+Nothing earth-shattering happened, but there was a particular quality to the stillness. Sometimes a quiet day is the entry. Not everything needs a turning point.
+          </div>
+        </div>
+        <div class="past-entry-card" style="margin-top:12px">
+          <div class="past-entry-date">
+            <span>Monday, March 17</span>
+            <span class="readonly-badge">Read only</span>
+          </div>
+          <div class="past-entry-text">
+            Early call with the team ran long. By the time it ended I'd lost the morning. Tried to recover the afternoon but couldn't find the thread. Some days are about damage control, not progress. I'm trying to make peace with that.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

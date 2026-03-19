@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept G — Notebook / Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype Nav -->
+  <nav class="prototype-nav">
+    <strong>Concept G</strong>
+    <span class="sep">·</span>
+    <a href="auth.html">Auth</a>
+    <a href="index.html">Journal</a>
+    <a href="food.html">Food</a>
+    <a href="notes.html">Notes</a>
+    <a href="library.html">Library</a>
+    <a href="settings.html" class="active">Settings</a>
+  </nav>
+
+  <div class="notebook-wrapper">
+    <div class="notebook">
+
+      <!-- Spine -->
+      <div class="spine"></div>
+
+      <!-- Tabs — visible but none active (settings is via gear, not a tab) -->
+      <div class="tabs">
+        <a href="index.html"   class="tab-btn tab-journal">Journal</a>
+        <a href="food.html"    class="tab-btn tab-food">Food</a>
+        <a href="notes.html"   class="tab-btn tab-notes">Notes</a>
+        <a href="library.html" class="tab-btn tab-library">Library</a>
+      </div>
+
+      <!-- Page -->
+      <div class="page">
+
+        <!-- Page Header — gear is how you get here, not a 5th tab -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <span style="font-family:var(--font-serif);font-size:16px;font-weight:bold;color:var(--text-primary);">Settings</span>
+          </div>
+          <div class="page-header-right">
+            <!-- Gear is highlighted to indicate current location -->
+            <button class="gear-btn" style="color:var(--text-secondary);" title="Settings (current)">⚙</button>
+          </div>
+        </div>
+
+        <!-- Settings Content — no lined paper -->
+        <div class="page-content">
+          <div class="settings-content">
+
+            <!-- Language & Theme -->
+            <div class="settings-section">
+              <div class="settings-section-title">Preferences</div>
+
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Language</div>
+                  <div class="settings-row-desc">Interface and content language</div>
+                </div>
+                <select class="settings-select">
+                  <option selected>English</option>
+                  <option>Português (Brasil)</option>
+                </select>
+              </div>
+
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Theme</div>
+                  <div class="settings-row-desc">Light or dark display</div>
+                </div>
+                <select class="settings-select">
+                  <option selected>Light</option>
+                  <option>Dark</option>
+                  <option>System</option>
+                </select>
+              </div>
+
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Landing area</div>
+                  <div class="settings-row-desc">Where the app opens after sign in</div>
+                </div>
+                <select class="settings-select">
+                  <option selected>Journal</option>
+                  <option>Food</option>
+                  <option>Notes</option>
+                  <option>Library</option>
+                </select>
+              </div>
+
+            </div><!-- /preferences -->
+
+            <!-- Export -->
+            <div class="settings-section">
+              <div class="settings-section-title">Export</div>
+
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Export journal &amp; food</div>
+                  <div class="settings-row-desc">Choose date range and format</div>
+                </div>
+                <button class="settings-btn accent">Export…</button>
+              </div>
+
+              <div class="settings-row" style="align-items:flex-start;padding-top:14px;">
+                <div>
+                  <div class="settings-row-label">Export formats</div>
+                  <div class="settings-row-desc">Available when exporting</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;font-family:var(--font-sans);font-size:12px;color:var(--text-secondary);">
+                  <span>Markdown (.md)</span>
+                  <span>Plain text (.txt)</span>
+                  <span>Print-friendly PDF</span>
+                </div>
+              </div>
+
+            </div><!-- /export -->
+
+            <!-- Backup & Restore -->
+            <div class="settings-section">
+              <div class="settings-section-title">Backup &amp; Restore</div>
+
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Download backup</div>
+                  <div class="settings-row-desc">Full encrypted backup of all your data</div>
+                </div>
+                <button class="settings-btn accent">Download…</button>
+              </div>
+
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Restore from backup</div>
+                  <div class="settings-row-desc">
+                    This will <strong style="color:#c04040;">replace all current data</strong>. Cannot be undone.
+                  </div>
+                </div>
+                <button class="settings-btn danger">Restore…</button>
+              </div>
+
+            </div><!-- /backup -->
+
+            <!-- PWA -->
+            <div class="settings-section">
+              <div class="settings-section-title">App Installation</div>
+
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Install as app</div>
+                  <div class="settings-row-desc">Add to home screen for a native-like experience</div>
+                </div>
+                <button class="settings-btn">Install app</button>
+              </div>
+
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Offline behavior</div>
+                  <div class="settings-row-desc">
+                    Reads are available offline. Writes queue and sync when reconnected.
+                  </div>
+                </div>
+                <label class="toggle">
+                  <div class="toggle-track on"></div>
+                  On
+                </label>
+              </div>
+
+            </div><!-- /pwa -->
+
+            <!-- Account -->
+            <div class="settings-section">
+              <div class="settings-section-title">Account</div>
+
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Signed in as</div>
+                  <div class="settings-row-desc">user@example.com · Google</div>
+                </div>
+                <button class="settings-btn">Sign out</button>
+              </div>
+
+            </div><!-- /account -->
+
+          </div><!-- /settings-content -->
+        </div><!-- /page-content -->
+
+      </div><!-- /page -->
+    </div><!-- /notebook -->
+  </div><!-- /notebook-wrapper -->
+
+  <!-- Mobile nav -->
+  <nav class="mobile-nav-bar">
+    <a href="index.html"   class="mobile-nav-btn">J<span>Journal</span></a>
+    <a href="food.html"    class="mobile-nav-btn">F<span>Food</span></a>
+    <a href="notes.html"   class="mobile-nav-btn">N<span>Notes</span></a>
+    <a href="library.html" class="mobile-nav-btn">L<span>Library</span></a>
+  </nav>
+
+</body>
+</html>
