@@ -137,6 +137,41 @@
   animation: fade-in 0.3s ease-out;
 }
 
+@keyframes create-sheet-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes create-sheet-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-create-sheet-backdrop {
+  animation: create-sheet-fade-in 0.2s ease-out;
+}
+
+.animate-create-sheet-panel {
+  animation: create-sheet-slide-up 0.24s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-create-sheet-backdrop,
+  .animate-create-sheet-panel {
+    animation: none;
+  }
+}
+
 /* Typography refinements */
 h1, h2, h3 {
   font-family: var(--font-heading), ui-serif, Georgia, serif;
@@ -161,4 +196,10 @@ input[type="number"] {
 
 .scrollbar-gutter-stable {
   scrollbar-gutter: stable;
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

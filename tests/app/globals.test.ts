@@ -12,4 +12,15 @@ describe("globals.css", () => {
     expect(css).toContain('input[type="number"] {');
     expect(css).toContain("-moz-appearance: textfield;");
   });
+
+  it("includes the mobile create sheet animations and safe-area bottom helper", () => {
+    const css = readFileSync(path.resolve(process.cwd(), "app/globals.css"), "utf8");
+
+    expect(css).toContain("@keyframes create-sheet-fade-in");
+    expect(css).toContain("@keyframes create-sheet-slide-up");
+    expect(css).toContain(".animate-create-sheet-backdrop");
+    expect(css).toContain(".animate-create-sheet-panel");
+    expect(css).toContain(".safe-bottom");
+    expect(css).toContain("env(safe-area-inset-bottom)");
+  });
 });

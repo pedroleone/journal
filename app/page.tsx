@@ -53,7 +53,7 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-24">
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-24">
         <div className="max-w-2xl w-full mx-auto space-y-20">
           {/* Hero */}
           <div className="animate-page space-y-8 text-center">
@@ -82,7 +82,7 @@ export default async function Home() {
             ))}
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Footer */}
       <footer className="py-8 text-center">

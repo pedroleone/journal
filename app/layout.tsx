@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Fraunces, DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { NavWrapper } from "@/components/nav-wrapper";
+import { AppShell } from "@/components/app-shell";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { ModeProvider } from "@/lib/mode-context";
 import { LocaleProvider } from "@/hooks/use-locale";
@@ -60,6 +60,7 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "rgb(248 247 242)" },
     { media: "(prefers-color-scheme: dark)", color: "rgb(43 40 35)" },
   ],
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -76,12 +77,11 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <Suspense>
           <ThemeProvider>
-          <LocaleProvider>
-            <ModeProvider>
-              <NavWrapper />
-              {children}
-            </ModeProvider>
-          </LocaleProvider>
+            <LocaleProvider>
+              <ModeProvider>
+                <AppShell>{children}</AppShell>
+              </ModeProvider>
+            </LocaleProvider>
           </ThemeProvider>
         </Suspense>
       </body>

@@ -13,6 +13,7 @@ export type Translations = {
     library: string;
     openLibrary: string;
     newLibraryItem: string;
+    createNew: string;
   };
   journal: {
     back: string;
@@ -227,6 +228,7 @@ export const en: Translations = {
     library: "Library",
     openLibrary: "Open library",
     newLibraryItem: "New library item",
+    createNew: "Create new",
   },
   journal: {
     back: "Back",
@@ -445,6 +447,7 @@ export const ptBr: Translations = {
     library: "Biblioteca",
     openLibrary: "Abrir biblioteca",
     newLibraryItem: "Novo item na biblioteca",
+    createNew: "Criar novo",
   },
   journal: {
     back: "Voltar",
