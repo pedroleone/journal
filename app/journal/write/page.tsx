@@ -270,7 +270,7 @@ export default function WritePage() {
 
   if (!isOnline && !readyForEditing) {
     return (
-      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center px-6">
+      <div className="flex h-full items-center justify-center px-6">
         <div className="max-w-md space-y-2 text-center">
           <h1 className="font-display text-2xl tracking-tight">{t.journal.connectionRequired}</h1>
           <p className="text-sm text-muted-foreground">
@@ -283,7 +283,7 @@ export default function WritePage() {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
@@ -292,7 +292,7 @@ export default function WritePage() {
   return (
     <div className="flex">
       {!isMobile && (
-        <div className="sticky top-14 self-start h-[calc(100vh-3.5rem)] shrink-0 overflow-y-auto">
+        <div className="sticky top-0 self-start h-full shrink-0 overflow-y-auto">
         <CollapsibleSidebar visible={false}>
           <DateTree
             dates={dates}
@@ -305,7 +305,7 @@ export default function WritePage() {
                 setDate(new Date(sel.year, sel.month - 1, sel.day));
               }
             }}
-            onExport={() => router.push("/export")}
+            onExport={() => router.push("/settings")}
           />
         </CollapsibleSidebar>
         </div>
