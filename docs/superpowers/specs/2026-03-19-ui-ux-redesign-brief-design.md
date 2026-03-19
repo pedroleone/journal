@@ -2,11 +2,11 @@
 
 ## Objective
 
-Create a new UI/UX for the app that preserves all current functionality while rethinking the product structure from first principles.
+Create a new UI/UX for the app that preserves all required functionality while allowing the product structure to be rethought from first principles.
 
-This document is intended as a neutral product requirements handoff for design work. It describes what the product must enable, not how the current implementation is laid out.
+This document is intended as a neutral product requirements handoff for design work. It describes what the product must enable, not a preferred structural solution.
 
-The redesign should not treat the current navigation, page boundaries, screen groupings, or interaction patterns as requirements.
+This brief does not prescribe navigation, page boundaries, screen groupings, or interaction patterns.
 
 ## Product Summary
 
@@ -51,7 +51,7 @@ The product must support:
 - A default landing experience after entering the app
 - Clear movement into the main product areas
 
-Current implemented authentication is Google sign-in. The redesign may rethink how the entry experience is presented, but it should preserve a Google-based sign-in path unless product scope changes separately.
+Authentication uses Google sign-in. The entry experience can be rethought, but it should preserve a Google-based sign-in path unless product scope changes separately.
 
 The redesign is free to change how these are organized, but it must preserve the ability to enter the product and reach the main areas reliably.
 
@@ -69,12 +69,12 @@ The journal domain must support:
 - Low-friction saving behavior suitable for active writing sessions
 - Clear handling of offline or connection-limited situations
 
-Additional current behavior to preserve:
+Additional product behavior to preserve:
 
 - Journal writing uses markdown-capable editing
-- The current product expectation is effectively one web-created journal entry per day
+- The product expectation is effectively one web-created journal entry per day
 
-The redesign should also account for the fact that not all journal entries behave the same way:
+The design should also account for the fact that not all journal entries behave the same way:
 
 - Some journal entries are editable
 - Some journal entries are read-only
@@ -162,7 +162,7 @@ Current supported item/media types include:
 - Video
 - Miscellaneous
 
-Supported filtering and organization capabilities currently include:
+Supported filtering and organization capabilities include:
 
 - Type
 - Status
@@ -174,14 +174,14 @@ Supported filtering and organization capabilities currently include:
 
 The redesign should preserve the ability to manage different metadata depending on the item type.
 
-Current status lifecycle to preserve:
+Status lifecycle to preserve:
 
 - Backlog
 - In progress
 - Finished
 - Dropped
 
-Current type-specific metadata examples include:
+Type-specific metadata examples include:
 
 - Platform for games
 - Page count for books
@@ -216,7 +216,7 @@ The product must support:
 - Choosing a default landing area after entering the app
 - Opening export and backup tools
 
-Current implemented preferences to preserve include:
+Preferences to preserve include:
 
 - English and Brazilian Portuguese language support
 - Light and dark theme support
@@ -263,7 +263,7 @@ The design work must account for:
 - Long-form text content
 - Fast capture flows on small screens
 
-Important edge cases the redesign must preserve:
+Important edge cases the design must preserve:
 
 - Existing current-day journal writing should resume instead of unnecessarily creating duplicates
 - Food entries may begin uncategorized and be organized later
@@ -286,12 +286,12 @@ Important edge cases the redesign must preserve:
 
 ### Must Not Assume
 
-- The current page boundaries are correct
-- The current navigation structure is correct
-- The current browse-versus-create separation is correct
-- The current sidebars, top bars, bottom bars, split views, or drawers should be preserved
-- The current terminology is final
-- The current workflows are ideal
+- Page boundaries are intentionally unspecified by this brief
+- Navigation structure is intentionally unspecified by this brief
+- Browse-versus-create separation is intentionally unspecified by this brief
+- Specific layout patterns such as sidebars, top bars, bottom bars, split views, or drawers are not prescribed
+- Terminology may be reconsidered
+- Workflow grouping may be reconsidered
 
 ### Should Optimize For
 
@@ -309,11 +309,11 @@ Important edge cases the redesign must preserve:
 - Offline states should not feel like data loss
 - Privacy messaging should build confidence without overwhelming the experience
 
-## Current Scope Boundaries
+## Scope Boundaries
 
-The redesign should preserve current implemented scope.
+The design should preserve the product scope described in this brief.
 
-Included in current scope:
+Included in scope:
 
 - Journal
 - Food
@@ -326,7 +326,7 @@ Included in current scope:
 - Language support
 - Installable PWA support
 
-This section is meant to prevent accidental over-design into unsupported domains, not to limit structural redesign inside the existing product surface.
+This section is meant to prevent accidental over-design into unsupported domains, not to limit structural design decisions inside the supported product surface.
 
 ## Deliverables Expected From Design
 
@@ -349,19 +349,19 @@ Recommended artifacts:
 
 ## Explicit Freedom To Rethink Structure
 
-This brief is intentionally structured around capabilities and user jobs rather than current screens.
+This brief is intentionally structured around capabilities and user jobs rather than predefined screens.
 
 The designer should:
 
 - Invent the information architecture from scratch
 - Propose new navigation patterns if they improve the experience
 - Reorganize flows if that improves clarity and speed
-- Combine or split experiences differently from the current implementation when justified
+- Combine or split experiences differently when justified
 
 The designer should not:
 
-- Mirror the current UI by default
-- Treat current routes or page structure as design requirements
-- Assume current layout choices are correct simply because they exist
+- Infer hidden structural requirements that are not stated in this brief
+- Treat any route, page, or screen map as implied by this document
+- Assume any particular layout pattern is preferred unless it is explicitly required here
 
 The only hard requirement is preserving the full implemented functionality and the core product constraints described above.
