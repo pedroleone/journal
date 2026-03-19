@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { TopBar } from "@/components/dashboard/top-bar";
 import { QuadrantGrid } from "@/components/dashboard/quadrant-grid";
-import { QuadrantCard } from "@/components/dashboard/quadrant-card";
+import { JournalQuadrant } from "@/components/dashboard/journal-quadrant";
+import { FoodQuadrant } from "@/components/dashboard/food-quadrant";
+import { NotesQuadrant } from "@/components/dashboard/notes-quadrant";
+import { LibraryQuadrant } from "@/components/dashboard/library-quadrant";
 
 function parseDate(param: string | null): Date {
   if (param) {
@@ -34,26 +37,10 @@ export function DashboardHome() {
     <div className="flex h-dvh flex-col">
       <TopBar date={date} onDateChange={handleDateChange} />
       <QuadrantGrid>
-        <QuadrantCard domain="journal" label="Journal" href="/journal/browse">
-          <p className="text-sm text-muted-foreground">
-            Journal quadrant — coming in Phase 2
-          </p>
-        </QuadrantCard>
-        <QuadrantCard domain="food" label="Food" href="/food/browse">
-          <p className="text-sm text-muted-foreground">
-            Food quadrant — coming in Phase 2
-          </p>
-        </QuadrantCard>
-        <QuadrantCard domain="notes" label="Notes" href="/notes/browse">
-          <p className="text-sm text-muted-foreground">
-            Notes quadrant — coming in Phase 2
-          </p>
-        </QuadrantCard>
-        <QuadrantCard domain="library" label="Library" href="/library/browse">
-          <p className="text-sm text-muted-foreground">
-            Library quadrant — coming in Phase 2
-          </p>
-        </QuadrantCard>
+        <JournalQuadrant date={date} />
+        <FoodQuadrant date={date} />
+        <NotesQuadrant />
+        <LibraryQuadrant />
       </QuadrantGrid>
     </div>
   );
