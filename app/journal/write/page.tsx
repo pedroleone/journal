@@ -47,7 +47,7 @@ interface DateEntry {
 
 interface JournalEntryResponse {
   id: string;
-  source: "web" | "telegram";
+  source: "web";
   year: number;
   month: number;
   day: number;
@@ -114,14 +114,6 @@ export default function WritePage() {
       if (!res.ok) throw new Error("Failed to load entry");
 
       const entry: JournalEntryResponse = await res.json();
-      if (entry.source !== "web") {
-        setEntryError(t.journal.telegramCannotEdit);
-        setContent("");
-        setImageKeys(entry.images ?? []);
-        setLoadedEntryId(null);
-        return;
-      }
-
       setContent(entry.content);
       setDate(new Date(entry.year, entry.month - 1, entry.day));
       setLoadedEntryId(id);
@@ -145,12 +137,12 @@ export default function WritePage() {
       const res = await fetch(`/api/entries?${params}`);
       if (!res.ok) return;
       const entries: JournalEntryResponse[] = await res.json();
-      const webEntry = entries.find((entry) => entry.source === "web");
+      const entry = entries[0];
 
-      if (webEntry) {
-        setContent(webEntry.content);
-        setLoadedEntryId(webEntry.id);
-        setImageKeys(webEntry.images ?? []);
+      if (entry) {
+        setContent(entry.content);
+        setLoadedEntryId(entry.id);
+        setImageKeys(entry.images ?? []);
       } else {
         setContent("");
         setLoadedEntryId(null);

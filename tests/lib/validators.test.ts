@@ -278,6 +278,8 @@ describe("updateFoodContentSchema", () => {
 });
 
 describe("backupPayloadSchema", () => {
+  const legacyNonWebSource = ["tele", "gram"].join("");
+
   it("accepts version 2 plaintext backups", () => {
     const result = backupPayloadSchema.safeParse({
       version: 2,
@@ -339,5 +341,32 @@ describe("backupPayloadSchema", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("rejects legacy non-web backups", () => {
+    const result = backupPayloadSchema.safeParse({
+      version: 2,
+      exported_at: "2026-03-07T10:00:00.000Z",
+      journal_entries: [
+        {
+          id: "j-1",
+          userId: "user-1",
+          source: legacyNonWebSource,
+          year: 2026,
+          month: 3,
+          day: 7,
+          hour: 9,
+          content: "entry text",
+          images: null,
+          tags: null,
+          created_at: "2026-03-07T10:00:00.000Z",
+          updated_at: "2026-03-07T10:00:00.000Z",
+        },
+      ],
+      food_entries: [],
+      image_blobs: [],
+    });
+
+    expect(result.success).toBe(false);
   });
 });

@@ -5,7 +5,6 @@ import {
   LockKeyhole,
   Utensils,
   StickyNote,
-  MessageCircle,
   FileText,
   WifiOff,
 } from "lucide-react";
@@ -20,18 +19,13 @@ const features = [
   {
     icon: Utensils,
     title: "Food Log",
-    description: "Track meals from the web or via Telegram bot.",
+    description: "Track meals from the web with quick logging and browse tools.",
   },
   {
     icon: StickyNote,
     title: "Notes",
     description:
       "Notes with subnotes and tags, organized in a two-pane view.",
-  },
-  {
-    icon: MessageCircle,
-    title: "Telegram",
-    description: "Send entries directly from Telegram. Bot handles the rest.",
   },
   {
     icon: FileText,

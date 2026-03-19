@@ -21,7 +21,6 @@ Use `pnpm` for all package management and scripts.
 - Web entries must be end-to-end encrypted.
 - The server must never store plaintext web journal content.
 - Images must be encrypted before upload and stored in R2 as encrypted blobs.
-- Telegram entries are the only content allowed to be encrypted server-side.
 
 ## Data
 

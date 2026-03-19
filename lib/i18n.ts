@@ -27,7 +27,6 @@ export type Translations = {
     offlineChanges: string;
     offlineBrowse: string;
     reconnectToLoad: string;
-    telegramCannotEdit: string;
     failedToLoadEntry: string;
     failedToLoadJournalEntry: string;
     connectionRequired: string;
@@ -175,18 +174,6 @@ export type Translations = {
     restoring: string;
     restoreFailed: string;
     importedResult: (journal: number, food: number, images: number) => string;
-    telegram: string;
-    telegramDesc: string;
-    connected: string;
-    disconnect: string;
-    waitingForConfirmation: string;
-    generateNewCode: string;
-    connectTelegram: string;
-    telegramCommands: string;
-    telegramCmd1: string;
-    telegramCmd2: string;
-    telegramCmd3: string;
-    telegramCmd4: string;
     loading: string;
     language: string;
     languageDesc: string;
@@ -242,7 +229,6 @@ export const en: Translations = {
     offlineChanges: "You are offline. Changes stay visible here but are not being saved.",
     offlineBrowse: "You are offline. Reconnect to load journal dates and entries.",
     reconnectToLoad: "Reconnect to load your journal.",
-    telegramCannotEdit: "Telegram entries cannot be edited from write mode.",
     failedToLoadEntry: "Failed to load entry",
     failedToLoadJournalEntry: "Failed to load journal entry",
     connectionRequired: "Connection required",
@@ -382,8 +368,7 @@ export const en: Translations = {
   settings: {
     settings: "Settings",
     journalControls: "Journal controls",
-    description:
-      "Export backups, restore from a backup file, and keep Telegram commands close at hand.",
+    description: "Export backups, restore from a backup file, and adjust how the app opens.",
     dataExport: "Data export",
     dataExportDesc: "Choose text export formats or download a full backup JSON file.",
     openExportTools: "Open export tools",
@@ -394,18 +379,6 @@ export const en: Translations = {
     restoreFailed: "Restore failed.",
     importedResult: (journal, food, images) =>
       `Imported ${journal} journal, ${food} food, ${images} images.`,
-    telegram: "Telegram",
-    telegramDesc: "Connect your Telegram account to log food entries from the bot.",
-    connected: "Connected",
-    disconnect: "Disconnect",
-    waitingForConfirmation: "Waiting for confirmation\u2026",
-    generateNewCode: "Generate new code",
-    connectTelegram: "Connect Telegram",
-    telegramCommands: "Telegram commands",
-    telegramCmd1: "/food saves a food entry.",
-    telegramCmd2: "Messages without a command also save as food entries.",
-    telegramCmd3: "/journal, /idea, and /note are intentionally unsupported.",
-    telegramCmd4: "Photos can be sent with or without /food and land in uncategorized food.",
     loading: "Loading\u2026",
     language: "Language",
     languageDesc: "Choose your preferred language.",
@@ -463,8 +436,6 @@ export const ptBr: Translations = {
     offlineBrowse:
       "Voc\u00ea est\u00e1 offline. Reconecte para carregar as datas e entradas do di\u00e1rio.",
     reconnectToLoad: "Reconecte para carregar seu di\u00e1rio.",
-    telegramCannotEdit:
-      "Entradas do Telegram n\u00e3o podem ser editadas no modo de escrita.",
     failedToLoadEntry: "Falha ao carregar entrada",
     failedToLoadJournalEntry: "Falha ao carregar entrada do di\u00e1rio",
     connectionRequired: "Conex\u00e3o necess\u00e1ria",
@@ -605,7 +576,7 @@ export const ptBr: Translations = {
     settings: "Configura\u00e7\u00f5es",
     journalControls: "Controles do di\u00e1rio",
     description:
-      "Exporte backups, restaure de um arquivo de backup e mantenha os comandos do Telegram \u00e0 m\u00e3o.",
+      "Exporte backups, restaure de um arquivo de backup e ajuste como o app abre.",
     dataExport: "Exportar dados",
     dataExportDesc:
       "Escolha formatos de exporta\u00e7\u00e3o ou baixe um arquivo JSON de backup completo.",
@@ -617,22 +588,6 @@ export const ptBr: Translations = {
     restoreFailed: "Falha na restaura\u00e7\u00e3o.",
     importedResult: (journal, food, images) =>
       `Importados ${journal} entradas do di\u00e1rio, ${food} de alimenta\u00e7\u00e3o, ${images} imagens.`,
-    telegram: "Telegram",
-    telegramDesc:
-      "Conecte sua conta do Telegram para registrar entradas de alimenta\u00e7\u00e3o pelo bot.",
-    connected: "Conectado",
-    disconnect: "Desconectar",
-    waitingForConfirmation: "Aguardando confirma\u00e7\u00e3o\u2026",
-    generateNewCode: "Gerar novo c\u00f3digo",
-    connectTelegram: "Conectar Telegram",
-    telegramCommands: "Comandos do Telegram",
-    telegramCmd1: "/food salva uma entrada de alimenta\u00e7\u00e3o.",
-    telegramCmd2:
-      "Mensagens sem um comando tamb\u00e9m s\u00e3o salvas como entradas de alimenta\u00e7\u00e3o.",
-    telegramCmd3:
-      "/journal, /idea e /note n\u00e3o s\u00e3o suportados intencionalmente.",
-    telegramCmd4:
-      "Fotos podem ser enviadas com ou sem /food e ficam em alimenta\u00e7\u00e3o n\u00e3o categorizada.",
     loading: "Carregando\u2026",
     language: "Idioma",
     languageDesc: "Escolha seu idioma preferido.",

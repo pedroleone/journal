@@ -215,7 +215,7 @@ const backupImageBlobSchema = z.object({
 const backupJournalEntrySchema = z.object({
   id: z.string().min(1),
   userId: z.string().min(1),
-  source: z.enum(["web", "telegram"]),
+  source: z.literal("web"),
   year: z.number().int(),
   month: z.number().int().min(1).max(12),
   day: z.number().int().min(1).max(31),
@@ -230,7 +230,7 @@ const backupJournalEntrySchema = z.object({
 const backupFoodEntrySchema = z.object({
   id: z.string().min(1),
   userId: z.string().min(1),
-  source: z.enum(["web", "telegram"]),
+  source: z.literal("web"),
   year: z.number().int(),
   month: z.number().int().min(1).max(12),
   day: z.number().int().min(1).max(31),

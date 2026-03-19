@@ -40,7 +40,7 @@ interface DateCount {
 
 interface RawFoodEntry {
   id: string;
-  source: "web" | "telegram";
+  source: "web";
   year: number;
   month: number;
   day: number;
@@ -54,7 +54,7 @@ interface RawFoodEntry {
 
 interface FoodEntryView {
   id: string;
-  source: "web" | "telegram";
+  source: "web";
   year: number;
   month: number;
   day: number;

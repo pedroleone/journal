@@ -13,7 +13,7 @@ import type { MealSlot } from "@/lib/food";
 
 interface FoodEntry {
   id: string;
-  source: "web" | "telegram";
+  source: "web";
   year: number;
   month: number;
   day: number;

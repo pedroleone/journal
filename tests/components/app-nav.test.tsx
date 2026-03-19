@@ -126,7 +126,6 @@ describe("AppNav", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue([
-        { id: "telegram-1", source: "telegram" },
         { id: "web-1", source: "web" },
       ]),
     });

@@ -10,7 +10,7 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 
 interface Entry {
   id: string;
-  source: "web" | "telegram";
+  source: "web";
   year: number;
   month: number;
   day: number;
@@ -62,7 +62,7 @@ export default function EntryPage({
   }, [id, isOnline]);
 
   async function handleSave() {
-    if (!entry || !isOnline || entry.source !== "web") return;
+    if (!entry || !isOnline) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/entries/${id}`, {
@@ -168,7 +168,7 @@ export default function EntryPage({
             <Button
               variant="outline"
               onClick={() => setEditing(true)}
-              disabled={!isOnline || entry.source !== "web"}
+              disabled={!isOnline}
             >
               Edit
             </Button>

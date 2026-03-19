@@ -144,9 +144,7 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
   }
 
   const isDayView = day != null;
-  const editableEntry = isDayView
-    ? (entries.find((entry) => entry.source === "web") ?? null)
-    : null;
+  const editableEntry = isDayView ? entries[0] ?? null : null;
 
   // For month/year views, group entries by day
   if (!isDayView) {

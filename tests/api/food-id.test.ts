@@ -249,7 +249,7 @@ describe("DELETE /api/food/[id]", () => {
     const entry = {
       id: "food-1",
       userId: "user-1",
-      source: "telegram",
+      source: "web",
       year: 2026,
       month: 3,
       day: 7,

@@ -11,7 +11,7 @@ import { useLocale } from "@/hooks/use-locale";
 
 interface FoodEntry {
   id: string;
-  source: "web" | "telegram";
+  source: "web";
   content: string;
   logged_at: string;
   images: string[] | null;
@@ -19,7 +19,7 @@ interface FoodEntry {
 
 interface RecentEntry {
   id: string;
-  source: "web" | "telegram";
+  source: "web";
   content: string;
   logged_at: string;
   images: string[] | null;

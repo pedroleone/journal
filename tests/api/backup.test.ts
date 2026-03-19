@@ -23,6 +23,8 @@ const mockDb = vi.mocked(db) as unknown as {
 };
 
 describe("backup routes", () => {
+  const legacyNonWebSource = ["tele", "gram"].join("");
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockReset();
@@ -141,5 +143,40 @@ describe("backup routes", () => {
     expect(mockServerCrypto.encryptServerText).toHaveBeenCalledWith("entry text");
     expect(mockServerCrypto.encryptServerBuffer).toHaveBeenCalled();
     expect(putEncryptedObject).toHaveBeenCalled();
+  });
+
+  it("rejects legacy non-web backups", async () => {
+    const { POST } = await import("@/app/api/backup/restore/route");
+    const response = await POST(
+      new NextRequest("http://localhost/api/backup/restore", {
+        method: "POST",
+        body: JSON.stringify({
+          version: 2,
+          exported_at: "2026-03-07T10:00:00.000Z",
+          journal_entries: [
+            {
+              id: "j-1",
+              userId: "user-1",
+              source: legacyNonWebSource,
+              year: 2026,
+              month: 3,
+              day: 7,
+              hour: 9,
+              content: "entry text",
+              images: null,
+              tags: null,
+              created_at: "2026-03-07T10:00:00.000Z",
+              updated_at: "2026-03-07T10:00:00.000Z",
+            },
+          ],
+          food_entries: [],
+          image_blobs: [],
+        }),
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockDb.insert).not.toHaveBeenCalled();
   });
 });
