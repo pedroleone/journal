@@ -71,7 +71,6 @@ export async function decryptServerBuffer(ciphertext: Uint8Array, iv: string): P
 **`app/api/food/route.ts`**
 - POST: receive `content`, encrypt, store
 - GET: decrypt each row, return `content`
-- Telegram webhook (`app/api/telegram/webhook/route.ts`): already uses `encryptServerText` — no changes needed
 
 ## Step 6 — API routes: images
 

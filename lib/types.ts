@@ -1,6 +1,6 @@
 import type { MealSlot } from "./food";
 
-export type EntrySource = "web" | "telegram";
+export type EntrySource = "web";
 
 export type ImageOwnerKind = "journal" | "food" | "note" | "note_subnote" | "library" | "library_note";
 

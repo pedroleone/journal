@@ -8,7 +8,6 @@ Encrypted personal journal web app built with Next.js, TypeScript, Drizzle, Turs
 - Google login creates the server session and opens the app directly.
 - All content (journal entries, notes, food log) is encrypted server-side before storage using AES-GCM.
 - Images are processed client-side (resized/re-encoded), then encrypted server-side before being stored in R2.
-- Telegram entries are encrypted server-side before persistence.
 - `SERVER_ENCRYPTION_SECRET` is the single key used for all server-side encryption.
 
 ## Environment Variables
@@ -27,9 +26,6 @@ R2_ENDPOINT="https://<account>.r2.cloudflarestorage.com"
 R2_ACCESS_KEY="replace-me"
 R2_SECRET_KEY="replace-me"
 R2_BUCKET="journal-images"
-TELEGRAM_BOT_TOKEN="replace-me"
-TELEGRAM_CHAT_ID="replace-me"
-TELEGRAM_WEBHOOK_SECRET="replace-me"
 ```
 
 Configure Google OAuth redirect URIs:

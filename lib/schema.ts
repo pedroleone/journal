@@ -12,9 +12,6 @@ export const users = sqliteTable(
     id: text("id").primaryKey(),
     googleSub: text("google_sub").notNull(),
     email: text("email").notNull(),
-    telegramChatId: text("telegram_chat_id").unique(),
-    telegramLinkToken: text("telegram_link_token"),
-    telegramLinkTokenExpiresAt: text("telegram_link_token_expires_at"),
     created_at: text("created_at").notNull(),
     updated_at: text("updated_at").notNull(),
   },
@@ -32,7 +29,7 @@ export const entries = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     source: text("source", {
-      enum: ["web", "telegram"],
+      enum: ["web"],
     }).notNull(),
     year: integer("year").notNull(),
     month: integer("month").notNull(),
@@ -69,7 +66,7 @@ export const foodEntries = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     source: text("source", {
-      enum: ["web", "telegram"],
+      enum: ["web"],
     }).notNull(),
     year: integer("year").notNull(),
     month: integer("month").notNull(),

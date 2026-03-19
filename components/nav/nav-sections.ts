@@ -7,7 +7,7 @@ import type { Mode } from "@/lib/mode-context";
 
 interface EntrySummary {
   id: string;
-  source: "web" | "telegram";
+  source: "web";
 }
 
 type NavLabelKey = "journal" | "food" | "notes" | "library";
@@ -90,8 +90,7 @@ export function useCreateHandlers(): CreateHandlers {
       const response = await fetch(`/api/entries?${params.toString()}`);
       if (response.ok) {
         const entries: EntrySummary[] = await response.json();
-        const existingWebEntry = entries.find((entry) => entry.source === "web");
-        const existingEntry = existingWebEntry ?? entries[0];
+        const existingEntry = entries[0];
         if (existingEntry) {
           router.push(`/journal/write?entry=${existingEntry.id}`);
           return;
