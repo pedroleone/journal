@@ -1,10 +1,10 @@
-# Library Browse Filter Toggle Implementation Plan
+# Library Browse Browse-First Controls Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make advanced library filters optional while keeping only search visible in a smaller sticky header, with type controls moved into the advanced panel across desktop and mobile.
+**Goal:** Move `library/browse` actions into the shared breadcrumb bar and hide search/filters behind a browse-first filter panel.
 
-**Architecture:** Keep URL-backed filter state unchanged and add only local presentation state for whether the advanced filter panel is visible. Reduce the sticky region in `LibraryBrowse` to search plus the filter toggle, then render `FilterBar` conditionally in normal document flow with type pills included inside that panel so mobile browsing gets more usable vertical space.
+**Architecture:** Add a generic breadcrumb-actions registration path owned by the dashboard shell so pages can supply compact navbar actions without route-specific shell logic. Then update `LibraryBrowse` to register `Filters` and `+` in shared chrome while rendering search, type, and the rest of the filters only inside the inline filter panel.
 
 **Tech Stack:** Next.js App Router, React 19, TypeScript, Vitest, Testing Library, Tailwind CSS
 
@@ -12,112 +12,147 @@
 
 ## File Structure
 
+- Create: `components/dashboard/breadcrumb-actions.tsx`
+  - Own the generic client-side action registration store and hooks.
+- Modify: `components/dashboard/dashboard-shell.tsx`
+  - Wrap shell chrome in the breadcrumb-actions provider.
+- Modify: `components/dashboard/breadcrumb-bar.tsx`
+  - Render optional right-side actions.
 - Modify: `components/library/library-browse.tsx`
-  - Own the advanced-filter visibility state and layout changes.
+  - Register breadcrumb actions, move search into the filter panel, remove page-local action buttons.
 - Modify: `components/library/filter-bar.tsx`
-  - Host type pills inside the advanced panel while preserving existing filter semantics.
+  - Keep the panel focused on type/status/metadata filters and chips.
 - Modify: `tests/components/library/library-browse.test.tsx`
-  - Add regression coverage for the new toggle and default closed state.
+  - Verify the library page uses shared chrome actions and hidden search.
+- Create: `tests/components/dashboard/dashboard-shell.test.tsx`
+  - Verify shared breadcrumb actions render only when registered.
 
-### Task 1: Add Regression Coverage For Advanced Filter Visibility
+### Task 1: Add Failing Tests For Shared Breadcrumb Actions
 
 **Files:**
-- Create: `tests/components/library/library-browse.test.tsx`
+- Create: `tests/components/dashboard/dashboard-shell.test.tsx`
+- Modify: `tests/components/library/library-browse.test.tsx`
+- Reference: `components/dashboard/dashboard-shell.tsx`
 - Reference: `components/library/library-browse.tsx`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing shell test**
 
 ```tsx
-it("keeps advanced filters hidden by default and reveals them on toggle", () => {
-  renderLibraryBrowse();
+it("renders breadcrumb actions supplied by a child page", () => {
+  render(
+    <DashboardShell>
+      <ActionProbe />
+    </DashboardShell>,
+  );
 
-  expect(screen.queryByText(/all statuses/i)).toBeNull();
-  expect(screen.queryByRole("button", { name: /books/i })).toBeNull();
-
-  fireEvent.click(screen.getByRole("button", { name: /filters/i }));
-
-  expect(screen.getByText(/all statuses/i)).toBeTruthy();
-  expect(screen.getByRole("button", { name: /books/i })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Filters" })).toBeTruthy();
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 2: Run the shell test to verify it fails**
 
-Run: `pnpm test tests/components/library/library-browse.test.tsx`
-Expected: FAIL because the filter panel renders immediately and no toggle exists yet.
+Run: `pnpm test tests/components/dashboard/dashboard-shell.test.tsx`
+Expected: FAIL because the shell has no action registration path yet.
 
-- [ ] **Step 3: Add a second failing test for hiding the panel without clearing filters**
+- [ ] **Step 3: Update the library browse test to require shared-chrome controls**
 
 ```tsx
-it("hides the panel without clearing applied filters", () => {
-  renderLibraryBrowse({
-    filters: { ...EMPTY_FILTERS, status: "finished" },
-  });
+it("keeps search hidden until the breadcrumb Filters action opens the panel", () => {
+  renderBrowseInShell();
 
-  fireEvent.click(screen.getByRole("button", { name: /filters/i }));
-  fireEvent.click(screen.getByRole("button", { name: /filters/i }));
+  expect(screen.queryByPlaceholderText("Search library...")).toBeNull();
 
-  expect(screen.queryByText(/all statuses/i)).toBeNull();
-  expect(screen.getByText(/1 item/i)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Filters" }));
+
+  expect(screen.getByPlaceholderText("Search library...")).toBeTruthy();
 });
 ```
 
-- [ ] **Step 4: Run test to verify it fails**
+- [ ] **Step 4: Run the browse test to verify it fails**
 
 Run: `pnpm test tests/components/library/library-browse.test.tsx`
-Expected: FAIL because there is still no toggle-driven hidden state.
+Expected: FAIL because the page still owns the top controls and search is still visible.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add tests/components/library/library-browse.test.tsx
-git commit -m "test: cover library browse filter toggle behavior"
+git add tests/components/dashboard/dashboard-shell.test.tsx tests/components/library/library-browse.test.tsx
+git commit -m "test: cover breadcrumb action slot for library browse"
 ```
 
-### Task 2: Implement The Toggleable Advanced Filter Panel
+### Task 2: Implement Generic Breadcrumb Actions
 
 **Files:**
-- Modify: `components/library/library-browse.tsx`
-- Modify: `components/library/filter-bar.tsx`
-- Test: `tests/components/library/library-browse.test.tsx`
+- Create: `components/dashboard/breadcrumb-actions.tsx`
+- Modify: `components/dashboard/dashboard-shell.tsx`
+- Modify: `components/dashboard/breadcrumb-bar.tsx`
+- Test: `tests/components/dashboard/dashboard-shell.test.tsx`
 
 - [ ] **Step 1: Write the minimal implementation**
 
 Implementation notes:
-- Add `const [filtersOpen, setFiltersOpen] = useState(false)`.
-- Keep only search and the filters toggle in the sticky wrapper.
-- Add a toggle button with a stable accessible name including `Filters`.
-- Move type pills into `FilterBar` as the first control group.
-- Move `FilterBar` below the sticky header and render it only when `filtersOpen` is true.
-- Include active type in the hidden-filter count shown on the toggle.
-- Adjust sticky offset classes so mobile uses less top spacing than desktop.
+- Create a small store-backed provider for breadcrumb actions.
+- Expose one hook for pages to register actions and one hook for the breadcrumb bar to read them.
+- Keep the API generic so pages pass `ReactNode`, not route-specific config.
+- Clear actions on unmount.
 
-- [ ] **Step 2: Run the focused test**
+- [ ] **Step 2: Run the shell test**
+
+Run: `pnpm test tests/components/dashboard/dashboard-shell.test.tsx`
+Expected: PASS
+
+- [ ] **Step 3: Run related shell coverage**
+
+Run: `pnpm test tests/components/dashboard/dashboard-shell.test.tsx tests/components/dashboard/quadrant-card.test.tsx`
+Expected: PASS
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add components/dashboard/breadcrumb-actions.tsx components/dashboard/dashboard-shell.tsx components/dashboard/breadcrumb-bar.tsx tests/components/dashboard/dashboard-shell.test.tsx
+git commit -m "feat: add reusable breadcrumb actions"
+```
+
+### Task 3: Move Library Browse Controls Into Shared Chrome
+
+**Files:**
+- Modify: `components/library/library-browse.tsx`
+- Modify: `components/library/filter-bar.tsx`
+- Modify: `tests/components/library/library-browse.test.tsx`
+- Optional Modify: `app/library/browse/page.tsx`
+
+- [ ] **Step 1: Write the minimal implementation**
+
+Implementation notes:
+- Register `Filters` and `+` through the breadcrumb-actions hook.
+- Remove page-local top action buttons.
+- Move search into the inline filter panel and keep it hidden by default.
+- Keep type pills inside the filter panel.
+- Preserve URL-backed filtering behavior and `+` routing.
+
+- [ ] **Step 2: Run the focused browse test**
 
 Run: `pnpm test tests/components/library/library-browse.test.tsx`
 Expected: PASS
 
-- [ ] **Step 3: Run existing related coverage**
+- [ ] **Step 3: Run related coverage**
 
-Run: `pnpm test tests/app/library/detail-page.test.tsx tests/components/library/library-browse.test.tsx`
+Run: `pnpm test tests/components/dashboard/dashboard-shell.test.tsx tests/components/library/library-browse.test.tsx tests/app/library/detail-page.test.tsx`
 Expected: PASS
 
-- [ ] **Step 4: Refine spacing only if needed**
+- [ ] **Step 4: Run lint on touched files**
 
-Check for:
-- sticky header height feels reasonable on mobile
-- no doubled border or awkward gap between sticky controls and panel
-- no regression to type/search interaction
-- type still switches grouped view to flat view when selected
+Run: `pnpm lint components/dashboard/breadcrumb-actions.tsx components/dashboard/dashboard-shell.tsx components/dashboard/breadcrumb-bar.tsx components/library/library-browse.tsx components/library/filter-bar.tsx tests/components/dashboard/dashboard-shell.test.tsx tests/components/library/library-browse.test.tsx`
+Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add components/library/library-browse.tsx components/library/filter-bar.tsx tests/components/library/library-browse.test.tsx
-git commit -m "feat: add toggleable library browse filters"
+git add components/dashboard/breadcrumb-actions.tsx components/dashboard/dashboard-shell.tsx components/dashboard/breadcrumb-bar.tsx components/library/library-browse.tsx components/library/filter-bar.tsx tests/components/dashboard/dashboard-shell.test.tsx tests/components/library/library-browse.test.tsx
+git commit -m "feat: move library browse controls into shared chrome"
 ```
 
-### Task 3: Full Verification
+### Task 4: Full Verification
 
 **Files:**
 - Verify only
@@ -127,22 +162,18 @@ git commit -m "feat: add toggleable library browse filters"
 Run: `pnpm test`
 Expected: PASS
 
-- [ ] **Step 2: Run lint on touched files if needed**
-
-Run: `pnpm lint components/library/library-browse.tsx tests/components/library/library-browse.test.tsx`
-Expected: PASS
-
-- [ ] **Step 3: Manual verification**
+- [ ] **Step 2: Manual verification**
 
 Check in browser:
-- advanced filters are closed on first load
-- toggle opens and closes reliably
-- active filters still affect results when panel is hidden
-- mobile viewport shows more content below the sticky controls
+- `Filters` and `+` appear in the breadcrumb bar on `library/browse`
+- search is hidden until filters are opened
+- filter panel opens and closes correctly
+- active filters still affect results when hidden
+- mobile breadcrumb row still fits comfortably
 
-- [ ] **Step 4: Commit verification-ready state**
+- [ ] **Step 3: Commit verification-ready state**
 
 ```bash
-git add components/library/library-browse.tsx components/library/filter-bar.tsx tests/components/library/library-browse.test.tsx
-git commit -m "chore: verify library browse filter toggle"
+git add components/dashboard/breadcrumb-actions.tsx components/dashboard/dashboard-shell.tsx components/dashboard/breadcrumb-bar.tsx components/library/library-browse.tsx components/library/filter-bar.tsx tests/components/dashboard/dashboard-shell.test.tsx tests/components/library/library-browse.test.tsx
+git commit -m "chore: verify shared library browse controls"
 ```

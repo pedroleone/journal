@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { useBreadcrumbActions } from "./breadcrumb-actions";
 import type { Mode } from "@/lib/mode-context";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
@@ -28,6 +29,7 @@ interface BreadcrumbBarProps {
 
 export function BreadcrumbBar({ domain, date }: BreadcrumbBarProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const actions = useBreadcrumbActions();
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-4 dark:bg-[var(--bg-topbar)]">
@@ -51,6 +53,7 @@ export function BreadcrumbBar({ domain, date }: BreadcrumbBarProps) {
           </span>
         </>
       )}
+      {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
     </header>
   );
 }

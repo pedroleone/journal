@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
 import type { MediaStatus, MediaType } from "@/lib/library";
-import { MEDIA_STATUSES } from "@/lib/library";
+import { MEDIA_STATUSES, MEDIA_TYPES } from "@/lib/library";
 
 export interface LibraryFilters {
   type: MediaType | null;
@@ -48,6 +48,14 @@ const STATUS_COLORS: Record<MediaStatus, string> = {
 
 export function FilterBar({ filters, onFilterChange, genres, reactions, platforms }: FilterBarProps) {
   const { t } = useLocale();
+  const typeLabels: Record<MediaType, string> = {
+    book: t.library.book,
+    album: t.library.album,
+    movie: t.library.movie,
+    game: t.library.game,
+    video: t.library.video,
+    misc: t.library.misc,
+  };
 
   const statusLabels: Record<MediaStatus, string> = {
     backlog: t.library.backlog,
@@ -59,6 +67,7 @@ export function FilterBar({ filters, onFilterChange, genres, reactions, platform
   const showPlatform = !filters.type || filters.type === "game";
 
   const activeChips: { label: string; key: keyof LibraryFilters }[] = [];
+  if (filters.type) activeChips.push({ label: typeLabels[filters.type], key: "type" });
   if (filters.status) activeChips.push({ label: statusLabels[filters.status], key: "status" });
   if (filters.genre) activeChips.push({ label: filters.genre, key: "genre" });
   if (filters.reaction) activeChips.push({ label: filters.reaction, key: "reaction" });
@@ -67,6 +76,34 @@ export function FilterBar({ filters, onFilterChange, genres, reactions, platform
 
   return (
     <div className="space-y-2 border-b border-border/60 px-3 py-2">
+      <div className="flex flex-wrap gap-1">
+        <button
+          onClick={() => onFilterChange("type", null)}
+          className={cn(
+            "rounded-md px-2 py-1 text-xs transition-colors",
+            !filters.type
+              ? "bg-secondary font-medium text-foreground"
+              : "text-muted-foreground hover:bg-secondary/50",
+          )}
+        >
+          {t.library.all}
+        </button>
+        {MEDIA_TYPES.map((type) => (
+          <button
+            key={type}
+            onClick={() => onFilterChange("type", filters.type === type ? null : type)}
+            className={cn(
+              "rounded-md px-2 py-1 text-xs transition-colors",
+              filters.type === type
+                ? "bg-secondary font-medium text-foreground"
+                : "text-muted-foreground hover:bg-secondary/50",
+            )}
+          >
+            {typeLabels[type]}
+          </button>
+        ))}
+      </div>
+
       {/* Status pills */}
       <div className="flex flex-wrap gap-1">
         <button

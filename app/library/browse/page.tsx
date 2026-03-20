@@ -93,22 +93,11 @@ export default function LibraryBrowsePage() {
     router.replace(qs ? `/library/browse?${qs}` : "/library/browse");
   }
 
-  async function handleQuickAdd(type: MediaType, title: string, creator?: string) {
-    const res = await fetch("/api/library", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, title, ...(creator && { creator }) }),
-    });
-    if (!res.ok) return;
-    await loadItems(filters);
-  }
-
   return (
     <LibraryBrowse
       items={items}
       filters={filters}
       onFilterChange={setFilter}
-      onQuickAdd={handleQuickAdd}
       genres={genres}
       reactions={reactions}
       platforms={platforms}

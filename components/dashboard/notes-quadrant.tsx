@@ -34,7 +34,6 @@ export function NotesQuadrant() {
         <Link
           href="/notes/browse?new=1"
           className="rounded bg-[var(--notes-dim)] px-2 py-0.5 text-xs font-medium text-[var(--notes)] hover:bg-[var(--notes)]/25"
-          onClick={(e) => e.stopPropagation()}
         >
           <Plus className="mr-1 inline-block h-3 w-3" />
           New

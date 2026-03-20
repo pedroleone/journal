@@ -46,7 +46,6 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
         <Link
           href="/journal/write"
           className="rounded bg-[var(--journal-dim)] px-2 py-0.5 text-xs font-medium text-[var(--journal)] hover:bg-[var(--journal)]/25"
-          onClick={(e) => e.stopPropagation()}
         >
           <Pen className="mr-1 inline-block h-3 w-3" />
           Write

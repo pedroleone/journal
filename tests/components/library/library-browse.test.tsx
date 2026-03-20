@@ -1,0 +1,204 @@
+// @vitest-environment jsdom
+
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { LibraryBrowse, type BrowseItem } from "@/components/library/library-browse";
+import { EMPTY_FILTERS, type LibraryFilters } from "@/components/library/filter-bar";
+
+const push = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push }),
+  usePathname: () => "/library/browse",
+}));
+
+vi.mock("@/hooks/use-locale", () => ({
+  useLocale: () => ({
+    t: {
+      library: {
+        search: "Search library...",
+        empty: "No library items yet.",
+        noMatch: "No items match your search.",
+        newItem: "+ New Item",
+        selectOrCreate: "Select or create",
+        all: "All",
+        book: "Books",
+        album: "Albums",
+        movie: "Movies",
+        game: "Games",
+        video: "Videos",
+        misc: "Misc",
+        backlog: "Backlog",
+        inProgress: "In Progress",
+        finished: "Finished",
+        dropped: "Dropped",
+        title: "Title",
+        creator: "Creator",
+        url: "URL",
+        rating: "Rating",
+        reactions: "Reactions",
+        genres: "Genres",
+        status: "Status",
+        type: "Type",
+        thoughts: "Thoughts",
+        addThought: "Add thought",
+        writeThought: "Write thought",
+        save: "Save",
+        delete: "Delete",
+        cancel: "Cancel",
+        back: "Back",
+        loading: "Loading...",
+        saving: "Saving...",
+        adding: "Adding...",
+        platform: "Platform",
+        pages: "Pages",
+        duration: "Duration",
+        channel: "Channel",
+        deleteItem: "Delete item",
+        filters: "Filters",
+        clearFilters: "Clear filters",
+        allStatuses: "All statuses",
+        allGenres: "All genres",
+        allReactions: "All reactions",
+        allPlatforms: "All platforms",
+        ratingAndAbove: (n: number) => `${n}+ stars`,
+        anyRating: "Any rating",
+        noItemsForFilters: "No items for these filters.",
+        addCover: "Add cover",
+        changeCover: "Change cover",
+        removeCover: "Remove cover",
+        quickAdd: "Quick add",
+        titlePlaceholder: "Title",
+        albumName: "Album name",
+        artistName: "Artist",
+        artistPlaceholder: "Artist",
+        select: "Select",
+        selectAll: "Select all",
+        updateStatus: "Update status",
+        nSelected: (n: number) => `${n} selected`,
+        year: "Year",
+        selectType: "Select type",
+        addToLibrary: "Add to library",
+        listening: "Listening",
+        listened: "Listened",
+        nItems: (type: string, count: number) => `${count} ${type}`,
+      },
+    },
+  }),
+}));
+
+vi.mock("@/hooks/use-media-query", () => ({
+  useMediaQuery: () => false,
+}));
+
+vi.mock("@/components/library/library-card", () => ({
+  LibraryCard: ({ item }: { item: { title: string } }) => (
+    <div data-testid="library-card">{item.title}</div>
+  ),
+}));
+
+function makeItem(overrides: Partial<BrowseItem> = {}): BrowseItem {
+  return {
+    id: "item-1",
+    type: "book",
+    title: "Test Book",
+    creator: "Author",
+    status: "backlog",
+    rating: null,
+    cover_image: null,
+    url: null,
+    reactions: null,
+    genres: null,
+    metadata: null,
+    added_at: "2026-03-20T00:00:00.000Z",
+    started_at: null,
+    finished_at: null,
+    created_at: "2026-03-20T00:00:00.000Z",
+    updated_at: "2026-03-20T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function renderBrowse({
+  items = [makeItem()],
+  filters = EMPTY_FILTERS,
+}: {
+  items?: BrowseItem[];
+  filters?: LibraryFilters;
+} = {}) {
+  return render(
+    <DashboardShell>
+      <LibraryBrowse
+        items={items}
+        filters={filters}
+        onFilterChange={vi.fn()}
+        genres={[{ value: "Fantasy", count: 1 }]}
+        reactions={[{ value: "Interesting", count: 1 }]}
+        platforms={[{ value: "Switch", count: 1 }]}
+      />
+    </DashboardShell>,
+  );
+}
+
+describe("LibraryBrowse", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("keeps search hidden until the breadcrumb Filters action opens the panel", () => {
+    renderBrowse();
+
+    const banner = screen.getByRole("banner");
+
+    expect(within(banner).getByRole("button", { name: "Filters" })).toBeTruthy();
+    expect(within(banner).getByRole("button", { name: "+ New Item" })).toBeTruthy();
+    expect(screen.queryByPlaceholderText("Search library...")).toBeNull();
+    expect(screen.queryByText("All statuses")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Books" })).toBeNull();
+
+    fireEvent.click(within(banner).getByRole("button", { name: "Filters" }));
+
+    expect(screen.getByPlaceholderText("Search library...")).toBeTruthy();
+    expect(screen.getByText("All statuses")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Books" })).toBeTruthy();
+  });
+
+  it("hides the panel without affecting filtered empty-state behavior", () => {
+    renderBrowse({
+      items: [],
+      filters: { ...EMPTY_FILTERS, status: "finished" },
+    });
+
+    fireEvent.click(within(screen.getByRole("banner")).getByRole("button", { name: "Filters" }));
+    expect(screen.getByText("All statuses")).toBeTruthy();
+
+    fireEvent.click(within(screen.getByRole("banner")).getByRole("button", { name: "Filters" }));
+
+    expect(screen.queryByText("All statuses")).toBeNull();
+    expect(screen.getByText("No items for these filters.")).toBeTruthy();
+  });
+
+  it("includes an active type in the hidden filter count", () => {
+    renderBrowse({
+      filters: { ...EMPTY_FILTERS, type: "book" },
+    });
+
+    expect(
+      within(screen.getByRole("banner")).getByRole("button", { name: "Filters" }).textContent,
+    ).toContain("1");
+    expect(screen.queryByRole("button", { name: "Books" })).toBeNull();
+  });
+
+  it("routes from the breadcrumb add action and removes bottom actions", () => {
+    renderBrowse();
+
+    expect(screen.queryByText("Quick add")).toBeNull();
+
+    fireEvent.click(
+      within(screen.getByRole("banner")).getByRole("button", { name: "+ New Item" }),
+    );
+
+    expect(push).toHaveBeenCalledWith("/library/new");
+  });
+});

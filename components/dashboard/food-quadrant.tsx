@@ -57,7 +57,6 @@ export function FoodQuadrant({ date }: FoodQuadrantProps) {
         <Link
           href="/food"
           className="flex h-5 w-5 items-center justify-center rounded bg-[var(--food-dim)] text-[var(--food)] hover:bg-[var(--food)]/25"
-          onClick={(e) => e.stopPropagation()}
         >
           <Plus className="h-3 w-3" />
         </Link>

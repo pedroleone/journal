@@ -92,7 +92,6 @@ export function LibraryQuadrant() {
         <Link
           href="/library/new"
           className="rounded bg-[var(--library-dim)] px-2 py-0.5 text-xs font-medium text-[var(--library)] hover:bg-[var(--library)]/25"
-          onClick={(e) => e.stopPropagation()}
         >
           <Plus className="mr-1 inline-block h-3 w-3" />
           Add

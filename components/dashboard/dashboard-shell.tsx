@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { BreadcrumbBar } from "./breadcrumb-bar";
+import { BreadcrumbActionsProvider } from "./breadcrumb-actions";
 import type { Mode } from "@/lib/mode-context";
 import { getModeFromPathname } from "@/lib/mode-context";
 
@@ -24,9 +25,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   // Expanded mode — breadcrumb bar + content
   return (
-    <div className="flex h-dvh flex-col">
-      <BreadcrumbBar domain={domain} />
-      <main className="flex-1 overflow-auto">{children}</main>
-    </div>
+    <BreadcrumbActionsProvider>
+      <div className="flex h-dvh flex-col">
+        <BreadcrumbBar domain={domain} />
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
+    </BreadcrumbActionsProvider>
   );
 }
