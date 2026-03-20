@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { db } from "../db";
-import { putEncryptedObject } from "../r2";
+import { deleteEncryptedObject, putEncryptedObject } from "../r2";
 import {
   entries,
   foodEntries,
@@ -37,6 +37,7 @@ type DemoSeedRunnerDeps = {
   getUserByEmail: (email: string) => Promise<DemoSeedUser | null>;
   ensureDemoSeedImageCache: () => Promise<DemoSeedCachedImages>;
   buildDemoSeedData: (userId: string) => DemoSeedData;
+  preflightStorage: (input: PersistDemoSeedDataInput) => Promise<void>;
   resetDemoSeedUserData: (userId: string) => Promise<void>;
   persistDemoSeedData: (input: PersistDemoSeedDataInput) => Promise<void>;
   log: (message: string) => void;
@@ -46,6 +47,7 @@ const defaultDeps: DemoSeedRunnerDeps = {
   getUserByEmail,
   ensureDemoSeedImageCache,
   buildDemoSeedData,
+  preflightStorage,
   resetDemoSeedUserData,
   persistDemoSeedData,
   log: console.log,
@@ -259,6 +261,31 @@ async function persistDemoSeedData({ user, seedData, cachedImages }: PersistDemo
   }
 }
 
+async function preflightStorage({ user, seedData, cachedImages }: PersistDemoSeedDataInput) {
+  const [firstImageRef] = seedData.imageRefs;
+  if (!firstImageRef) {
+    return;
+  }
+
+  const sourcePath = cachedImages[firstImageRef];
+  if (!sourcePath) {
+    throw new Error(`Missing cached demo seed image "${firstImageRef}"`);
+  }
+
+  const buffer = new Uint8Array(await readFile(sourcePath));
+  const encrypted = await encryptServerBuffer(buffer);
+  const key = `${user.id}/seed-preflight/${firstImageRef}.enc`;
+
+  await putEncryptedObject({
+    key,
+    body: encrypted.ciphertext,
+    iv: encrypted.iv,
+    contentType: getImageContentType(sourcePath),
+  });
+
+  await deleteEncryptedObject(key);
+}
+
 export async function runDemoSeed(argv: string[], deps: DemoSeedRunnerDeps = defaultDeps) {
   const email = readEmailArg(argv);
   if (!email) {
@@ -276,6 +303,7 @@ export async function runDemoSeed(argv: string[], deps: DemoSeedRunnerDeps = def
 
   const cachedImages = await deps.ensureDemoSeedImageCache();
   const seedData = deps.buildDemoSeedData(user.id);
+  await deps.preflightStorage({ user, seedData, cachedImages });
   await deps.resetDemoSeedUserData(user.id);
   await deps.persistDemoSeedData({
     user,

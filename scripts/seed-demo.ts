@@ -1,4 +1,7 @@
+import { loadEnvConfig } from "@next/env";
 import { runDemoSeed } from "../lib/dev/demo-seed-runner";
+
+loadEnvConfig(process.cwd());
 
 runDemoSeed(process.argv.slice(2)).catch((error) => {
   console.error(error instanceof Error ? error.message : error);

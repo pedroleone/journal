@@ -5,6 +5,7 @@ describe("runDemoSeed", () => {
     getUserByEmail: vi.fn(),
     ensureDemoSeedImageCache: vi.fn(),
     buildDemoSeedData: vi.fn(),
+    preflightStorage: vi.fn(),
     resetDemoSeedUserData: vi.fn(),
     persistDemoSeedData: vi.fn(),
     log: vi.fn(),
@@ -15,6 +16,7 @@ describe("runDemoSeed", () => {
     deps.getUserByEmail.mockReset();
     deps.ensureDemoSeedImageCache.mockReset();
     deps.buildDemoSeedData.mockReset();
+    deps.preflightStorage.mockReset();
     deps.resetDemoSeedUserData.mockReset();
     deps.persistDemoSeedData.mockReset();
     deps.log.mockReset();
@@ -48,6 +50,7 @@ describe("runDemoSeed", () => {
     deps.getUserByEmail.mockResolvedValueOnce({ id: "user-1", email: "seed@example.com" });
     deps.ensureDemoSeedImageCache.mockResolvedValueOnce({ "desk-book": "/tmp/desk-book.jpg" });
     deps.buildDemoSeedData.mockReturnValueOnce(seedData);
+    deps.preflightStorage.mockResolvedValueOnce(undefined);
     deps.resetDemoSeedUserData.mockResolvedValueOnce(undefined);
     deps.persistDemoSeedData.mockResolvedValueOnce(undefined);
 
@@ -57,6 +60,11 @@ describe("runDemoSeed", () => {
     expect(deps.log).toHaveBeenCalledWith('Matched user: seed@example.com ("user-1")');
     expect(deps.ensureDemoSeedImageCache).toHaveBeenCalledOnce();
     expect(deps.buildDemoSeedData).toHaveBeenCalledWith("user-1");
+    expect(deps.preflightStorage).toHaveBeenCalledWith({
+      user: { id: "user-1", email: "seed@example.com" },
+      seedData,
+      cachedImages: { "desk-book": "/tmp/desk-book.jpg" },
+    });
     expect(deps.resetDemoSeedUserData).toHaveBeenCalledWith("user-1");
     expect(deps.persistDemoSeedData).toHaveBeenCalledWith({
       user: { id: "user-1", email: "seed@example.com" },
@@ -64,5 +72,27 @@ describe("runDemoSeed", () => {
       cachedImages: { "desk-book": "/tmp/desk-book.jpg" },
     });
     expect(result).toEqual({ user: { id: "user-1", email: "seed@example.com" } });
+  });
+
+  it("fails before reset when storage preflight fails", async () => {
+    const seedData = {
+      journalEntries: [],
+      foodEntries: [],
+      notes: [],
+      noteSubnotes: [],
+      libraryItems: [],
+      libraryNotes: [],
+      imageRefs: new Set(["desk-book"]),
+    };
+    deps.getUserByEmail.mockResolvedValueOnce({ id: "user-1", email: "seed@example.com" });
+    deps.ensureDemoSeedImageCache.mockResolvedValueOnce({ "desk-book": "/tmp/desk-book.jpg" });
+    deps.buildDemoSeedData.mockReturnValueOnce(seedData);
+    deps.preflightStorage.mockRejectedValueOnce(new Error("storage down"));
+
+    const { runDemoSeed } = await import("@/lib/dev/demo-seed-runner");
+
+    await expect(runDemoSeed(["--email", "seed@example.com"], deps)).rejects.toThrow("storage down");
+    expect(deps.resetDemoSeedUserData).not.toHaveBeenCalled();
+    expect(deps.persistDemoSeedData).not.toHaveBeenCalled();
   });
 });
