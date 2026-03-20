@@ -18,20 +18,22 @@ interface JournalQuadrantProps {
 export function JournalQuadrant({ date }: JournalQuadrantProps) {
   const [entry, setEntry] = useState<JournalEntry | null>(null);
   const [loading, setLoading] = useState(true);
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const browseHref = `/journal/browse?date=${date.toISOString().slice(0, 10)}`;
+  const writeHref = `/journal/write?year=${year}&month=${month}&day=${day}`;
 
   useEffect(() => {
     setLoading(true);
-    const y = date.getFullYear();
-    const m = date.getMonth() + 1;
-    const d = date.getDate();
-    fetch(`/api/entries?year=${y}&month=${m}&day=${d}`)
+    fetch(`/api/entries?year=${year}&month=${month}&day=${day}`)
       .then((r) => r.json())
       .then((data: JournalEntry[]) => {
         setEntry(data[0] ?? null);
       })
       .catch(() => setEntry(null))
       .finally(() => setLoading(false));
-  }, [date]);
+  }, [day, month, year]);
 
   const content = entry?.encrypted_content ?? "";
   const wordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;
@@ -41,10 +43,10 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
     <QuadrantCard
       domain="journal"
       label="Journal"
-      href="/journal/browse"
+      href={entry ? browseHref : writeHref}
       actions={
         <Link
-          href="/journal/write"
+          href={writeHref}
           className="rounded bg-[var(--journal-dim)] px-2 py-0.5 text-xs font-medium text-[var(--journal)] hover:bg-[var(--journal)]/25"
         >
           <Pen className="mr-1 inline-block h-3 w-3" />

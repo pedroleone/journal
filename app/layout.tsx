@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Fraunces, DM_Sans, Geist_Mono } from "next/font/google";
+import { Fraunces, DM_Sans, Geist_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
@@ -23,6 +23,12 @@ const body = DM_Sans({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const reading = Source_Serif_4({
+  variable: "--font-prose",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -71,7 +77,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${heading.variable} ${body.variable} ${geistMono.variable} antialiased`}
+        className={`${heading.variable} ${body.variable} ${geistMono.variable} ${reading.variable} antialiased`}
       >
         <ServiceWorkerRegister />
         <Suspense>

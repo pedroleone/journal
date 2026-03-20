@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
-import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
-  ArrowLeft,
+  CalendarDays,
   Check,
   Loader2,
   AlertCircle,
   Paperclip,
   Plus,
   X,
+  PencilLine,
 } from "lucide-react";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,10 +23,7 @@ import {
 import { useImages } from "@/hooks/use-images";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
-import { CollapsibleSidebar } from "@/components/ui/collapsible-sidebar";
-import { DateTree, type DateSelection } from "@/components/journal/date-tree";
 import { useLocale } from "@/hooks/use-locale";
 
 function formatWriteDate(date: Date, localeCode: string): string {
@@ -36,13 +33,6 @@ function formatWriteDate(date: Date, localeCode: string): string {
     month: "long",
     year: "numeric",
   });
-}
-
-interface DateEntry {
-  id: string;
-  year: number;
-  month: number;
-  day: number;
 }
 
 interface JournalEntryResponse {
@@ -57,14 +47,34 @@ interface JournalEntryResponse {
 
 export default function WritePage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const editEntryId = searchParams.get("entry");
+  const queryYear = searchParams.get("year");
+  const queryMonth = searchParams.get("month");
+  const queryDay = searchParams.get("day");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const initialDate = (() => {
+    const year = Number(queryYear);
+    const month = Number(queryMonth);
+    const day = Number(queryDay);
+
+    if (
+      Number.isInteger(year) &&
+      Number.isInteger(month) &&
+      Number.isInteger(day) &&
+      year > 0 &&
+      month >= 1 &&
+      month <= 12 &&
+      day >= 1 &&
+      day <= 31
+    ) {
+      return new Date(year, month - 1, day);
+    }
+
+    return new Date();
+  })();
 
   const [content, setContent] = useState("");
-  const [date, setDate] = useState(new Date());
-  const [dates, setDates] = useState<DateEntry[]>([]);
+  const [date, setDate] = useState(initialDate);
   const [loadedEntryId, setLoadedEntryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -168,14 +178,33 @@ export default function WritePage() {
   }, [date, editEntryId, isOnline, loadEntryForDate]);
 
   useEffect(() => {
-    if (!isOnline) return;
-    let cancelled = false;
-    fetch("/api/entries/dates")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => { if (!cancelled) setDates(data); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [isOnline]);
+    if (editEntryId) return;
+
+    const year = Number(queryYear);
+    const month = Number(queryMonth);
+    const day = Number(queryDay);
+    if (
+      !Number.isInteger(year) ||
+      !Number.isInteger(month) ||
+      !Number.isInteger(day) ||
+      year <= 0 ||
+      month < 1 ||
+      month > 12 ||
+      day < 1 ||
+      day > 31
+    ) {
+      return;
+    }
+
+    const nextDate = new Date(year, month - 1, day);
+    if (
+      nextDate.getFullYear() !== date.getFullYear() ||
+      nextDate.getMonth() !== date.getMonth() ||
+      nextDate.getDate() !== date.getDate()
+    ) {
+      setDate(nextDate);
+    }
+  }, [date, editEntryId, queryDay, queryMonth, queryYear]);
 
   const { status, save } = useAutoSave({
     entryId: loadedEntryId,
@@ -268,6 +297,46 @@ export default function WritePage() {
     setContent((prev) => `${prev}\n\n---\n\n*${time}*\n\n`);
   }
 
+  const metaStatus = (() => {
+    if (status === "saving") {
+      return {
+        icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />,
+        label: t.journal.saving,
+        className: "text-muted-foreground",
+      };
+    }
+
+    if (status === "saved") {
+      return {
+        icon: <Check className="h-3.5 w-3.5" />,
+        label: t.journal.saved,
+        className: "text-[var(--food)]",
+      };
+    }
+
+    if (status === "error") {
+      return {
+        icon: <AlertCircle className="h-3.5 w-3.5" />,
+        label: t.journal.saveFailed,
+        className: "text-destructive",
+      };
+    }
+
+    if (status === "offline") {
+      return {
+        icon: <AlertCircle className="h-3.5 w-3.5" />,
+        label: t.journal.offline,
+        className: "text-muted-foreground",
+      };
+    }
+
+    return {
+      icon: <PencilLine className="h-3.5 w-3.5" />,
+      label: "Draft",
+      className: "text-muted-foreground",
+    };
+  })();
+
   if (!isOnline && !readyForEditing) {
     return (
       <div className="flex h-full items-center justify-center px-6">
@@ -290,33 +359,13 @@ export default function WritePage() {
   }
 
   return (
-    <div className="flex">
-      {!isMobile && (
-        <div className="sticky top-0 self-start h-full shrink-0 overflow-y-auto">
-        <CollapsibleSidebar visible={false}>
-          <DateTree
-            dates={dates}
-            selected={{ year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() }}
-            onSelect={(sel: DateSelection) => {
-              if (sel.day != null && sel.month != null) {
-                if (editEntryId) {
-                  router.replace("/journal/write");
-                }
-                setDate(new Date(sel.year, sel.month - 1, sel.day));
-              }
-            }}
-            onExport={() => router.push("/settings")}
-          />
-        </CollapsibleSidebar>
-        </div>
-      )}
-      <div
-        className="flex flex-1 flex-col"
-        onDragOver={handleDragOver}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
+    <div
+      className="flex flex-1 flex-col"
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {isDragging && (
         <div className="pointer-events-none fixed inset-0 z-40 m-4 rounded-xl ring-2 ring-primary/50 bg-primary/5 transition-all" />
       )}
@@ -325,19 +374,29 @@ export default function WritePage() {
           {t.journal.offlineChanges}
         </div>
       )}
-      <div className="mx-auto w-full max-w-3xl px-6">
-        <div className="flex items-center justify-between py-4">
-          <Link
-            href="/journal/browse"
-            className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t.journal.back}
-          </Link>
+      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
+        <div className="mx-auto w-full max-w-[760px] rounded-[32px] border border-border/60 bg-card/30 px-6 py-7 shadow-[0_24px_80px_rgba(0,0,0,0.16)] backdrop-blur-sm sm:px-8 sm:py-9">
+        <div className="journal-meta-row">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5 text-[var(--journal)]" />
+            {formatWriteDate(date, t.localeCode)}
+          </span>
+          <span className="journal-meta-separator">·</span>
+          <span className="inline-flex items-center gap-1.5">
+            <PencilLine className="h-3.5 w-3.5" />
+            {editEntryId || loadedEntryId ? "Editing" : "Writing"}
+          </span>
+          <span className="journal-meta-separator">·</span>
+          <span className={`inline-flex items-center gap-1.5 ${metaStatus.className}`}>
+            {metaStatus.icon}
+            {metaStatus.label}
+          </span>
+        </div>
 
+        <div className="mt-5 flex items-center justify-center py-1">
           <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
             <PopoverTrigger asChild>
-              <button className="font-display text-lg tracking-tight text-foreground transition-colors hover:text-muted-foreground">
+              <button className="font-display text-2xl tracking-tight text-foreground transition-colors hover:text-muted-foreground sm:text-3xl">
                 {formatWriteDate(date, t.localeCode)}
               </button>
             </PopoverTrigger>
@@ -354,21 +413,19 @@ export default function WritePage() {
               />
             </PopoverContent>
           </Popover>
-
-          <div className="w-16" />
         </div>
 
         {entryError ? (
           <div className="pb-2 text-sm text-destructive">{entryError}</div>
         ) : null}
 
-        <div className="pb-4">
+        <div className="pb-4 pt-4">
           <MarkdownEditor
             value={content}
             onChange={setContent}
             onBlur={() => { void save(); }}
             placeholder={t.journal.startWriting}
-            className="text-base leading-relaxed"
+            className="journal-prose"
             minHeight="calc(100vh - 12rem)"
             autoFocus
           />
@@ -410,7 +467,7 @@ export default function WritePage() {
           )}
         </div>
 
-        <div className="sticky bottom-0 flex items-center justify-between border-t border-border/40 py-3 bg-background/95 backdrop-blur-sm">
+        <div className="sticky bottom-0 flex items-center justify-between border-t border-border/40 bg-background/95 py-3 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <input
               ref={fileInputRef}
@@ -476,7 +533,7 @@ export default function WritePage() {
             )}
           </div>
         </div>
-      </div>
+        </div>
       </div>
     </div>
   );

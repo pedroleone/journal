@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useLocale } from "@/hooks/use-locale";
 
 interface DateNavigatorProps {
   date: Date;
@@ -14,12 +15,12 @@ function addDays(date: Date, days: number): Date {
   return d;
 }
 
-function formatShort(date: Date): string {
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+function formatShort(date: Date, localeCode: string): string {
+  return date.toLocaleDateString(localeCode, { month: "short", day: "numeric" });
 }
 
-function formatFull(date: Date): string {
-  return date.toLocaleDateString(undefined, {
+function formatFull(date: Date, localeCode: string): string {
+  return date.toLocaleDateString(localeCode, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -28,6 +29,7 @@ function formatFull(date: Date): string {
 
 export function DateNavigator({ date, onDateChange }: DateNavigatorProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { t } = useLocale();
   const prev = addDays(date, -1);
   const next = addDays(date, 1);
 
@@ -46,18 +48,18 @@ export function DateNavigator({ date, onDateChange }: DateNavigatorProps) {
           onClick={() => onDateChange(prev)}
           className="text-xs text-muted-foreground hover:text-foreground px-1"
         >
-          {formatShort(prev)}
+          {formatShort(prev, t.localeCode)}
         </button>
       )}
 
-      <span className="px-2 text-sm font-medium">{formatFull(date)}</span>
+      <span className="px-2 text-sm font-medium">{formatFull(date, t.localeCode)}</span>
 
       {isDesktop && (
         <button
           onClick={() => onDateChange(next)}
           className="text-xs text-muted-foreground hover:text-foreground px-1"
         >
-          {formatShort(next)}
+          {formatShort(next, t.localeCode)}
         </button>
       )}
 

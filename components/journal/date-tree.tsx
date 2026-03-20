@@ -29,6 +29,7 @@ interface DateTreeProps {
   selected: DateSelection | null;
   onSelect: (sel: DateSelection) => void;
   onExport: () => void;
+  variant?: "sidebar" | "archive";
 }
 
 const MONTH_NAMES = [
@@ -100,16 +101,18 @@ export function DateTree({
   selected,
   onSelect,
   onExport,
+  variant = "sidebar",
 }: DateTreeProps) {
   const tree = useMemo(() => buildTree(dates), [dates]);
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
+  const isArchive = variant === "archive";
 
   return (
     <div className="flex h-full flex-col">
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-1">
+        <div className={cn("space-y-1", isArchive ? "p-4" : "p-3")}>
           {tree.length === 0 && (
             <p className="px-2 py-8 text-center text-sm text-muted-foreground">
               No entries yet
@@ -127,7 +130,8 @@ export function DateTree({
                   <button
                     onClick={() => onSelect({ year: yearGroup.year })}
                     className={cn(
-                      "flex-1 rounded-md px-2 py-1.5 text-left text-xs font-medium uppercase tracking-wider transition-colors",
+                      "flex-1 rounded-md px-2 py-1.5 text-left font-medium uppercase tracking-wider transition-colors",
+                      isArchive ? "text-[11px]" : "text-xs",
                       yearActive
                         ? "bg-secondary font-semibold text-foreground"
                         : "text-muted-foreground hover:text-foreground",
@@ -168,7 +172,7 @@ export function DateTree({
                                 "flex-1 rounded-md px-2 py-1 text-left text-sm transition-colors",
                                 monthActive
                                   ? "bg-secondary font-medium text-foreground"
-                                  : "text-muted-foreground hover:text-foreground",
+                                  : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground",
                               )}
                             >
                               {MONTH_NAMES[monthGroup.month]}
@@ -225,7 +229,7 @@ export function DateTree({
           })}
         </div>
       </ScrollArea>
-      <div className="border-t border-border/60 p-3">
+      <div className={cn("border-t border-border/60", isArchive ? "p-4" : "p-3")}>
         <Button
           variant="ghost"
           size="sm"

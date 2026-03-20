@@ -227,6 +227,32 @@ h1, h2, h3 {
   letter-spacing: -0.02em;
 }
 
+.journal-prose {
+  font-family: var(--font-prose), ui-serif, Georgia, serif;
+  font-size: 1.125rem;
+  line-height: 1.9;
+  color: var(--foreground);
+}
+
+.journal-prose .cm-editor,
+.journal-prose .cm-scroller,
+.journal-prose .cm-content {
+  font: inherit;
+}
+
+.journal-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.journal-meta-separator {
+  color: var(--border);
+}
+
 /* Textarea writing feel */
 textarea {
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
