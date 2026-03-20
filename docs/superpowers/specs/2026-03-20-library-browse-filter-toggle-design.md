@@ -1,85 +1,102 @@
-# Library Browse Filter Toggle Design
+# Library Browse Browse-First Controls Design
 
 ## Summary
 
-Adjust the `library/browse` layout so the sticky header is smaller and more predictable, while making advanced filters optional. The search bar remains visible; the advanced filter panel is hidden by default and can be toggled open when needed. Type selection moves into that panel.
+Adjust the `library/browse` layout so the browsing canvas is clean by default. Compact page actions move into the shared breadcrumb bar, while search and filtering live inside a hidden panel that opens only when requested.
 
 ## Goals
 
-- Keep primary browsing controls visible without consuming too much viewport space.
-- Remove the feeling that the filter area is visually dislocated from the top of the page.
-- Let users browse the library without always seeing the advanced filters.
-- Improve the mobile experience by avoiding a large sticky block that leaves too little space for content.
+- Keep the library grid visually clean by default.
+- Remove page-local action clutter from the browse content area.
+- Let users browse without always seeing search or filter controls.
+- Establish a reusable top-navbar actions pattern for other sections.
+- Improve mobile browsing by avoiding persistent page-level toolbars.
 
 ## Non-Goals
 
 - No changes to library filtering semantics or URL parameter names.
-- No persistence of the advanced filter panel open/closed state.
+- No persistence of the filter panel open/closed state.
 - No modal, drawer, or sheet implementation for filters in this iteration.
+- No shared-navbar search input in this iteration.
 
 ## Current Problem
 
-`components/library/library-browse.tsx` renders the search bar, type pills, and `FilterBar` inside a single sticky container with `top-14`. That couples all filter UI into one pinned block:
+`library/browse` currently uses page-local controls for actions and refinement:
 
-- The vertical composition can feel slightly offset or visually detached.
-- The advanced filters are always visible, even when not needed.
-- On mobile, the sticky block consumes too much of the screen and reduces the visible content area.
+- Action placement is split between shared chrome and page content.
+- Browse controls still occupy part of the layout instead of keeping the grid clean.
+- There is no reusable way for a page to put compact actions into the breadcrumb bar.
 
 ## Proposed Approach
 
-Use a two-tier layout:
+Use a shell-plus-panel layout:
 
-1. A reduced sticky header that contains only:
-   - search input
-   - advanced filters toggle button
-2. A conditional advanced filter panel rendered in normal page flow below the sticky header.
+1. The shared breadcrumb bar gains an optional right-side actions slot.
+2. `library/browse` registers two actions in that slot:
+   - `Filters`
+   - `+`
+3. The page body starts directly with library content.
+4. Opening `Filters` reveals a panel above the content grid containing:
+   - search
+   - type pills
+   - status pills
+   - metadata filters
+   - active filter chips
 
-Inside the advanced filter panel, render type selection first as a pill row, followed by the existing status and metadata filters.
-
-This keeps the most-used controls available while letting the expanded filter section scroll naturally with the page.
+This gives the page a browse-first default state while keeping refinement and creation one tap away.
 
 ## Component Changes
+
+### `components/dashboard/breadcrumb-bar.tsx`
+
+- Add an optional right-side actions area.
+- Preserve current breadcrumb behavior when no actions are supplied.
+- Keep the actions API generic rather than library-specific.
+
+### `components/dashboard/dashboard-shell.tsx`
+
+- Provide a way for routed pages to supply breadcrumb-bar actions.
+- Keep shared chrome ownership in the shell rather than duplicating navbar logic in pages.
 
 ### `components/library/library-browse.tsx`
 
 - Add local UI state `filtersOpen`, initialized to `false`.
-- Keep the search bar sticky.
-- Keep only the search bar and filters toggle in the sticky area.
-- Add a toggle control next to the search context.
-- Move `FilterBar` outside the sticky wrapper.
-- Render `FilterBar` only when `filtersOpen` is `true`.
-- Adjust top offset classes so mobile uses a smaller sticky offset than desktop.
+- Remove page-local top-right action buttons.
+- Render the filter panel inline above content only when `filtersOpen` is `true`.
+- Move the search field into the filter panel.
+- Wire shared navbar actions to local browse behavior.
 
 ### `components/library/filter-bar.tsx`
 
 - Preserve current filtering behavior and callbacks.
-- Support rendering as a standalone collapsible section below the sticky controls.
-- Add the type pill row to the advanced filter panel, above status and metadata filters.
+- Support rendering as the full browse refinement panel, with search above the existing type/status/metadata controls.
 - Keep active filter chips visible inside the panel when it is open.
 
 No API or server-side changes are required.
 
 ## Interaction Design
 
-- Default state on each visit: advanced filters closed.
-- Tapping the toggle reveals the advanced filter panel inline.
+- Default state on each visit: filters closed.
+- Tapping the breadcrumb-bar `Filters` action reveals the filter panel inline.
 - Tapping again hides it without clearing any active filters.
 - Active filters remain applied even while the panel is hidden.
-- Search filtering continues to work exactly as it does now.
-- Type filtering continues to work exactly as it does now, but from inside the advanced panel.
+- Search filtering continues to work exactly as it does now, but from inside the panel.
+- Type filtering continues to work exactly as it does now, but from inside the panel.
+- Tapping `+` in the breadcrumb bar routes to `/library/new`.
 
 ## Responsive Behavior
 
 ### Desktop
 
-- Sticky search bar remains near the top for quick refinement.
-- Expanded advanced filters appear immediately below the sticky region.
+- Breadcrumbs remain on the left, page actions on the right.
+- The content area starts directly with the library grid when filters are closed.
+- Expanded filters appear below the breadcrumb bar and above the content grid.
 
 ### Mobile
 
-- Sticky offset is reduced so the header does not consume as much viewport height.
-- Expanded advanced filters scroll as normal content instead of staying pinned.
-- Users can hide the advanced panel and browse the grid with more vertical space.
+- The breadcrumb row uses compact actions so label text and actions still fit.
+- Users see the content grid immediately when filters are closed.
+- Opening filters reveals search and refinement controls without permanently consuming content space.
 
 ## Error Handling
 
@@ -92,26 +109,32 @@ No API or server-side changes are required.
 
 Add component tests for `LibraryBrowse` to cover:
 
-- advanced filters are hidden by default
-- toggle button reveals the filter panel
-- type pills are hidden while the panel is closed
-- type pills appear inside the panel when opened
-- toggle button hides the filter panel again
-- active filters remain effective when the panel is hidden
+- filters are hidden by default
+- breadcrumb-bar `Filters` action reveals the filter panel
+- search is hidden while the panel is closed
+- search and type pills appear inside the panel when opened
+- hiding the panel does not clear active filters
+- breadcrumb-bar `+` action routes to `/library/new`
 
-Existing page tests should continue to pass because URL parsing and data loading remain unchanged.
+Add shell/chrome tests to cover:
+
+- breadcrumb bar renders optional right-side actions
+- pages without actions retain the current breadcrumb layout
+
+Existing data-loading and route tests should continue to pass because URL parsing and filtering behavior remain unchanged.
 
 ## Risks
 
-- Moving `FilterBar` outside the sticky wrapper may expose spacing issues between header and content.
-- The toggle label/icon needs to communicate state clearly enough without adding clutter.
-- Moving type into the panel makes it one step less visible, so the filter count should reflect active hidden filters clearly.
+- Adding page-owned actions to shared shell chrome can create coupling if the API is not kept generic.
+- Mobile breadcrumb width becomes tighter once actions live in the top bar.
+- The filter action still needs to communicate hidden active filters clearly.
 
 ## Acceptance Criteria
 
-- `library/browse` loads with advanced filters hidden.
-- Search remains visible and usable.
-- A toggle shows and hides the advanced filter panel.
-- Type selection is available inside the advanced panel as pills.
+- The breadcrumb bar supports reusable page-level actions.
+- `library/browse` shows `Filters` and `+` in the breadcrumb bar.
+- Search is hidden by default and available inside the filter panel.
+- Type selection is available inside the filter panel as pills.
 - Hiding the panel does not clear any current filters.
+- The bottom quick-add/new panel is absent.
 - The mobile layout leaves more visible space for browsing content than before.
