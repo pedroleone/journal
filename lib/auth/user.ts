@@ -68,3 +68,15 @@ export async function getPrimaryUser() {
 
   return user ?? null;
 }
+
+export async function getUserByEmail(email: string) {
+  const [user] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+    })
+    .from(users)
+    .where(eq(users.email, email));
+
+  return user ?? null;
+}

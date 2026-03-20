@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import {
   upsertGoogleUser,
   getPrimaryUser,
+  getUserByEmail,
 } from "@/lib/auth/user";
 
 const mockDb = vi.mocked(db) as unknown as Record<string, ReturnType<typeof vi.fn>>;
@@ -86,6 +87,30 @@ describe("getPrimaryUser", () => {
   it("returns null when not found", async () => {
     mockDb.limit.mockResolvedValueOnce([]);
     const user = await getPrimaryUser();
+    expect(user).toBeNull();
+  });
+});
+
+describe("getUserByEmail", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDb.select.mockReturnThis();
+    mockDb.from.mockReturnThis();
+  });
+
+  it("returns user when the email exists", async () => {
+    mockDb.where.mockResolvedValueOnce([{ id: "user-1", email: "seed@example.com" }]);
+
+    const user = await getUserByEmail("seed@example.com");
+
+    expect(user).toEqual({ id: "user-1", email: "seed@example.com" });
+  });
+
+  it("returns null when the email does not exist", async () => {
+    mockDb.where.mockResolvedValueOnce([]);
+
+    const user = await getUserByEmail("missing@example.com");
+
     expect(user).toBeNull();
   });
 });
