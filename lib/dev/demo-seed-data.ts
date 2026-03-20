@@ -107,6 +107,24 @@ const JOURNAL_CLOSERS = [
   "This felt more balanced than last week.",
 ];
 
+const JOURNAL_MIDDLES = [
+  "The first half of the day felt scattered, mostly because I kept switching contexts too quickly. Once I slowed down and let one task run a little longer, everything stopped feeling so brittle.",
+  "There was not one dramatic turning point, just a series of small adjustments that made the whole day read differently in hindsight. Better music, fewer tabs open, more patience with transitions.",
+  "I noticed that my energy improved as soon as I stopped trying to optimize every hour. The simpler version of the day was clearly the better one, even if it looked less ambitious on paper.",
+  "Most of the useful progress happened after I accepted that this was not going to be a perfectly structured day. That shift lowered the friction enough for the actual work to happen.",
+  "The mood was quieter than usual, but in a way that helped me pay attention. I ended up observing details I would normally miss when I am rushing through a checklist.",
+  "It helped to keep expectations narrow and concrete. Once the target became manageable again, the work stopped feeling like something I had to negotiate with.",
+];
+
+const JOURNAL_REFLECTIONS = [
+  "I want to remember how much easier the evening became once I stopped forcing a productive tone onto everything. A lot of the tension was coming from style, not substance.",
+  "There is probably a version of this routine that is sustainable if I stop treating every useful habit like it needs immediate perfection. Consistency is clearly more important than intensity here.",
+  "The best part of the day was how ordinary it felt by the end. Nothing flashy happened, but the shape of it was the kind of shape I actually trust long term.",
+  "I keep relearning that momentum grows out of small proof, not big declarations. A decent hour is often enough to turn the rest of the day around.",
+  "It would be easy to tell a dramatic story about this day, but the truth is much simpler and more useful. A few choices worked, and I should just repeat them.",
+  "The scrolling, back-and-forth quality of the day settled down once I let myself finish thoughts in full. That alone made everything feel calmer and more deliberate.",
+];
+
 const NOTE_TOPICS = [
   "Studio refresh ideas",
   "Small rituals that improve focus",
@@ -188,12 +206,27 @@ function buildJournalEntries(userId: string, base: Date) {
     const daysAgo = index + 1;
     const hour = [7, 9, 12, 18, 21][index % 5];
     const imageRefs = index % 4 === 0 ? [IMAGE_IDS[index % IMAGE_IDS.length]] : [];
+    const paragraphs = [
+      JOURNAL_OPENERS[index % JOURNAL_OPENERS.length],
+      JOURNAL_MIDDLES[index % JOURNAL_MIDDLES.length],
+      JOURNAL_REFLECTIONS[index % JOURNAL_REFLECTIONS.length],
+      JOURNAL_CLOSERS[index % JOURNAL_CLOSERS.length],
+    ];
+
+    if (index % 3 === 0) {
+      paragraphs.splice(
+        3,
+        0,
+        "One more thing that stood out: the day looked fuller from the outside than it felt from the inside. That difference matters, because a lot of the pressure disappears once I describe the texture honestly instead of theatrically.",
+      );
+    }
+
     return {
       id: `journal-${String(index + 1).padStart(2, "0")}`,
       userId,
       ...recordTimestamps(base, daysAgo, hour),
       ...dateParts(base, daysAgo, hour),
-      content: `${JOURNAL_OPENERS[index % JOURNAL_OPENERS.length]} ${JOURNAL_CLOSERS[index % JOURNAL_CLOSERS.length]}`,
+      content: paragraphs.join("\n\n"),
       imageRefs,
     };
   });
@@ -216,7 +249,11 @@ function buildFoodEntries(userId: string, base: Date) {
       ...timestamps,
       ...dateParts(base, daysAgo, template.hour),
       mealSlot: template.mealSlot,
-      content: template.content,
+      content: [
+        template.content,
+        "Portion felt about right and did not leave me sluggish afterward. I am trying to keep notes like this because the difference between a decent meal and a useful one is usually in the aftermath.",
+        "If I repeat this, I would keep the structure the same and only swap one component for variety. It is more helpful to notice what was stable than to invent novelty every time.",
+      ].join("\n\n"),
       imageRefs: index % 5 === 0 ? [IMAGE_IDS[(index + 1) % IMAGE_IDS.length]] : [],
       tags: template.tags,
       loggedAt: timestamps.createdAt,
@@ -233,7 +270,10 @@ function buildFoodEntries(userId: string, base: Date) {
       ...timestamps,
       ...dateParts(base, daysAgo, 16),
       mealSlot: null,
-      content: "Quick snack note or ingredient reminder added before assigning it properly.",
+      content: [
+        "Quick snack note or ingredient reminder added before assigning it properly.",
+        "Leaving these a little more detailed makes them easier to categorize later, especially when the day is busy and I only have fragments at the time.",
+      ].join("\n\n"),
       imageRefs: index % 2 === 0 ? ["meal-bowl"] : [],
       tags: ["uncategorized"],
       loggedAt: timestamps.createdAt,
@@ -250,7 +290,12 @@ function buildNotes(userId: string, base: Date) {
     userId,
     ...recordTimestamps(base, index * 2 + 1, 10),
     title,
-    content: `${title}.\n\nKept this note around because it still turns into useful decisions when I revisit it.`,
+    content: [
+      `${title}.`,
+      "Kept this note around because it still turns into useful decisions when I revisit it. The first version was shorter, but I keep finding that longer notes make the patterns more obvious when I return a week later.",
+      "There is usually one practical thread hidden under the mood or aesthetic language, and that is the part worth preserving. If this turns into action later, it will probably come from the concrete examples more than the headline idea.",
+      "I also want these notes to feel substantial enough in the UI that they behave like real reading surfaces instead of placeholder text blocks. That makes it easier to judge layout, spacing, and scroll rhythm honestly.",
+    ].join("\n\n"),
     tags: [index % 2 === 0 ? "personal" : "ideas", index % 3 === 0 ? "favorite" : "reference"],
     imageRefs: index % 4 === 0 ? [IMAGE_IDS[(index + 2) % IMAGE_IDS.length]] : [],
   }));
@@ -262,7 +307,10 @@ function buildNoteSubnotes(userId: string, notes: DemoSeedNote[], base: Date) {
     noteId: note.id,
     userId,
     ...recordTimestamps(base, index + 1, 19),
-    content: "Small follow-up thought attached later once the original note started proving useful.",
+    content: [
+      "Small follow-up thought attached later once the original note started proving useful.",
+      "This usually happens when the first draft captures the mood and the follow-up captures the practical version that I can actually reuse.",
+    ].join("\n\n"),
     imageRefs: index % 3 === 0 ? ["notebook-flatlay"] : [],
   }));
 }
@@ -295,7 +343,10 @@ function buildLibraryNotes(userId: string, items: DemoSeedLibraryItem[], base: D
     mediaItemId: item.id,
     userId,
     ...recordTimestamps(base, index + 1, 22),
-    content: "Short reaction note captured separately so the main item stays readable at a glance.",
+    content: [
+      "Short reaction note captured separately so the main item stays readable at a glance.",
+      "I like having a second layer for reactions that are too specific or too messy for the main summary. It gives the detail view something more convincing to read without making the browse cards heavier than they need to be.",
+    ].join("\n\n"),
     imageRefs: index % 4 === 0 ? [IMAGE_IDS[(index + 4) % IMAGE_IDS.length]] : [],
   }));
 }

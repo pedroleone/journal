@@ -38,4 +38,12 @@ describe("buildDemoSeedData", () => {
     expect(noteImageCount).toBeGreaterThan(0);
     expect(libraryCoverCount).toBeGreaterThan(0);
   });
+
+  it("gives journal entries enough text to exercise scrolling states", () => {
+    const data = buildDemoSeedData("user-1");
+    const paragraphCounts = data.journalEntries.map((entry) => entry.content.split("\n\n").length);
+
+    expect(Math.min(...paragraphCounts)).toBeGreaterThanOrEqual(2);
+    expect(Math.max(...paragraphCounts)).toBeGreaterThanOrEqual(4);
+  });
 });
