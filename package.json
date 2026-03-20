@@ -14,6 +14,7 @@
     "db:migrate": "node --experimental-strip-types scripts/run-drizzle.ts migrate",
     "db:push": "node --experimental-strip-types scripts/run-drizzle.ts push",
     "db:push:prod": "dotenv -e .env -- node --experimental-strip-types scripts/run-drizzle.ts push",
+    "seed:demo": "tsx scripts/seed-demo.ts",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -59,6 +60,7 @@
     "jsdom": "^28.1.0",
     "shadcn": "^3.8.5",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5",
     "vitest": "^4.0.18"

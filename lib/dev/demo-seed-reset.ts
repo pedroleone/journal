@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { deleteEncryptedObject } from "@/lib/r2";
+import { db } from "../db";
+import { deleteEncryptedObject } from "../r2";
 import {
   entries,
   foodEntries,
@@ -8,7 +8,7 @@ import {
   mediaItemNotes,
   notes,
   noteSubnotes,
-} from "@/lib/schema";
+} from "../schema";
 
 type ImageArrayOwner = { images: string[] | null };
 type LibraryItemOwner = { cover_image: string | null };
