@@ -73,7 +73,6 @@ export default function RootLayout({
       <body
         className={`${heading.variable} ${body.variable} ${geistMono.variable} antialiased`}
       >
-        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t===null&&d)){document.documentElement.classList.add('dark');}})();` }} />
         <ServiceWorkerRegister />
         <Suspense>
           <ThemeProvider>
