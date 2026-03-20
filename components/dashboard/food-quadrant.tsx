@@ -6,12 +6,13 @@ import { Plus } from "lucide-react";
 import { QuadrantCard } from "./quadrant-card";
 import { MealRow } from "@/components/shared/meal-row";
 import { InboxBadge } from "@/components/shared/inbox-badge";
-import type { MealSlot } from "@/lib/food";
+import { getFoodEntryPreview, type MealSlot } from "@/lib/food";
 
 interface FoodEntry {
   id: string;
   meal_slot: MealSlot | null;
-  encrypted_content: string;
+  content?: string;
+  encrypted_content?: string;
   logged_at: string;
 }
 
@@ -80,7 +81,7 @@ export function FoodQuadrant({ date }: FoodQuadrantProps) {
             <MealRow
               key={e.id}
               slot={e.meal_slot!}
-              description={e.encrypted_content.slice(0, 60)}
+              description={getFoodEntryPreview(e).slice(0, 60)}
               time={new Date(e.logged_at).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",

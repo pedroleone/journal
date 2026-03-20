@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getMonthDays, suggestMealSlot } from "@/lib/food";
+import { getFoodEntryPreview, getMonthDays, suggestMealSlot } from "@/lib/food";
 
 describe("suggestMealSlot", () => {
   it("maps boundary hours correctly", () => {
@@ -27,5 +27,24 @@ describe("getMonthDays", () => {
   it("handles leap year february", () => {
     const days = getMonthDays(2024, 2);
     expect(days.length).toBe(29);
+  });
+});
+
+describe("getFoodEntryPreview", () => {
+  it("prefers decrypted content from list responses", () => {
+    expect(getFoodEntryPreview({
+      content: "Roast chicken with rice and salad",
+      encrypted_content: undefined,
+    })).toBe("Roast chicken with rice and salad");
+  });
+
+  it("falls back to encrypted content when decrypted content is unavailable", () => {
+    expect(getFoodEntryPreview({
+      encrypted_content: "ciphertext-preview",
+    })).toBe("ciphertext-preview");
+  });
+
+  it("returns an empty preview when no content fields are present", () => {
+    expect(getFoodEntryPreview({})).toBe("");
   });
 });

@@ -30,3 +30,10 @@ export function getMonthDays(year: number, month: number): number[] {
   const daysInMonth = new Date(year, month, 0).getDate();
   return Array.from({ length: daysInMonth }, (_, i) => i + 1);
 }
+
+export function getFoodEntryPreview(entry: {
+  content?: string | null;
+  encrypted_content?: string | null;
+}) {
+  return entry.content ?? entry.encrypted_content ?? "";
+}
