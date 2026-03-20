@@ -377,17 +377,17 @@ export default function WritePage() {
       <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
         <div className="mx-auto w-full max-w-[760px] rounded-[32px] border border-border/60 bg-card/30 px-6 py-7 shadow-[0_24px_80px_rgba(0,0,0,0.16)] backdrop-blur-sm sm:px-8 sm:py-9">
         <div className="journal-meta-row">
-          <span className="inline-flex items-center gap-1.5">
+          <span className="journal-meta-group">
             <CalendarDays className="h-3.5 w-3.5 text-[var(--journal)]" />
             {formatWriteDate(date, t.localeCode)}
           </span>
           <span className="journal-meta-separator">·</span>
-          <span className="inline-flex items-center gap-1.5">
+          <span className="journal-meta-group">
             <PencilLine className="h-3.5 w-3.5" />
             {editEntryId || loadedEntryId ? "Editing" : "Writing"}
           </span>
           <span className="journal-meta-separator">·</span>
-          <span className={`inline-flex items-center gap-1.5 ${metaStatus.className}`}>
+          <span className={`journal-meta-group ${metaStatus.className}`}>
             {metaStatus.icon}
             {metaStatus.label}
           </span>
@@ -481,7 +481,7 @@ export default function WritePage() {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              className="journal-utility-action"
               disabled={!isOnline || uploadingImages}
             >
               {uploadingImages ? (
@@ -493,8 +493,7 @@ export default function WritePage() {
             </button>
             <button
               onClick={handleNewThought}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              disabled={!content.trim()}
+              className="journal-utility-action"
             >
               <Plus className="h-3 w-3" />
               {t.journal.newThought}

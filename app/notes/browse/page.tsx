@@ -33,6 +33,7 @@ export default function NotesBrowsePage() {
   }, [activeTag, loadNotes]);
 
   const isNewMode = searchParams.get("new") === "1";
+  const requestedNoteId = searchParams.get("id");
 
   useEffect(() => {
     if (isNewMode) {
@@ -41,11 +42,17 @@ export default function NotesBrowsePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNewMode]);
 
+  useEffect(() => {
+    if (!requestedNoteId || isNewMode) return;
+    setSelectedNoteId(requestedNoteId);
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile, isNewMode, requestedNoteId]);
+
   function handleSelectNote(id: string) {
     if (id === NEW_NOTE_ID) return;
     setSelectedNoteId(id);
     if (isMobile) setSidebarOpen(false);
-    if (searchParams.get("new")) router.replace("/notes/browse");
+    if (searchParams.get("new") || searchParams.get("id")) router.replace("/notes/browse");
   }
 
   function handleTagFilter(tag: string | null) {

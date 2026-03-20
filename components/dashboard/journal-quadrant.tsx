@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Pen } from "lucide-react";
+import { BookOpen, Pen } from "lucide-react";
 import { QuadrantCard } from "./quadrant-card";
 
 interface JournalEntry {
   id: string;
-  encrypted_content: string;
+  content?: string;
+  encrypted_content?: string;
   images: string[] | null;
 }
 
@@ -50,7 +51,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
   const entry = snapshot?.requestKey === requestKey ? snapshot.entry : null;
   const loading = snapshot?.requestKey !== requestKey;
 
-  const content = entry?.encrypted_content ?? "";
+  const content = entry?.content ?? entry?.encrypted_content ?? "";
   const wordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;
   const imageCount = entry?.images?.length ?? 0;
 
@@ -60,13 +61,22 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
       label="Journal"
       href={entry ? browseHref : writeHref}
       actions={
-        <Link
-          href={writeHref}
-          className="rounded bg-[var(--journal-dim)] px-2 py-0.5 text-xs font-medium text-[var(--journal)] hover:bg-[var(--journal)]/25"
-        >
-          <Pen className="mr-1 inline-block h-3 w-3" />
-          Write
-        </Link>
+        <>
+          <Link
+            href={browseHref}
+            className="rounded bg-[var(--journal-dim)] px-2 py-0.5 text-xs font-medium text-[var(--journal)] hover:bg-[var(--journal)]/25"
+          >
+            <BookOpen className="mr-1 inline-block h-3 w-3" />
+            Browse
+          </Link>
+          <Link
+            href={writeHref}
+            className="rounded bg-[var(--journal-dim)] px-2 py-0.5 text-xs font-medium text-[var(--journal)] hover:bg-[var(--journal)]/25"
+          >
+            <Pen className="mr-1 inline-block h-3 w-3" />
+            Write
+          </Link>
+        </>
       }
       footer={
         entry ? (

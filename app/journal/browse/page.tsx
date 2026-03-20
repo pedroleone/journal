@@ -89,6 +89,10 @@ export default function BrowsePage() {
 
   function handleSelect(sel: DateSelection) {
     setFallbackSelected(sel);
+    if (sel.month != null && sel.day != null) {
+      const nextDate = `${sel.year}-${String(sel.month).padStart(2, "0")}-${String(sel.day).padStart(2, "0")}`;
+      router.replace(`/journal/browse?date=${nextDate}`);
+    }
     if (isMobile) setArchiveOpen(false);
   }
 
@@ -106,18 +110,6 @@ export default function BrowsePage() {
 
       <div className="flex min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-5xl flex-col px-4 pb-12 pt-6 sm:px-6">
-          <div className="mb-6 flex items-center justify-end gap-4">
-            <button
-              type="button"
-              onClick={() => setArchiveOpen((current) => !current)}
-              aria-pressed={archiveOpen}
-              className="inline-flex items-center gap-2 rounded-md border border-border/60 bg-secondary/35 px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary/60"
-            >
-              <Archive className="h-4 w-4 text-[var(--journal)]" />
-              Archive
-            </button>
-          </div>
-
           {!isOnline && (
             <div className="mb-4 rounded-lg border border-border/60 bg-secondary/40 px-4 py-3 text-sm text-muted-foreground">
               {t.journal.offlineBrowse}
@@ -129,6 +121,17 @@ export default function BrowsePage() {
               year={selected.year}
               month={selected.month}
               day={selected.day}
+              actions={
+                <button
+                  type="button"
+                  onClick={() => setArchiveOpen((current) => !current)}
+                  aria-pressed={archiveOpen}
+                  className="inline-flex items-center gap-2 rounded-md border border-border/60 bg-secondary/35 px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary/60"
+                >
+                  <Archive className="h-4 w-4 text-[var(--journal)]" />
+                  Archive
+                </button>
+              }
             />
           ) : (
             <div className="flex min-h-[50vh] items-center justify-center rounded-[28px] border border-border/60 bg-card/40 px-6 text-center">

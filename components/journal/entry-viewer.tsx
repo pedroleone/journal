@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import type { EntrySource } from "@/lib/types";
-import { JournalCanvas } from "@/components/journal/journal-canvas";
 import { JournalEntryState } from "@/components/journal/journal-entry-state";
 
 interface Entry {
@@ -56,6 +55,7 @@ interface EntryViewerProps {
   year: number;
   month?: number;
   day?: number;
+  actions?: React.ReactNode;
 }
 
 function getHeading(year: number, month?: number, day?: number): string {
@@ -64,7 +64,29 @@ function getHeading(year: number, month?: number, day?: number): string {
   return String(year);
 }
 
-export function EntryViewer({ year, month, day }: EntryViewerProps) {
+function FlatJournalView({
+  heading,
+  actions,
+  body,
+}: {
+  heading: string;
+  actions?: React.ReactNode;
+  body: React.ReactNode;
+}) {
+  return (
+    <section className="mx-auto w-full max-w-[760px]">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <h2 className="font-display text-[2rem] leading-tight tracking-tight text-foreground sm:text-[2.25rem]">
+          {heading}
+        </h2>
+        {actions ? <div className="shrink-0">{actions}</div> : null}
+      </div>
+      <div className="mt-7">{body}</div>
+    </section>
+  );
+}
+
+export function EntryViewer({ year, month, day, actions }: EntryViewerProps) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -102,9 +124,9 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
 
   if (loading) {
     return (
-      <JournalCanvas
+      <FlatJournalView
         heading={getHeading(year, month, day)}
-        meta={<span>Loading entry</span>}
+        actions={actions}
         body={
           <div className="animate-page space-y-6">
             <Skeleton className="h-4 w-40" />
@@ -120,9 +142,9 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
 
   if (error) {
     return (
-      <JournalCanvas
+      <FlatJournalView
         heading={getHeading(year, month, day)}
-        meta={<span>Connection required</span>}
+        actions={actions}
         body={<p className="text-sm text-muted-foreground">{error}</p>}
       />
     );
@@ -130,9 +152,9 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
 
   if (day == null || month == null) {
     return (
-      <JournalCanvas
+      <FlatJournalView
         heading={getHeading(year, month, day)}
-        meta={<span>Archive selection</span>}
+        actions={actions}
         body={
           <p className="text-sm text-muted-foreground">
             Pick a specific day from the archive to read or edit an entry.
@@ -144,15 +166,17 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
 
   if (entries.length === 0) {
     return (
-      <JournalCanvas
+      <FlatJournalView
         heading={getHeading(year, month, day)}
-        meta={<span>No entry yet</span>}
         actions={
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/journal/write?year=${year}&month=${month}&day=${day}`}>
-              Write for this day
-            </Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            {actions}
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/journal/write?year=${year}&month=${month}&day=${day}`}>
+                Write for this day
+              </Link>
+            </Button>
+          </div>
         }
         body={
           <p className="text-sm text-muted-foreground">
@@ -163,20 +187,12 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
     );
   }
 
-  const editableEntry = entries[0] ?? null;
-
   return (
-    <JournalCanvas
+    <FlatJournalView
       heading={getHeading(year, month, day)}
-      meta={
-        <>
-          <span>{entries.length === 1 ? "Single entry" : `${entries.length} entries`}</span>
-          <span className="text-border">·</span>
-          <span>{entries.some((entry) => entry.images?.length) ? "Includes images" : "Text only"}</span>
-        </>
-      }
+      actions={actions}
       body={
-        <div className="animate-page space-y-8">
+        <div className="journal-browse-reading animate-page space-y-6">
           {entries.map((entry) => (
             <JournalEntryState
               key={entry.id}
@@ -186,14 +202,6 @@ export function EntryViewer({ year, month, day }: EntryViewerProps) {
               editable={entry.source === "web"}
             />
           ))}
-        </div>
-      }
-      footer={
-        <div className="flex items-center justify-between gap-3">
-          <span>{editableEntry?.source === "web" ? "Web entry" : "Imported entry"}</span>
-          <span>
-            {entries.reduce((sum, entry) => sum + entry.content.split(/\s+/).filter(Boolean).length, 0)} words
-          </span>
         </div>
       }
     />

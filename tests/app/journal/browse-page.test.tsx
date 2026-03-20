@@ -5,12 +5,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import BrowsePage from "@/app/journal/browse/page";
 
 const push = vi.fn();
+const replace = vi.fn();
 const useMediaQueryMock = vi.fn();
 const useOnlineStatusMock = vi.fn();
 const useSearchParamsMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push, replace }),
   useSearchParams: () => useSearchParamsMock(),
 }));
 
@@ -51,11 +52,18 @@ vi.mock("@/components/journal/entry-viewer", () => ({
     year,
     month,
     day,
+    actions,
   }: {
     year: number;
     month: number;
     day: number;
-  }) => <div data-testid="entry-viewer">{`${year}-${month}-${day}`}</div>,
+    actions?: React.ReactNode;
+  }) => (
+    <div data-testid="entry-viewer">
+      <div data-testid="entry-viewer-actions">{actions}</div>
+      <div data-testid="entry-viewer-date">{`${year}-${month}-${day}`}</div>
+    </div>
+  ),
 }));
 
 describe("BrowsePage", () => {
@@ -77,7 +85,7 @@ describe("BrowsePage", () => {
 
     render(<BrowsePage />);
 
-    expect((await screen.findByTestId("entry-viewer")).textContent).toBe("2026-3-7");
+    expect((await screen.findByTestId("entry-viewer-date")).textContent).toBe("2026-3-7");
     expect(screen.queryByTestId("date-tree")).toBeNull();
   });
 
@@ -86,7 +94,7 @@ describe("BrowsePage", () => {
 
     render(<BrowsePage />);
 
-    expect((await screen.findByTestId("entry-viewer")).textContent).toBe("2026-3-7");
+    expect((await screen.findByTestId("entry-viewer-date")).textContent).toBe("2026-3-7");
     expect(screen.queryByTestId("date-tree")).toBeNull();
     expect(screen.getByRole("button", { name: /archive/i })).toBeTruthy();
   });
@@ -105,6 +113,7 @@ describe("BrowsePage", () => {
 
     expect(screen.getByTestId("journal-archive-panel")).toBeTruthy();
     expect(archiveButton.getAttribute("aria-pressed")).toBe("true");
+    expect(archiveButton.closest(".mb-6")).toBeNull();
   });
 
   it("uses the query-selected date instead of snapping to the latest entry", async () => {
@@ -113,7 +122,7 @@ describe("BrowsePage", () => {
 
     render(<BrowsePage />);
 
-    expect((await screen.findByTestId("entry-viewer")).textContent).toBe("2026-3-18");
+    expect((await screen.findByTestId("entry-viewer-date")).textContent).toBe("2026-3-18");
   });
 
   it("does not render the improvised archive-aware heading", async () => {
@@ -137,5 +146,40 @@ describe("BrowsePage", () => {
 
     expect(screen.queryByTestId("journal-archive-panel")).toBeNull();
     expect(screen.getByTestId("entry-viewer").textContent).toContain("2026-3-6");
+  });
+
+  it("replaces the explicit date query when selecting a different archive day", async () => {
+    useMediaQueryMock.mockReturnValue(false);
+    useSearchParamsMock.mockReturnValue(new URLSearchParams("date=2026-03-07"));
+
+    render(<BrowsePage />);
+
+    const archiveButton = await screen.findByRole("button", { name: /archive/i });
+    fireEvent.click(archiveButton);
+    fireEvent.click(screen.getByRole("button", { name: /wed, 06\/03/i }));
+
+    expect(replace).toHaveBeenCalledWith("/journal/browse?date=2026-03-06");
+  });
+
+  it("keeps the browse viewer flat for an empty selected day", async () => {
+    useMediaQueryMock.mockReturnValue(false);
+    useSearchParamsMock.mockReturnValue(new URLSearchParams("date=2026-03-20"));
+
+    const { container } = render(<BrowsePage />);
+
+    await screen.findByTestId("entry-viewer");
+    expect(container.querySelector(".journal-browse-shell")).toBeNull();
+  });
+
+  it("does not show extra browse metadata labels for populated days", async () => {
+    useMediaQueryMock.mockReturnValue(false);
+    useSearchParamsMock.mockReturnValue(new URLSearchParams("date=2026-03-19"));
+
+    render(<BrowsePage />);
+
+    await screen.findByTestId("entry-viewer");
+    expect(screen.queryByText("Single entry")).toBeNull();
+    expect(screen.queryByText("Includes images")).toBeNull();
+    expect(screen.queryByText("Web entry")).toBeNull();
   });
 });

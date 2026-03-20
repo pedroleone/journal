@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import { QuadrantCard } from "./quadrant-card";
 import type { MediaStatus } from "@/lib/library";
 
@@ -36,7 +36,10 @@ function StatusPill({ status }: { status: string }) {
 
 function ItemRow({ item }: { item: LibraryItem }) {
   return (
-    <div className="flex items-center gap-2 py-1">
+    <Link
+      href={`/library/${encodeURIComponent(item.id)}`}
+      className="pointer-events-auto flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-[var(--library-dim)]/65"
+    >
       {item.cover_image ? (
         <div className="h-8 w-6 shrink-0 overflow-hidden rounded-sm bg-muted">
           <Image
@@ -60,7 +63,7 @@ function ItemRow({ item }: { item: LibraryItem }) {
         )}
       </div>
       <StatusPill status={item.status} />
-    </div>
+    </Link>
   );
 }
 
@@ -93,13 +96,22 @@ export function LibraryQuadrant() {
       label="Library"
       href="/library/browse"
       actions={
-        <Link
-          href="/library/new"
-          className="rounded bg-[var(--library-dim)] px-2 py-0.5 text-xs font-medium text-[var(--library)] hover:bg-[var(--library)]/25"
-        >
-          <Plus className="mr-1 inline-block h-3 w-3" />
-          Add
-        </Link>
+        <>
+          <Link
+            href="/library/browse"
+            className="rounded bg-[var(--library-dim)] px-2 py-0.5 text-xs font-medium text-[var(--library)] hover:bg-[var(--library)]/25"
+          >
+            <BookOpen className="mr-1 inline-block h-3 w-3" />
+            Browse
+          </Link>
+          <Link
+            href="/library/new"
+            className="rounded bg-[var(--library-dim)] px-2 py-0.5 text-xs font-medium text-[var(--library)] hover:bg-[var(--library)]/25"
+          >
+            <Plus className="mr-1 inline-block h-3 w-3" />
+            Add
+          </Link>
+        </>
       }
       footer={<span>{total} items</span>}
     >

@@ -33,14 +33,22 @@ export function QuadrantCard({
         </Link>
         {actions && <div className="flex items-center gap-1">{actions}</div>}
       </div>
-      <Link href={href} className="flex flex-1 flex-col overflow-hidden">
-        <div className="flex-1 overflow-hidden">{children}</div>
+      <div className="relative flex flex-1 flex-col overflow-hidden">
+        <Link
+          href={href}
+          aria-hidden="true"
+          tabIndex={-1}
+          className="absolute inset-0 rounded-md"
+        />
+        <div className="relative z-10 flex-1 overflow-hidden pointer-events-none">
+          {children}
+        </div>
         {footer && (
-          <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="relative z-10 mt-3 flex items-center gap-3 text-xs text-muted-foreground pointer-events-none">
             {footer}
           </div>
         )}
-      </Link>
+      </div>
     </div>
   );
 }

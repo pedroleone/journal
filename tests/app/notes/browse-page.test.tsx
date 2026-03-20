@@ -26,9 +26,11 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
+const useSearchParamsMock = vi.fn();
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => useSearchParamsMock(),
 }));
 
 vi.mock("@/hooks/use-media-query", () => ({
@@ -52,6 +54,7 @@ describe("NotesBrowsePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useMediaQueryMock.mockReturnValue(false);
+    useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
   it("shows the newly selected note detail instead of leaving the previous content on screen", async () => {
@@ -187,5 +190,53 @@ describe("NotesBrowsePage", () => {
       expect(screen.getByText("Second content")).toBeTruthy();
     });
     expect(screen.queryByText("First content")).toBeNull();
+  });
+
+  it("preselects the requested note from the query string", async () => {
+    useSearchParamsMock.mockReturnValue(new URLSearchParams("id=note-2"));
+
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+
+      if (url === "/api/notes") {
+        return Promise.resolve(jsonResponse([
+          {
+            id: "note-1",
+            title: "First note",
+            tags: null,
+            images: null,
+            created_at: "2026-03-08T12:00:00.000Z",
+            updated_at: "2026-03-08T12:00:00.000Z",
+          },
+          {
+            id: "note-2",
+            title: "Second note",
+            tags: null,
+            images: null,
+            created_at: "2026-03-09T12:00:00.000Z",
+            updated_at: "2026-03-09T12:00:00.000Z",
+          },
+        ]));
+      }
+
+      if (url === "/api/notes/note-2") {
+        return Promise.resolve(jsonResponse({
+          id: "note-2",
+          title: "Second note",
+          tags: null,
+          images: null,
+          content: "Second content",
+          created_at: "2026-03-09T12:00:00.000Z",
+          updated_at: "2026-03-09T12:00:00.000Z",
+          subnotes: [],
+        }));
+      }
+
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    }) as unknown as typeof fetch;
+
+    render(<NotesBrowsePage />);
+
+    expect(await screen.findByText("Second content")).toBeTruthy();
   });
 });

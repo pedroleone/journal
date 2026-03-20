@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import { QuadrantCard } from "./quadrant-card";
 
 interface NoteItem {
@@ -31,13 +31,22 @@ export function NotesQuadrant() {
       label="Notes"
       href="/notes/browse"
       actions={
-        <Link
-          href="/notes/browse?new=1"
-          className="rounded bg-[var(--notes-dim)] px-2 py-0.5 text-xs font-medium text-[var(--notes)] hover:bg-[var(--notes)]/25"
-        >
-          <Plus className="mr-1 inline-block h-3 w-3" />
-          New
-        </Link>
+        <>
+          <Link
+            href="/notes/browse"
+            className="rounded bg-[var(--notes-dim)] px-2 py-0.5 text-xs font-medium text-[var(--notes)] hover:bg-[var(--notes)]/25"
+          >
+            <BookOpen className="mr-1 inline-block h-3 w-3" />
+            Browse
+          </Link>
+          <Link
+            href="/notes/browse?new=1"
+            className="rounded bg-[var(--notes-dim)] px-2 py-0.5 text-xs font-medium text-[var(--notes)] hover:bg-[var(--notes)]/25"
+          >
+            <Plus className="mr-1 inline-block h-3 w-3" />
+            New
+          </Link>
+        </>
       }
       footer={
         <>
@@ -55,7 +64,11 @@ export function NotesQuadrant() {
       ) : notes.length > 0 ? (
         <div className="space-y-1.5">
           {notes.slice(0, 3).map((note) => (
-            <div key={note.id} className="flex items-center gap-2">
+            <Link
+              key={note.id}
+              href={`/notes/browse?id=${encodeURIComponent(note.id)}`}
+              className="pointer-events-auto flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-[var(--notes-dim)]/70"
+            >
               <span className="flex-1 truncate text-sm">
                 {note.title || "Untitled"}
               </span>
@@ -64,7 +77,7 @@ export function NotesQuadrant() {
                   {note.tags[0]}
                 </span>
               )}
-            </div>
+            </Link>
           ))}
         </div>
       ) : (

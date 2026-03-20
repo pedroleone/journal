@@ -22,4 +22,20 @@ describe("QuadrantCard", () => {
     expect(screen.getByRole("link", { name: /write/i })).toBeTruthy();
     expect(container.querySelector("a a")).toBeNull();
   });
+
+  it("supports linked content rows without nesting them inside the browse surface", () => {
+    const { container } = render(
+      <QuadrantCard
+        domain="notes"
+        label="Notes"
+        href="/notes/browse"
+      >
+        <a href="/notes/browse?id=note-1">First note</a>
+      </QuadrantCard>,
+    );
+
+    const noteLink = screen.getByRole("link", { name: /first note/i });
+    expect(noteLink.getAttribute("href")).toBe("/notes/browse?id=note-1");
+    expect(container.querySelector("a a")).toBeNull();
+  });
 });
