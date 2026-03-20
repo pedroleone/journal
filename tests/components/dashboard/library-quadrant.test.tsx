@@ -41,16 +41,17 @@ describe("LibraryQuadrant", () => {
         json: async () => [],
       } as Response);
 
-    render(<LibraryQuadrant />);
+    const { container } = render(<LibraryQuadrant />);
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
-    const image = await screen.findByRole("img", { hidden: true });
-    expect(image).toHaveAttribute(
-      "src",
-      "/api/images/user-1%2Flibrary%2Fitem-1%2Fcover%20image.enc",
-    );
+    await waitFor(() => {
+      const image = container.querySelector("img");
+      expect(image?.getAttribute("src")).toBe(
+        "/api/images/user-1%2Flibrary%2Fitem-1%2Fcover%20image.enc",
+      );
+    });
   });
 });
