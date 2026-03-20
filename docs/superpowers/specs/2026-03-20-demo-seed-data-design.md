@@ -2,20 +2,20 @@
 
 ## Summary
 
-Add a local-only, repeatable seed command that resets the first registered user's app data and recreates a realistic medium-density dataset across journal, food, notes, and library. The seeded content should include encrypted text, encrypted image blobs in R2, and enough variety to make UX/UI changes easy to evaluate.
+Add a local-only, repeatable seed command that resets a selected existing user's app data and recreates a realistic medium-density dataset across journal, food, notes, and library. The seeded content should include encrypted text, encrypted image blobs in R2, and enough variety to make UX/UI changes easy to evaluate.
 
 ## Goals
 
 - Provide a single command that produces a believable "heavy user" account across the full app.
 - Keep repeated runs fast by caching a small curated image set locally.
 - Preserve the current privacy model by storing seeded text encrypted and image blobs encrypted.
-- Prevent accidental destructive use by requiring explicit email confirmation against the first registered user.
+- Prevent accidental destructive use by requiring an explicit email that resolves to an existing user before any reset occurs.
 - Keep the seeded dataset deterministic so UI comparisons are stable between runs.
 
 ## Non-Goals
 
 - No production-facing admin seeding flow.
-- No support for seeding arbitrary users by query or selector.
+- No support for fuzzy user lookup or interactive user selection.
 - No append or merge behavior with existing user data.
 - No attempt to simulate browser auth flows or client-side encryption during seeding.
 - No large-scale stress-test dataset or randomized data generator.
@@ -28,14 +28,14 @@ The app currently has no fast way to populate a realistic account state for desi
 
 Add a `pnpm` script that runs a local-only TypeScript seed entrypoint. The command will:
 
-1. Resolve the first registered user from the database.
-2. Print that user's email and require `--email <value>` to match exactly before continuing.
+1. Resolve the user from the database by exact `--email <value>`.
+2. Print the matched user's email and refuse to continue if no matching user exists.
 3. Validate that execution is happening in a local/dev environment and that required DB, crypto, and R2 env vars are present.
 4. Clear the target user's existing journal, food, notes, subnotes, library items, library notes, and referenced encrypted image blobs.
 5. Download a fixed curated image manifest into a local cache directory if the files are not already cached.
 6. Recreate a deterministic medium-density dataset using direct DB inserts plus existing server-side encryption and R2 helpers.
 
-This keeps the tool fast, repeatable, and independent from OAuth/session flows while still matching the app's storage model.
+This keeps the tool fast, repeatable, independent from OAuth/session flows, and decoupled from account creation order while still matching the app's storage model.
 
 ## Architecture
 
@@ -44,9 +44,8 @@ This keeps the tool fast, repeatable, and independent from OAuth/session flows w
 - Add a new script such as `pnpm seed:demo -- --email you@example.com`.
 - The entrypoint should live under `scripts/` or `lib/dev/` and be clearly marked as local-only.
 - The command should exit with a clear error when:
-  - no user exists
   - `--email` is missing
-  - the provided email does not match the first registered user
+  - no user exists for the provided email
   - required env vars are missing
   - the environment is not local/dev
 
@@ -110,7 +109,7 @@ The split should keep the destructive reset logic separate from content generati
 
 ## Error Handling
 
-- Abort before deletion if the target user cannot be confirmed.
+- Abort before deletion if the target user email does not resolve to an existing account.
 - Abort before deletion if the environment is not local/dev.
 - Abort before deletion if the curated image manifest cannot be prepared.
 - If image upload fails during seeding, fail the command and surface which item failed.
@@ -126,7 +125,7 @@ Add unit tests rather than real integration tests for the seed tool:
 - reset helper collects image keys from every supported owner shape
 - reset helper issues deletes in the expected order for a target user
 - image manifest/cache helper skips downloads when cached files already exist
-- CLI argument validation rejects missing or mismatched email confirmation
+- CLI argument validation rejects missing email and unknown user email
 
 Run the new targeted tests and then run `pnpm test` to catch regressions.
 
@@ -134,13 +133,13 @@ Run the new targeted tests and then run `pnpm test` to catch regressions.
 
 - Curated remote image URLs can disappear over time, so the manifest should stay small and easy to refresh.
 - Direct DB seeding can drift from API validation rules if responsibilities are not centralized carefully.
-- Destructive reset is dangerous if environment and email checks are too loose.
+- Destructive reset is dangerous if environment checks or user lookup constraints are too loose.
 - Seed realism can degrade if the dataset becomes overly synthetic or too repetitive.
 
 ## Acceptance Criteria
 
 - A local-only `pnpm` seed command exists for demo data.
-- The command only targets the first registered user and requires exact email confirmation.
+- The command requires an exact user email and refuses to run if that user is not found.
 - Existing app data for that user is cleared before reseeding.
 - Seeded data spans journal, food, notes, note subnotes, library items, and library notes.
 - Seeded text is stored encrypted using the existing server crypto helpers.
