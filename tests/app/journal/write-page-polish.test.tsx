@@ -7,13 +7,19 @@ import WritePage from "@/app/journal/write/page";
 const useSearchParamsMock = vi.fn();
 const useOnlineStatusMock = vi.fn();
 const useAutoSaveMock = vi.fn();
+const useMediaQueryMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
   useSearchParams: () => useSearchParamsMock(),
 }));
 
 vi.mock("@/hooks/use-online-status", () => ({
   useOnlineStatus: () => useOnlineStatusMock(),
+}));
+
+vi.mock("@/hooks/use-media-query", () => ({
+  useMediaQuery: () => useMediaQueryMock(),
 }));
 
 vi.mock("@/hooks/use-locale", () => ({
@@ -73,6 +79,7 @@ describe("WritePage polish", () => {
     vi.clearAllMocks();
     useSearchParamsMock.mockReturnValue(new URLSearchParams("year=2026&month=3&day=20"));
     useOnlineStatusMock.mockReturnValue(true);
+    useMediaQueryMock.mockReturnValue(false);
     useAutoSaveMock.mockReturnValue({ status: "idle", save: vi.fn() });
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -91,14 +98,11 @@ describe("WritePage polish", () => {
     expect(thoughtButton.hasAttribute("disabled")).toBe(false);
   });
 
-  it("renders the writer status groups with visible separators and relaxed spacing", async () => {
+  it("renders write controls without the old boxed meta row", async () => {
     const { container } = render(<WritePage />);
 
-    await screen.findByText(/draft/i);
-    const metaRow = container.querySelector(".journal-meta-row");
-    expect(metaRow).toBeTruthy();
-    expect(metaRow?.className).toContain("journal-meta-row");
-    expect(container.querySelectorAll(".journal-meta-group").length).toBe(3);
-    expect(container.querySelectorAll(".journal-meta-separator").length).toBeGreaterThan(1);
+    await screen.findByRole("button", { name: /archive/i });
+    expect(container.querySelector(".journal-meta-row")).toBeNull();
+    expect(container.querySelector(".journal-browse-shell")).toBeNull();
   });
 });

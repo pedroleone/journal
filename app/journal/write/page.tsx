@@ -2,16 +2,15 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
-  CalendarDays,
+  Archive,
   Check,
   Loader2,
   AlertCircle,
   Paperclip,
   Plus,
   X,
-  PencilLine,
 } from "lucide-react";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -25,6 +24,9 @@ import { useAutoSave } from "@/hooks/use-auto-save";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
 import { useLocale } from "@/hooks/use-locale";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { JournalArchivePanel } from "@/components/journal/journal-archive-panel";
+import type { DateSelection } from "@/components/journal/date-tree";
 
 function formatWriteDate(date: Date, localeCode: string): string {
   return date.toLocaleDateString(localeCode, {
@@ -46,6 +48,7 @@ interface JournalEntryResponse {
 }
 
 export default function WritePage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const editEntryId = searchParams.get("entry");
   const queryYear = searchParams.get("year");
@@ -79,12 +82,15 @@ export default function WritePage() {
   const [loading, setLoading] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [readyForEditing, setReadyForEditing] = useState(false);
+  const [dates, setDates] = useState<Array<{ id: string; year: number; month: number; day: number }>>([]);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [imageKeys, setImageKeys] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [entryError, setEntryError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [writeLightboxIndex, setWriteLightboxIndex] = useState<number | null>(null);
   const isOnline = useOnlineStatus();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const { t } = useLocale();
   const { images } = useImages(imageKeys);
 
@@ -215,6 +221,22 @@ export default function WritePage() {
   });
 
   useEffect(() => {
+    if (!isOnline) return;
+    let cancelled = false;
+    fetch("/api/entries/dates")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        if (cancelled) return;
+        setDates(data);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOnline]);
+
+  useEffect(() => {
     if (!content.trim() || status === "saved") return;
 
     function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -302,7 +324,6 @@ export default function WritePage() {
       return {
         icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />,
         label: t.journal.saving,
-        className: "text-muted-foreground",
       };
     }
 
@@ -310,7 +331,6 @@ export default function WritePage() {
       return {
         icon: <Check className="h-3.5 w-3.5" />,
         label: t.journal.saved,
-        className: "text-[var(--food)]",
       };
     }
 
@@ -318,7 +338,6 @@ export default function WritePage() {
       return {
         icon: <AlertCircle className="h-3.5 w-3.5" />,
         label: t.journal.saveFailed,
-        className: "text-destructive",
       };
     }
 
@@ -326,16 +345,27 @@ export default function WritePage() {
       return {
         icon: <AlertCircle className="h-3.5 w-3.5" />,
         label: t.journal.offline,
-        className: "text-muted-foreground",
       };
     }
 
     return {
-      icon: <PencilLine className="h-3.5 w-3.5" />,
+      icon: <Plus className="h-3.5 w-3.5" />,
       label: "Draft",
-      className: "text-muted-foreground",
     };
   })();
+
+  function handleArchiveSelect(selection: DateSelection) {
+    if (selection.month == null || selection.day == null) return;
+
+    const nextDate = new Date(selection.year, selection.month - 1, selection.day);
+    setDate(nextDate);
+    setLoadedEntryId(null);
+    router.replace(
+      `/journal/write?year=${selection.year}&month=${selection.month}&day=${selection.day}`,
+    );
+
+    if (isMobile) setArchiveOpen(false);
+  }
 
   if (!isOnline && !readyForEditing) {
     return (
@@ -366,6 +396,19 @@ export default function WritePage() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      <JournalArchivePanel
+        open={archiveOpen}
+        isMobile={isMobile}
+        dates={dates}
+        selected={{
+          year: date.getFullYear(),
+          month: date.getMonth() + 1,
+          day: date.getDate(),
+        }}
+        onSelect={handleArchiveSelect}
+        onClose={() => setArchiveOpen(false)}
+        onExport={() => router.push("/settings")}
+      />
       {isDragging && (
         <div className="pointer-events-none fixed inset-0 z-40 m-4 rounded-xl ring-2 ring-primary/50 bg-primary/5 transition-all" />
       )}
@@ -375,164 +418,169 @@ export default function WritePage() {
         </div>
       )}
       <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
-        <div className="mx-auto w-full max-w-[760px] rounded-[32px] border border-border/60 bg-card/30 px-6 py-7 shadow-[0_24px_80px_rgba(0,0,0,0.16)] backdrop-blur-sm sm:px-8 sm:py-9">
-        <div className="journal-meta-row">
-          <span className="journal-meta-group">
-            <CalendarDays className="h-3.5 w-3.5 text-[var(--journal)]" />
-            {formatWriteDate(date, t.localeCode)}
-          </span>
-          <span className="journal-meta-separator">·</span>
-          <span className="journal-meta-group">
-            <PencilLine className="h-3.5 w-3.5" />
-            {editEntryId || loadedEntryId ? "Editing" : "Writing"}
-          </span>
-          <span className="journal-meta-separator">·</span>
-          <span className={`journal-meta-group ${metaStatus.className}`}>
-            {metaStatus.icon}
-            {metaStatus.label}
-          </span>
-        </div>
+        <section className="mx-auto w-full max-w-[760px]">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <button className="font-display text-[2rem] leading-tight tracking-tight text-foreground transition-colors hover:text-muted-foreground sm:text-[2.25rem]">
+                  {formatWriteDate(date, t.localeCode)}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(d) => {
+                    if (d) {
+                      setDate(d);
+                      setLoadedEntryId(null);
+                      router.replace(
+                        `/journal/write?year=${d.getFullYear()}&month=${d.getMonth() + 1}&day=${d.getDate()}`,
+                      );
+                      setCalendarOpen(false);
+                    }
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
 
-        <div className="mt-5 flex items-center justify-center py-1">
-          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-            <PopoverTrigger asChild>
-              <button className="font-display text-2xl tracking-tight text-foreground transition-colors hover:text-muted-foreground sm:text-3xl">
-                {formatWriteDate(date, t.localeCode)}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="center">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(d) => {
-                  if (d) {
-                    setDate(d);
-                    setCalendarOpen(false);
-                  }
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+            <button
+              type="button"
+              onClick={() => setArchiveOpen((current) => !current)}
+              aria-pressed={archiveOpen}
+              className="inline-flex items-center gap-2 rounded-md border border-border/60 bg-secondary/35 px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary/60"
+            >
+              <Archive className="h-4 w-4 text-[var(--journal)]" />
+              Archive
+            </button>
+          </div>
 
-        {entryError ? (
-          <div className="pb-2 text-sm text-destructive">{entryError}</div>
-        ) : null}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+            <span>{editEntryId || loadedEntryId ? "Editing" : "Writing"}</span>
+            <span className="inline-flex items-center gap-1.5">
+              {metaStatus.icon}
+              {metaStatus.label}
+            </span>
+          </div>
 
-        <div className="pb-4 pt-4">
-          <MarkdownEditor
-            value={content}
-            onChange={setContent}
-            onBlur={() => { void save(); }}
-            placeholder={t.journal.startWriting}
-            className="journal-prose"
-            minHeight="calc(100vh - 12rem)"
-            autoFocus
-          />
-
-          {images.length > 0 ? (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {images.map((image, i) => (
-                <div
-                  key={image.key}
-                  className="relative overflow-hidden rounded-lg border border-border/50 bg-card/20"
-                >
-                  {/* Blob URLs back these previews, so Next/Image is not a good fit here. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={image.url}
-                    alt=""
-                    className="h-48 w-full cursor-pointer object-cover"
-                    onClick={() => setWriteLightboxIndex(i)}
-                  />
-                  <button
-                    onClick={() => handleRemoveImage(image.key)}
-                    className="absolute right-2 top-2 rounded-full bg-background/90 p-1 text-foreground shadow-sm"
-                    aria-label="Remove image"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+          {entryError ? (
+            <div className="mt-4 text-sm text-destructive">{entryError}</div>
           ) : null}
 
-          {writeLightboxIndex !== null && (
-            <ImageLightbox
-              images={images}
-              index={writeLightboxIndex}
-              onIndexChange={setWriteLightboxIndex}
-              onClose={() => setWriteLightboxIndex(null)}
+          <div className="pb-4 pt-6">
+            <MarkdownEditor
+              value={content}
+              onChange={setContent}
+              onBlur={() => { void save(); }}
+              placeholder={t.journal.startWriting}
+              className="journal-prose"
+              minHeight="calc(100vh - 12rem)"
+              autoFocus
             />
-          )}
-        </div>
 
-        <div className="sticky bottom-0 flex items-center justify-between border-t border-border/40 bg-background/95 py-3 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(event) => {
-                void handleImageSelection(event.target.files);
-              }}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="journal-utility-action"
-              disabled={!isOnline || uploadingImages}
-            >
-              {uploadingImages ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Paperclip className="h-3 w-3" />
-              )}
-              {t.journal.image}
-            </button>
-            <button
-              onClick={handleNewThought}
-              className="journal-utility-action"
-            >
-              <Plus className="h-3 w-3" />
-              {t.journal.newThought}
-            </button>
-            {imageKeys.length > 0 ? (
-              <span className="text-xs text-muted-foreground">
-                {imageKeys.length} attached
-              </span>
+            {images.length > 0 ? (
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {images.map((image, i) => (
+                  <div
+                    key={image.key}
+                    className="relative overflow-hidden rounded-lg border border-border/50 bg-card/20"
+                  >
+                    {/* Blob URLs back these previews, so Next/Image is not a good fit here. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={image.url}
+                      alt=""
+                      className="h-48 w-full cursor-pointer object-cover"
+                      onClick={() => setWriteLightboxIndex(i)}
+                    />
+                    <button
+                      onClick={() => handleRemoveImage(image.key)}
+                      className="absolute right-2 top-2 rounded-full bg-background/90 p-1 text-foreground shadow-sm"
+                      aria-label="Remove image"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             ) : null}
+
+            {writeLightboxIndex !== null && (
+              <ImageLightbox
+                images={images}
+                index={writeLightboxIndex}
+                onIndexChange={setWriteLightboxIndex}
+                onClose={() => setWriteLightboxIndex(null)}
+              />
+            )}
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            {status === "saving" && (
-              <>
-                <Loader2 className="h-3 w-3 animate-spin" />
-                {t.journal.saving}
-              </>
-            )}
-            {status === "saved" && (
-              <>
-                <Check className="h-3 w-3" />
-                {t.journal.saved}
-              </>
-            )}
-            {status === "error" && (
-              <>
-                <AlertCircle className="h-3 w-3" />
-                {t.journal.saveFailed}
-              </>
-            )}
-            {status === "offline" && (
-              <>
-                <AlertCircle className="h-3 w-3" />
-                {t.journal.offline}
-              </>
-            )}
+          <div className="flex flex-wrap items-center justify-between gap-4 py-3">
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(event) => {
+                  void handleImageSelection(event.target.files);
+                }}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="journal-utility-action"
+                disabled={!isOnline || uploadingImages}
+              >
+                {uploadingImages ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Paperclip className="h-3 w-3" />
+                )}
+                {t.journal.image}
+              </button>
+              <button
+                onClick={handleNewThought}
+                className="journal-utility-action"
+              >
+                <Plus className="h-3 w-3" />
+                {t.journal.newThought}
+              </button>
+              {imageKeys.length > 0 ? (
+                <span className="text-xs text-muted-foreground">
+                  {imageKeys.length} attached
+                </span>
+              ) : null}
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {status === "saving" && (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {t.journal.saving}
+                </>
+              )}
+              {status === "saved" && (
+                <>
+                  <Check className="h-3 w-3" />
+                  {t.journal.saved}
+                </>
+              )}
+              {status === "error" && (
+                <>
+                  <AlertCircle className="h-3 w-3" />
+                  {t.journal.saveFailed}
+                </>
+              )}
+              {status === "offline" && (
+                <>
+                  <AlertCircle className="h-3 w-3" />
+                  {t.journal.offline}
+                </>
+              )}
+            </div>
           </div>
-        </div>
-        </div>
+        </section>
       </div>
     </div>
   );

@@ -132,10 +132,13 @@ describe("WritePage", () => {
   });
 
   it("uses the selected query date as the writing date", async () => {
-    render(<WritePage />);
+    const { container } = render(<WritePage />);
 
     expect(await screen.findByRole("button", { name: /wednesday, march 18, 2026/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /archive/i })).toBeTruthy();
     expect(screen.getByTestId("markdown-editor").className).toContain("journal-prose");
+    expect(container.querySelector(".journal-meta-row")).toBeNull();
+    expect(container.querySelector(".journal-browse-shell")).toBeNull();
   });
 
   it("does not render the desktop journal date tree while editing", async () => {
@@ -148,15 +151,15 @@ describe("WritePage", () => {
     expect(screen.queryByText("date-tree")).toBeNull();
   });
 
-  it("renders the compact journal meta row for editing", async () => {
+  it("renders editing in the same flat structure as browse", async () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams("entry=entry-1"));
     useAutoSaveMock.mockReturnValue({ status: "saved", save: vi.fn() });
 
     const { container } = render(<WritePage />);
 
-    expect(await screen.findByText(/editing/i)).toBeTruthy();
-    const metaRow = container.querySelector(".journal-meta-row");
-    expect(metaRow?.textContent).toContain("Editing");
-    expect(metaRow?.textContent).toContain("Saved");
+    expect(await screen.findByRole("button", { name: /archive/i })).toBeTruthy();
+    expect(container.querySelector(".journal-meta-row")).toBeNull();
+    expect(container.querySelector(".journal-browse-shell")).toBeNull();
+    expect(screen.getAllByText(/saved/i).length).toBeGreaterThan(0);
   });
 });
