@@ -147,6 +147,28 @@ describe("image routes", () => {
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([4, 5, 6]));
   });
 
+  it("returns library cover image bytes when the key matches cover_image", async () => {
+    const { getEncryptedObject } = await import("@/lib/r2");
+    mockDb.where.mockResolvedValueOnce([
+      { id: "item-1", cover_image: "user-1/library/item-1/cover.enc" },
+    ]);
+    vi.mocked(getEncryptedObject).mockResolvedValue({
+      body: new Uint8Array([1, 2, 3]),
+      iv: "image-iv",
+      contentType: "image/jpeg",
+    });
+
+    const { GET } = await import("@/app/api/images/[key]/route");
+    const response = await GET(
+      new NextRequest("http://localhost/api/images/user-1%2Flibrary%2Fitem-1%2Fcover.enc"),
+      { params: Promise.resolve({ key: "user-1%2Flibrary%2Fitem-1%2Fcover.enc" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/jpeg");
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([4, 5, 6]));
+  });
+
   it("deletes an encrypted image and removes the DB reference", async () => {
     const { deleteEncryptedObject } = await import("@/lib/r2");
     mockDb.where

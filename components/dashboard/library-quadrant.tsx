@@ -39,7 +39,7 @@ function ItemRow({ item }: { item: LibraryItem }) {
       {item.cover_image ? (
         <div className="h-8 w-6 shrink-0 overflow-hidden rounded-sm bg-muted">
           <img
-            src={`/api/images/${item.cover_image}`}
+            src={`/api/images/${encodeURIComponent(item.cover_image)}`}
             alt=""
             className="h-full w-full object-cover"
           />
