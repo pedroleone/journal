@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make advanced library filters optional while keeping search and type controls visible in a smaller sticky header across desktop and mobile.
+**Goal:** Make advanced library filters optional while keeping only search visible in a smaller sticky header, with type controls moved into the advanced panel across desktop and mobile.
 
-**Architecture:** Keep URL-backed filter state unchanged and add only local presentation state for whether the advanced filter panel is visible. Reduce the sticky region in `LibraryBrowse` to the primary controls, then render `FilterBar` conditionally in normal document flow so mobile browsing gets more usable vertical space.
+**Architecture:** Keep URL-backed filter state unchanged and add only local presentation state for whether the advanced filter panel is visible. Reduce the sticky region in `LibraryBrowse` to search plus the filter toggle, then render `FilterBar` conditionally in normal document flow with type pills included inside that panel so mobile browsing gets more usable vertical space.
 
 **Tech Stack:** Next.js App Router, React 19, TypeScript, Vitest, Testing Library, Tailwind CSS
 
@@ -14,10 +14,10 @@
 
 - Modify: `components/library/library-browse.tsx`
   - Own the advanced-filter visibility state and layout changes.
+- Modify: `components/library/filter-bar.tsx`
+  - Host type pills inside the advanced panel while preserving existing filter semantics.
 - Modify: `tests/components/library/library-browse.test.tsx`
   - Add regression coverage for the new toggle and default closed state.
-- Optional modify: `components/library/filter-bar.tsx`
-  - Only if minor class adjustments are needed after the `LibraryBrowse` refactor.
 
 ### Task 1: Add Regression Coverage For Advanced Filter Visibility
 
@@ -32,10 +32,12 @@ it("keeps advanced filters hidden by default and reveals them on toggle", () => 
   renderLibraryBrowse();
 
   expect(screen.queryByText(/all statuses/i)).toBeNull();
+  expect(screen.queryByRole("button", { name: /books/i })).toBeNull();
 
   fireEvent.click(screen.getByRole("button", { name: /filters/i }));
 
   expect(screen.getByText(/all statuses/i)).toBeTruthy();
+  expect(screen.getByRole("button", { name: /books/i })).toBeTruthy();
 });
 ```
 
@@ -76,16 +78,18 @@ git commit -m "test: cover library browse filter toggle behavior"
 
 **Files:**
 - Modify: `components/library/library-browse.tsx`
-- Optional Modify: `components/library/filter-bar.tsx`
+- Modify: `components/library/filter-bar.tsx`
 - Test: `tests/components/library/library-browse.test.tsx`
 
 - [ ] **Step 1: Write the minimal implementation**
 
 Implementation notes:
 - Add `const [filtersOpen, setFiltersOpen] = useState(false)`.
-- Keep search and type pills in the sticky wrapper.
+- Keep only search and the filters toggle in the sticky wrapper.
 - Add a toggle button with a stable accessible name including `Filters`.
+- Move type pills into `FilterBar` as the first control group.
 - Move `FilterBar` below the sticky header and render it only when `filtersOpen` is true.
+- Include active type in the hidden-filter count shown on the toggle.
 - Adjust sticky offset classes so mobile uses less top spacing than desktop.
 
 - [ ] **Step 2: Run the focused test**
@@ -104,6 +108,7 @@ Check for:
 - sticky header height feels reasonable on mobile
 - no doubled border or awkward gap between sticky controls and panel
 - no regression to type/search interaction
+- type still switches grouped view to flat view when selected
 
 - [ ] **Step 5: Commit**
 

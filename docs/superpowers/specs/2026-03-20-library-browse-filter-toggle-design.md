@@ -2,7 +2,7 @@
 
 ## Summary
 
-Adjust the `library/browse` layout so the sticky header is smaller and more predictable, while making advanced filters optional. The search bar and type pills remain visible; the advanced filter panel is hidden by default and can be toggled open when needed.
+Adjust the `library/browse` layout so the sticky header is smaller and more predictable, while making advanced filters optional. The search bar remains visible; the advanced filter panel is hidden by default and can be toggled open when needed. Type selection moves into that panel.
 
 ## Goals
 
@@ -31,9 +31,10 @@ Use a two-tier layout:
 
 1. A reduced sticky header that contains only:
    - search input
-   - type pills
    - advanced filters toggle button
 2. A conditional advanced filter panel rendered in normal page flow below the sticky header.
+
+Inside the advanced filter panel, render type selection first as a pill row, followed by the existing status and metadata filters.
 
 This keeps the most-used controls available while letting the expanded filter section scroll naturally with the page.
 
@@ -43,8 +44,8 @@ This keeps the most-used controls available while letting the expanded filter se
 
 - Add local UI state `filtersOpen`, initialized to `false`.
 - Keep the search bar sticky.
-- Keep the type pills inside the sticky area.
-- Add a toggle control near the type pills.
+- Keep only the search bar and filters toggle in the sticky area.
+- Add a toggle control next to the search context.
 - Move `FilterBar` outside the sticky wrapper.
 - Render `FilterBar` only when `filtersOpen` is `true`.
 - Adjust top offset classes so mobile uses a smaller sticky offset than desktop.
@@ -53,6 +54,7 @@ This keeps the most-used controls available while letting the expanded filter se
 
 - Preserve current filtering behavior and callbacks.
 - Support rendering as a standalone collapsible section below the sticky controls.
+- Add the type pill row to the advanced filter panel, above status and metadata filters.
 - Keep active filter chips visible inside the panel when it is open.
 
 No API or server-side changes are required.
@@ -63,13 +65,14 @@ No API or server-side changes are required.
 - Tapping the toggle reveals the advanced filter panel inline.
 - Tapping again hides it without clearing any active filters.
 - Active filters remain applied even while the panel is hidden.
-- Search and type filtering continue to work exactly as they do now.
+- Search filtering continues to work exactly as it does now.
+- Type filtering continues to work exactly as it does now, but from inside the advanced panel.
 
 ## Responsive Behavior
 
 ### Desktop
 
-- Sticky search/type bar remains near the top for quick refinement.
+- Sticky search bar remains near the top for quick refinement.
 - Expanded advanced filters appear immediately below the sticky region.
 
 ### Mobile
@@ -82,6 +85,7 @@ No API or server-side changes are required.
 
 - If vocabulary lists are empty, the existing `FilterBar` behavior remains unchanged.
 - If filters are active while the panel is hidden, item results still reflect those active filters.
+- If a type filter is active while the panel is hidden, the flat-grid result mode still remains active.
 - No special recovery state is needed because this is presentational and URL-backed.
 
 ## Testing Strategy
@@ -90,6 +94,8 @@ Add component tests for `LibraryBrowse` to cover:
 
 - advanced filters are hidden by default
 - toggle button reveals the filter panel
+- type pills are hidden while the panel is closed
+- type pills appear inside the panel when opened
 - toggle button hides the filter panel again
 - active filters remain effective when the panel is hidden
 
@@ -99,11 +105,13 @@ Existing page tests should continue to pass because URL parsing and data loading
 
 - Moving `FilterBar` outside the sticky wrapper may expose spacing issues between header and content.
 - The toggle label/icon needs to communicate state clearly enough without adding clutter.
+- Moving type into the panel makes it one step less visible, so the filter count should reflect active hidden filters clearly.
 
 ## Acceptance Criteria
 
 - `library/browse` loads with advanced filters hidden.
-- Search and type pills remain visible and usable.
+- Search remains visible and usable.
 - A toggle shows and hides the advanced filter panel.
+- Type selection is available inside the advanced panel as pills.
 - Hiding the panel does not clear any current filters.
 - The mobile layout leaves more visible space for browsing content than before.
