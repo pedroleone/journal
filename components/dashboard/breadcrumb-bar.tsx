@@ -32,7 +32,7 @@ export function BreadcrumbBar({ domain, date }: BreadcrumbBarProps) {
   const actions = useBreadcrumbActions();
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-4 dark:bg-[var(--bg-topbar)]">
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-[var(--surface-topbar)] px-4">
       <Link
         href="/"
         className={`flex items-center gap-1 text-sm font-medium ${ACCENT_TEXT[domain]} hover:opacity-80`}

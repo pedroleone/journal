@@ -11,7 +11,7 @@ interface TopBarProps {
 
 export function TopBar({ date, onDateChange }: TopBarProps) {
   return (
-    <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-border bg-background px-4 dark:bg-[var(--bg-topbar)]">
+    <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-border bg-[var(--surface-topbar)] px-4">
       <DateNavigator date={date} onDateChange={onDateChange} />
       <div className="flex items-center gap-2">
         <Link
