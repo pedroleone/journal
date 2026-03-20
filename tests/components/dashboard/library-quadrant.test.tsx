@@ -1,8 +1,33 @@
 // @vitest-environment jsdom
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LibraryQuadrant } from "@/components/dashboard/library-quadrant";
+
+vi.mock("next/image", () => ({
+  default: ({
+    alt,
+    className,
+    height,
+    src,
+    width,
+  }: {
+    alt: string;
+    className?: string;
+    height: number;
+    src: string;
+    width: number;
+  }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      alt={alt}
+      className={className}
+      height={height}
+      src={src}
+      width={width}
+    />
+  ),
+}));
 
 vi.mock("next/link", () => ({
   default: ({ children, href, className }: { children: React.ReactNode; href: string; className?: string }) => (

@@ -15,25 +15,40 @@ interface JournalQuadrantProps {
   date: Date;
 }
 
+interface JournalSnapshot {
+  requestKey: string;
+  entry: JournalEntry | null;
+}
+
 export function JournalQuadrant({ date }: JournalQuadrantProps) {
-  const [entry, setEntry] = useState<JournalEntry | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<JournalSnapshot | null>(null);
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
+  const requestKey = `${year}-${month}-${day}`;
   const browseHref = `/journal/browse?date=${date.toISOString().slice(0, 10)}`;
   const writeHref = `/journal/write?year=${year}&month=${month}&day=${day}`;
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
     fetch(`/api/entries?year=${year}&month=${month}&day=${day}`)
       .then((r) => r.json())
       .then((data: JournalEntry[]) => {
-        setEntry(data[0] ?? null);
+        if (cancelled) return;
+        setSnapshot({ requestKey, entry: data[0] ?? null });
       })
-      .catch(() => setEntry(null))
-      .finally(() => setLoading(false));
-  }, [day, month, year]);
+      .catch(() => {
+        if (cancelled) return;
+        setSnapshot({ requestKey, entry: null });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [day, month, requestKey, year]);
+
+  const entry = snapshot?.requestKey === requestKey ? snapshot.entry : null;
+  const loading = snapshot?.requestKey !== requestKey;
 
   const content = entry?.encrypted_content ?? "";
   const wordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;

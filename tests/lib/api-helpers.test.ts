@@ -22,7 +22,7 @@ describe("withAuth", () => {
   it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValueOnce(null);
     const { withAuth } = await import("@/lib/api-helpers");
-    const handler = withAuth(async (_userId, _request) => {
+    const handler = withAuth(async () => {
       return new (await import("next/server")).NextResponse("ok");
     });
     const req = new NextRequest("http://localhost/api/test");
@@ -34,7 +34,7 @@ describe("withAuth", () => {
     mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
     const { withAuth } = await import("@/lib/api-helpers");
     let receivedUserId = "";
-    const handler = withAuth(async (userId, _request) => {
+    const handler = withAuth(async (userId) => {
       receivedUserId = userId;
       return new (await import("next/server")).NextResponse("ok");
     });
@@ -47,7 +47,7 @@ describe("withAuth", () => {
     mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
     const { withAuth } = await import("@/lib/api-helpers");
     let receivedParams: Record<string, string> = {};
-    const handler = withAuth<{ id: string }>(async (_userId, _request, { params }) => {
+    const handler = withAuth<{ id: string }>(async (...[, , { params }]) => {
       receivedParams = params;
       return new (await import("next/server")).NextResponse("ok");
     });

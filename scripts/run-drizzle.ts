@@ -1,8 +1,8 @@
-const { spawnSync } = require("node:child_process");
-const {
+import { spawnSync } from "node:child_process";
+import {
   buildDrizzleProcessEnv,
   resolveDrizzleDbCredentials,
-} = require("../lib/drizzle-env.ts");
+} from "../lib/drizzle-env.ts";
 
 const args = process.argv.slice(2);
 

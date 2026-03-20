@@ -53,12 +53,13 @@ export default function BrowsePage() {
   const searchParams = useSearchParams();
   const explicitSelection = parseSelectedDate(searchParams);
   const [dates, setDates] = useState<DateEntry[]>([]);
-  const [selected, setSelected] = useState<DateSelection | null>(explicitSelection);
+  const [fallbackSelected, setFallbackSelected] = useState<DateSelection | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isOnline = useOnlineStatus();
   const { t } = useLocale();
+  const selected = explicitSelection ?? fallbackSelected;
 
   useEffect(() => {
     if (!isOnline) return;
@@ -69,7 +70,7 @@ export default function BrowsePage() {
         if (cancelled) return;
 
         setDates(data);
-        setSelected((current) => {
+        setFallbackSelected((current) => {
           if (current || data.length === 0) return current;
 
           const [latestEntry] = data;
@@ -84,15 +85,10 @@ export default function BrowsePage() {
     return () => {
       cancelled = true;
     };
-  }, [explicitSelection, isMobile, isOnline]);
-
-  useEffect(() => {
-    if (!explicitSelection) return;
-    setSelected(explicitSelection);
-  }, [explicitSelection]);
+  }, [isOnline]);
 
   function handleSelect(sel: DateSelection) {
-    setSelected(sel);
+    setFallbackSelected(sel);
     if (isMobile) setArchiveOpen(false);
   }
 

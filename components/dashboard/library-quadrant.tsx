@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { QuadrantCard } from "./quadrant-card";
@@ -38,9 +39,12 @@ function ItemRow({ item }: { item: LibraryItem }) {
     <div className="flex items-center gap-2 py-1">
       {item.cover_image ? (
         <div className="h-8 w-6 shrink-0 overflow-hidden rounded-sm bg-muted">
-          <img
+          <Image
             src={`/api/images/${encodeURIComponent(item.cover_image)}`}
             alt=""
+            unoptimized
+            width={24}
+            height={32}
             className="h-full w-full object-cover"
           />
         </div>

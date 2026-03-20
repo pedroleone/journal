@@ -20,31 +20,53 @@ interface FoodQuadrantProps {
   date: Date;
 }
 
+interface FoodSnapshot {
+  requestKey: string;
+  entries: FoodEntry[];
+  unsortedCount: number;
+}
+
 export function FoodQuadrant({ date }: FoodQuadrantProps) {
-  const [entries, setEntries] = useState<FoodEntry[]>([]);
-  const [unsortedCount, setUnsortedCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<FoodSnapshot | null>(null);
+  const y = date.getFullYear();
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  const requestKey = `${y}-${m}-${d}`;
 
   useEffect(() => {
-    setLoading(true);
-    const y = date.getFullYear();
-    const m = date.getMonth() + 1;
-    const d = date.getDate();
+    let cancelled = false;
 
     Promise.all([
       fetch(`/api/food?year=${y}&month=${m}&day=${d}`).then((r) => r.json()),
       fetch("/api/food?uncategorized=true").then((r) => r.json()),
     ])
       .then(([dayEntries, uncategorized]: [FoodEntry[], FoodEntry[]]) => {
-        setEntries(dayEntries);
-        setUnsortedCount(uncategorized.length);
+        if (cancelled) return;
+        setSnapshot({
+          requestKey,
+          entries: dayEntries,
+          unsortedCount: uncategorized.length,
+        });
       })
       .catch(() => {
-        setEntries([]);
-        setUnsortedCount(0);
+        if (cancelled) return;
+        setSnapshot({
+          requestKey,
+          entries: [],
+          unsortedCount: 0,
+        });
       })
-      .finally(() => setLoading(false));
-  }, [date]);
+      .finally(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [d, m, requestKey, y]);
+
+  const entries = snapshot?.requestKey === requestKey ? snapshot.entries : [];
+  const unsortedCount =
+    snapshot?.requestKey === requestKey ? snapshot.unsortedCount : 0;
+  const loading = snapshot?.requestKey !== requestKey;
 
   const assigned = entries.filter((e) => e.meal_slot);
   const filledSlots = new Set(assigned.map((e) => e.meal_slot));

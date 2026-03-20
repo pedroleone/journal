@@ -6,7 +6,7 @@ import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { VocabularyInput } from "@/components/library/vocabulary-input";
 import { StatusTransition } from "@/components/library/status-transition";
 import { useLocale } from "@/hooks/use-locale";
-import { MEDIA_TYPES, MEDIA_STATUSES, CREATOR_LABELS } from "@/lib/library";
+import { MEDIA_TYPES, CREATOR_LABELS } from "@/lib/library";
 import type { MediaType, MediaStatus } from "@/lib/library";
 
 export interface LibraryNote {
