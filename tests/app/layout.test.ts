@@ -8,4 +8,11 @@ describe("layout navigation shell", () => {
 
     expect(layout).toContain('viewportFit: "cover"');
   });
+
+  it("exports remapped theme colors for light and dark browser chrome", () => {
+    const layout = readFileSync(path.resolve(process.cwd(), "app/layout.tsx"), "utf8");
+
+    expect(layout).toContain('{ media: "(prefers-color-scheme: light)", color: "#f4efe6" }');
+    expect(layout).toContain('{ media: "(prefers-color-scheme: dark)", color: "#111118" }');
+  });
 });

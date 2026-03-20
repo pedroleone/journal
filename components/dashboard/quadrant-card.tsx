@@ -23,7 +23,7 @@ export function QuadrantCard({
   children,
 }: QuadrantCardProps) {
   return (
-    <div className="flex flex-col bg-background p-4 transition-colors hover:bg-accent/30 dark:bg-[var(--bg-quad)] dark:hover:bg-[var(--bg-surface)]">
+    <div className="flex flex-col bg-[var(--surface-panel)] p-4 transition-colors hover:bg-[var(--surface-panel-hover)]">
       <div className="mb-3 flex items-center justify-between">
         <Link href={href} className="flex items-center gap-2">
           <AccentDot domain={domain} />
