@@ -3,6 +3,18 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("globals.css", () => {
+  it("defines dashboard semantic surface and text tokens", () => {
+    const css = readFileSync(path.resolve(process.cwd(), "app/globals.css"), "utf8");
+
+    expect(css).toContain("--surface-base:");
+    expect(css).toContain("--surface-topbar:");
+    expect(css).toContain("--surface-panel:");
+    expect(css).toContain("--surface-panel-hover:");
+    expect(css).toContain("--text-primary:");
+    expect(css).toContain("--text-secondary:");
+    expect(css).toContain("--border-subtle:");
+  });
+
   it("hides native spinner controls for number inputs", () => {
     const css = readFileSync(path.resolve(process.cwd(), "app/globals.css"), "utf8");
 
