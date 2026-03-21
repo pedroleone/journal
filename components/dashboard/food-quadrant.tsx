@@ -75,7 +75,7 @@ export function FoodQuadrant({ date }: FoodQuadrantProps) {
     <QuadrantCard
       domain="food"
       label="Food"
-      href="/food/browse"
+      href="/food"
       actions={
         <Link
           href="/food"

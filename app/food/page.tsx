@@ -1,234 +1,235 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Camera, Check, Loader2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CalendarDays } from "lucide-react";
+import { FoodMealSlotCard } from "@/components/food/food-meal-slot-card";
+import { FoodQuickAdd } from "@/components/food/food-quick-add";
+import { buildMealSlotState } from "@/components/food/food-day-state";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
-import { uploadEncryptedImage } from "@/lib/client-images";
+import type { MealSlot } from "@/lib/food";
+import { MEAL_SLOTS } from "@/lib/food";
 import { useLocale } from "@/hooks/use-locale";
 
-interface FoodEntry {
+interface FoodEntryView {
   id: string;
   source: "web";
+  year: number;
+  month: number;
+  day: number;
+  hour: number | null;
+  meal_slot: MealSlot | null;
   content: string;
   logged_at: string;
   images: string[] | null;
+  tags: string[] | null;
 }
 
-interface RecentEntry {
-  id: string;
-  source: "web";
-  content: string;
-  logged_at: string;
-  images: string[] | null;
-}
-
-function formatLoggedAt(iso: string): string {
-  return new Date(iso).toLocaleString([], {
+function formatDateLabel(date: Date, localeCode: string) {
+  return date.toLocaleDateString(localeCode, {
+    weekday: "short",
     month: "short",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
+}
+
+function getMealSlotLabel(slot: MealSlot, t: ReturnType<typeof useLocale>["t"]) {
+  return t.food[slot];
 }
 
 export default function FoodPage() {
   const { t } = useLocale();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [content, setContent] = useState("");
-  const [logging, setLogging] = useState(false);
-  const [recent, setRecent] = useState<RecentEntry[]>([]);
-  const [savedFlash, setSavedFlash] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploadError, setUploadError] = useState("");
+  const router = useRouter();
+  const selectedDate = useMemo(() => new Date(), []);
+  const [dayEntries, setDayEntries] = useState<FoodEntryView[]>([]);
+  const [uncategorizedEntries, setUncategorizedEntries] = useState<FoodEntryView[]>([]);
+  const [uncategorizedCount, setUncategorizedCount] = useState(0);
+  const [view, setView] = useState<"day" | "inbox">("day");
 
-  const loadRecent = useCallback(async () => {
-    try {
-      const res = await fetch("/api/food?uncategorized=true&limit=5");
-      if (!res.ok) return;
-      const raw: FoodEntry[] = await res.json();
-      setRecent(raw);
-    } catch {
-      // Ignore feed failures to keep quick-log usable.
-    }
+  const mealSlots = useMemo(
+    () =>
+      MEAL_SLOTS.map((slot) => ({
+        value: slot,
+        label: getMealSlotLabel(slot, t),
+      })),
+    [t],
+  );
+
+  const loadDayEntries = useCallback(async () => {
+    const params = new URLSearchParams({
+      year: String(selectedDate.getFullYear()),
+      month: String(selectedDate.getMonth() + 1),
+      day: String(selectedDate.getDate()),
+    });
+
+    const response = await fetch(`/api/food?${params}`);
+    if (!response.ok) return;
+
+    const data: FoodEntryView[] = await response.json();
+    setDayEntries(data);
+  }, [selectedDate]);
+
+  const loadUncategorizedCount = useCallback(async () => {
+    const response = await fetch("/api/food?uncategorized=true");
+    if (!response.ok) return;
+
+    const data: FoodEntryView[] = await response.json();
+    setUncategorizedEntries(data);
+    setUncategorizedCount(data.length);
   }, []);
 
-  useEffect(() => {
-    loadRecent();
-  }, [loadRecent]);
-
-  async function handleLog() {
-    if (!content.trim() && selectedFiles.length === 0) return;
-
-    setLogging(true);
-    setUploadError("");
-    try {
-      const res = await fetch("/api/food", {
+  const handleAddToSlot = useCallback(
+    async (slot: MealSlot) => {
+      const response = await fetch("/api/food", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: content.trim(),
+          content: "",
           images: [],
+          meal_slot: slot,
+          year: selectedDate.getFullYear(),
+          month: selectedDate.getMonth() + 1,
+          day: selectedDate.getDate(),
         }),
       });
-      if (!res.ok) return;
 
-      const data = await res.json();
+      if (!response.ok) return;
+      const data = (await response.json()) as { id: string };
+      router.push(`/food/entry/${data.id}?edit=true`);
+    },
+    [router, selectedDate],
+  );
 
-      for (const file of selectedFiles) {
-        await uploadEncryptedImage({
-          file,
-          ownerKind: "food",
-          ownerId: data.id,
-        });
-      }
+  const handleSkipSlot = useCallback(
+    async (slot: MealSlot) => {
+      const response = await fetch("/api/food", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: "",
+          meal_slot: slot,
+          year: selectedDate.getFullYear(),
+          month: selectedDate.getMonth() + 1,
+          day: selectedDate.getDate(),
+          tags: ["skipped"],
+        }),
+      });
 
-      setContent("");
-      setSelectedFiles([]);
-      setUploadError("");
-      setSavedFlash(true);
-      setTimeout(() => setSavedFlash(false), 1200);
-      await loadRecent();
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Failed to upload image");
-    } finally {
-      setLogging(false);
-    }
-  }
+      if (!response.ok) return;
+      await loadDayEntries();
+    },
+    [loadDayEntries, selectedDate],
+  );
+
+  const handleUndoSkip = useCallback(
+    async (entryId: string) => {
+      const response = await fetch(`/api/food/${entryId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) return;
+      await loadDayEntries();
+    },
+    [loadDayEntries],
+  );
+
+  useEffect(() => {
+    void loadDayEntries();
+    void loadUncategorizedCount();
+  }, [loadDayEntries, loadUncategorizedCount]);
 
   return (
-    <div className="animate-page mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-10">
-      <div className="flex justify-end">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/food/browse">{t.food.browseAndOrganize}</Link>
-        </Button>
-      </div>
+    <div className="animate-page min-h-dvh bg-[var(--surface-canvas)]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col">
+        <header className="flex min-h-14 flex-wrap items-center gap-3 border-b border-border/60 bg-[var(--surface-topbar)] px-4 py-3">
+          <Link href="/" className="text-sm font-medium text-[var(--food)] hover:opacity-80">
+            Dashboard
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-sm font-medium">Food</span>
+          <span className="ml-auto text-sm text-muted-foreground">
+            {formatDateLabel(selectedDate, t.localeCode)}
+          </span>
+        </header>
 
-      <div className="space-y-4 rounded-xl border border-border/60 bg-card/30 p-4 sm:p-6">
-        <h1 className="font-display text-2xl tracking-tight">{t.food.quickFoodLog}</h1>
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={t.food.whatAreYouEating}
-          rows={4}
-          className="resize-none border-border/50 bg-background/70"
-        />
-        {selectedFiles.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {selectedFiles.map((file, index) => (
-              <div
-                key={`${file.name}-${index}`}
-                className="inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground"
-              >
-                {file.name}
-                <button
-              onClick={() => {
-                setUploadError("");
-                setSelectedFiles((current) =>
-                      current.filter((_, currentIndex) => currentIndex !== index),
-                    );
-                  }}
-                  aria-label={`Remove ${file.name}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : null}
-        {uploadError ? (
-          <p className="text-sm text-destructive">{uploadError}</p>
-        ) : null}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(event) => {
-                setUploadError("");
-                setSelectedFiles((current) => [
-                  ...current,
-                  ...Array.from(event.target.files ?? []),
-                ]);
-                event.target.value = "";
+        <div className="px-4 py-4">
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <FoodQuickAdd
+              year={selectedDate.getFullYear()}
+              month={selectedDate.getMonth() + 1}
+              day={selectedDate.getDate()}
+              onSaved={async () => {
+                setView("inbox");
+                await Promise.all([loadDayEntries(), loadUncategorizedCount()]);
               }}
             />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+            <Button
+              variant="outline"
+              size="sm"
               type="button"
+              onClick={() => setView("inbox")}
             >
-              <Camera className="h-3.5 w-3.5" />
-              {t.food.photo}
-            </button>
-            <span>{t.food.oneFieldOneTap}</span>
+              {`Inbox (${uncategorizedCount})`}
+            </Button>
+            <Button variant="outline" size="sm" type="button">
+              <CalendarDays className="h-4 w-4" />
+              Calendar
+            </Button>
+            {view === "inbox" ? (
+              <Button variant="ghost" size="sm" type="button" onClick={() => setView("day")}>
+                Day View
+              </Button>
+            ) : null}
           </div>
-          <Button
-            onClick={handleLog}
-            disabled={logging || (!content.trim() && selectedFiles.length === 0)}
-          >
-            {logging ? (
-              <>
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                {t.food.logging}
-              </>
-            ) : (
-              t.food.log
-            )}
-          </Button>
-        </div>
-      </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            {t.food.recentUncategorized}
-          </h2>
-          {savedFlash && (
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Check className="h-3 w-3" />
-              {t.food.saved}
-            </span>
+          {view === "inbox" ? (
+            <section className="space-y-4">
+              <div className="rounded-3xl border border-border/60 bg-card/30 p-4">
+                <h2 className="text-lg font-semibold tracking-tight">
+                  {t.food.uncategorizedEntries}
+                </h2>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {uncategorizedEntries.map((entry) => (
+                  <article
+                    key={entry.id}
+                    className="rounded-3xl border border-border/60 bg-card/30 p-4"
+                  >
+                    <p className="text-sm leading-relaxed">{entry.content || t.food.photoEntry}</p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {mealSlots.map((slot) => {
+                const state = buildMealSlotState(slot.value, dayEntries);
+                const skippedId = state.kind === "skipped" ? state.skippedEntry.id : null;
+
+                return (
+                  <FoodMealSlotCard
+                    key={slot.value}
+                    slot={slot.value}
+                    slotLabel={slot.label}
+                    state={state}
+                    canSkip={slot.value !== "observation"}
+                    onAdd={() => void handleAddToSlot(slot.value)}
+                    onSkip={() => void handleSkipSlot(slot.value)}
+                    onUndoSkip={
+                      skippedId ? () => void handleUndoSkip(skippedId) : undefined
+                    }
+                  />
+                );
+              })}
+            </div>
           )}
         </div>
-        {recent.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t.food.noFoodLogsYet}</p>
-        ) : (
-          <div className="space-y-3">
-            {recent.map((entry) => (
-              <div
-                key={entry.id}
-                className="rounded-lg border border-border/50 bg-card/20 px-3 py-3"
-              >
-                {entry.content ? (
-                  <p className="text-sm leading-relaxed">{entry.content}</p>
-                ) : (
-                  <p className="text-sm italic text-muted-foreground">{t.food.photoEntry}</p>
-                )}
-                {entry.images?.length ? (
-                  <EncryptedImageGallery
-                    imageKeys={entry.images}
-                    className="mt-3"
-                    imageClassName="h-32"
-                  />
-                ) : null}
-                <div className="mt-2 flex items-center justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">
-                    {formatLoggedAt(entry.logged_at)}
-                  </p>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
