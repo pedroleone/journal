@@ -17,9 +17,8 @@ Use `pnpm` for all package management and scripts.
 ## Core Architecture
 
 - Server auth is password-based with JWT cookie sessions.
-- Journal content is encrypted/decrypted client-side when possible.
-- Web entries must be end-to-end encrypted.
-- The server must never store plaintext web journal content.
+- Journal, notes, and food text are encrypted on the server before storage.
+- The server may receive plaintext text payloads from authenticated web clients, but must never store plaintext content at rest.
 - Images must be encrypted before upload and stored in R2 as encrypted blobs.
 
 ## Data
@@ -41,5 +40,5 @@ Use `pnpm` for all package management and scripts.
 ## Important Rules
 
 - Prefer built-in Web Crypto / platform APIs where possible.
-- Preserve the privacy-first, zero-knowledge design.
+- Preserve the privacy-first design, with server-side text encryption and client-side image encryption.
 - Keep implementation simple and minimal.
