@@ -16,6 +16,29 @@ interface FoodInlineComposerProps {
   onSaved?: (foodEntryId: string) => void | Promise<void>;
 }
 
+async function readFoodCreateError(response: Response, fallback: string) {
+  try {
+    const data = (await response.json()) as { error?: unknown };
+    if (typeof data.error === "string" && data.error.length > 0) {
+      return data.error;
+    }
+  } catch {
+    // Fall back to the generic message if the response body is not JSON.
+  }
+
+  return fallback;
+}
+
+async function rollbackCreatedFoodEntry(foodEntryId: string) {
+  try {
+    await fetch(`/api/food/${foodEntryId}`, {
+      method: "DELETE",
+    });
+  } catch {
+    // Best effort rollback. If deletion fails, we still surface the original error.
+  }
+}
+
 export function FoodInlineComposer({
   year,
   month,
@@ -35,6 +58,7 @@ export function FoodInlineComposer({
 
     setLogging(true);
     setUploadError("");
+    let createdFoodEntryId: string | null = null;
     try {
       const response = await fetch("/api/food", {
         method: "POST",
@@ -49,9 +73,12 @@ export function FoodInlineComposer({
         }),
       });
 
-      if (!response.ok) return;
+      if (!response.ok) {
+        throw new Error(await readFoodCreateError(response, "Failed to create food entry"));
+      }
 
       const data = (await response.json()) as { id: string };
+      createdFoodEntryId = data.id;
 
       for (const file of selectedFiles) {
         await uploadEncryptedImage({
@@ -61,10 +88,13 @@ export function FoodInlineComposer({
         });
       }
 
+      await onSaved?.(data.id);
       setContent("");
       setSelectedFiles([]);
-      await onSaved?.(data.id);
     } catch (error) {
+      if (createdFoodEntryId) {
+        await rollbackCreatedFoodEntry(createdFoodEntryId);
+      }
       setUploadError(error instanceof Error ? error.message : "Failed to upload image");
     } finally {
       setLogging(false);

@@ -19,13 +19,20 @@ function makeJsonResponse(body: unknown, status = 200) {
 }
 
 describe("FoodInlineComposer", () => {
+  let postFoodResponse: Response;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    postFoodResponse = makeJsonResponse({ id: "food-1" }, 201);
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === "string" ? input : input.toString();
 
       if (url === "/api/food" && init?.method === "POST") {
-        return makeJsonResponse({ id: "food-1" }, 201);
+        return postFoodResponse;
+      }
+
+      if (url === "/api/food/food-1" && init?.method === "DELETE") {
+        return new Response(null, { status: 204 });
       }
 
       throw new Error(`Unhandled fetch: ${url}`);
@@ -102,5 +109,74 @@ describe("FoodInlineComposer", () => {
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalledWith("food-1");
     });
+  });
+
+  it("surfaces a create failure message", async () => {
+    postFoodResponse = makeJsonResponse({ error: "Unable to create food entry" }, 500);
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/what are you eating/i), {
+      target: { value: "Late lunch" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Unable to create food entry")).toBeTruthy();
+    });
+  });
+
+  it("rolls back the created entry when upload fails", async () => {
+    mockUploadEncryptedImage.mockRejectedValueOnce(new Error("Image upload failed"));
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/what are you eating/i), {
+      target: { value: "Late lunch" },
+    });
+    fireEvent.change(screen.getByLabelText(/photo/i), {
+      target: {
+        files: [new File(["a"], "meal.jpg", { type: "image/jpeg" })],
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/food/food-1",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+
+    expect(screen.getByText("Image upload failed")).toBeTruthy();
+  });
+
+  it("rolls back the created entry when onSaved fails", async () => {
+    const onSaved = vi.fn().mockRejectedValue(new Error("Save callback failed"));
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} onSaved={onSaved} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/what are you eating/i), {
+      target: { value: "Late lunch" },
+    });
+    fireEvent.change(screen.getByLabelText(/photo/i), {
+      target: {
+        files: [new File(["a"], "meal.jpg", { type: "image/jpeg" })],
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalledWith("food-1");
+    });
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/food/food-1",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+
+    expect(screen.getByText("Save callback failed")).toBeTruthy();
   });
 });
