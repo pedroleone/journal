@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { QuadrantCard } from "./quadrant-card";
+import { FoodInlineComposer } from "@/components/food/food-inline-composer";
 import { MealRow } from "@/components/shared/meal-row";
 import { InboxBadge } from "@/components/shared/inbox-badge";
 import { getFoodEntryPreview, type MealSlot } from "@/lib/food";
@@ -28,12 +29,13 @@ interface FoodSnapshot {
 
 export function FoodQuadrant({ date }: FoodQuadrantProps) {
   const [snapshot, setSnapshot] = useState<FoodSnapshot | null>(null);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const y = date.getFullYear();
   const m = date.getMonth() + 1;
   const d = date.getDate();
   const requestKey = `${y}-${m}-${d}`;
 
-  useEffect(() => {
+  const loadSnapshot = useCallback(() => {
     let cancelled = false;
 
     Promise.all([
@@ -63,6 +65,10 @@ export function FoodQuadrant({ date }: FoodQuadrantProps) {
     };
   }, [d, m, requestKey, y]);
 
+  useEffect(() => {
+    return loadSnapshot();
+  }, [loadSnapshot]);
+
   const entries = snapshot?.requestKey === requestKey ? snapshot.entries : [];
   const unsortedCount =
     snapshot?.requestKey === requestKey ? snapshot.unsortedCount : 0;
@@ -77,12 +83,14 @@ export function FoodQuadrant({ date }: FoodQuadrantProps) {
       label="Food"
       href="/food"
       actions={
-        <Link
-          href="/food"
+        <button
+          type="button"
+          aria-label="Quick add food"
+          onClick={() => setShowQuickAdd(true)}
           className="flex h-5 w-5 items-center justify-center rounded bg-[var(--food-dim)] text-[var(--food)] hover:bg-[var(--food)]/25"
         >
           <Plus className="h-3 w-3" />
-        </Link>
+        </button>
       }
       footer={
         <>
@@ -91,7 +99,19 @@ export function FoodQuadrant({ date }: FoodQuadrantProps) {
         </>
       }
     >
-      {loading ? (
+      {showQuickAdd ? (
+        <div className="space-y-3">
+          <FoodInlineComposer
+            year={y}
+            month={m}
+            day={d}
+            onSaved={async () => {
+              setShowQuickAdd(false);
+              loadSnapshot();
+            }}
+          />
+        </div>
+      ) : loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-6 animate-pulse rounded bg-muted/30" />
