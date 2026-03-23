@@ -25,8 +25,8 @@ export function FoodQuickAdd({ year, month, day, onSaved }: FoodQuickAddProps) {
           month={month}
           day={day}
           onSaved={async () => {
-            setOpen(false);
             await onSaved();
+            setOpen(false);
           }}
         />
       ) : null}

@@ -84,4 +84,25 @@ describe("FoodQuickAdd", () => {
       });
     });
   });
+
+  it("keeps the composer open when the parent save callback fails", async () => {
+    const onSaved = vi.fn().mockRejectedValue(new Error("Refresh failed"));
+
+    render(<FoodQuickAdd year={2026} month={3} day={20} onSaved={onSaved} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /quick add/i }));
+    fireEvent.change(screen.getByPlaceholderText(/what are you eating/i), {
+      target: { value: "Late lunch" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(screen.getByPlaceholderText(/what are you eating/i)).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("Refresh failed")).toBeTruthy();
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
 });

@@ -31,10 +31,6 @@ describe("FoodInlineComposer", () => {
         return postFoodResponse;
       }
 
-      if (url === "/api/food/food-1" && init?.method === "DELETE") {
-        return new Response(null, { status: 204 });
-      }
-
       throw new Error(`Unhandled fetch: ${url}`);
     }) as typeof fetch;
     mockUploadEncryptedImage.mockResolvedValue({ key: "img-1", images: ["img-1"] });
@@ -126,7 +122,7 @@ describe("FoodInlineComposer", () => {
     });
   });
 
-  it("rolls back the created entry when upload fails", async () => {
+  it("shows an upload failure without deleting the created entry", async () => {
     mockUploadEncryptedImage.mockRejectedValueOnce(new Error("Image upload failed"));
 
     render(<FoodInlineComposer year={2026} month={3} day={20} />);
@@ -142,16 +138,44 @@ describe("FoodInlineComposer", () => {
     fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        "/api/food/food-1",
-        expect.objectContaining({ method: "DELETE" }),
-      );
+      expect(screen.getByText("Image upload failed")).toBeTruthy();
     });
-
-    expect(screen.getByText("Image upload failed")).toBeTruthy();
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/food/food-1",
+      expect.objectContaining({ method: "DELETE" }),
+    );
   });
 
-  it("rolls back the created entry when onSaved fails", async () => {
+  it("reuses the created entry when retrying after upload failure", async () => {
+    mockUploadEncryptedImage
+      .mockRejectedValueOnce(new Error("Image upload failed"))
+      .mockResolvedValueOnce({ key: "img-1", images: ["img-1"] });
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/what are you eating/i), {
+      target: { value: "Late lunch" },
+    });
+    fireEvent.change(screen.getByLabelText(/photo/i), {
+      target: {
+        files: [new File(["a"], "meal.jpg", { type: "image/jpeg" })],
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Image upload failed")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    expect(mockUploadEncryptedImage).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows a save callback failure without deleting the created entry", async () => {
     const onSaved = vi.fn().mockRejectedValue(new Error("Save callback failed"));
 
     render(<FoodInlineComposer year={2026} month={3} day={20} onSaved={onSaved} />);
@@ -171,12 +195,174 @@ describe("FoodInlineComposer", () => {
     });
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        "/api/food/food-1",
-        expect.objectContaining({ method: "DELETE" }),
-      );
+      expect(screen.getByText("Save callback failed")).toBeTruthy();
+    });
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/food/food-1",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
+  it("reuses the created entry when retrying after save callback failure", async () => {
+    const onSaved = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Save callback failed"))
+      .mockResolvedValueOnce(undefined);
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} onSaved={onSaved} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/what are you eating/i), {
+      target: { value: "Late lunch" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Save callback failed")).toBeTruthy();
     });
 
-    expect(screen.getByText("Save callback failed")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalledTimes(2);
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps retry available for image-only entries after save callback failure", async () => {
+    const onSaved = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Save callback failed"))
+      .mockResolvedValueOnce(undefined);
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} onSaved={onSaved} />);
+
+    fireEvent.change(screen.getByLabelText(/photo/i), {
+      target: {
+        files: [new File(["a"], "meal.jpg", { type: "image/jpeg" })],
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Save callback failed")).toBeTruthy();
+    });
+
+    const logButton = screen.getByRole("button", { name: /^log$/i });
+    expect((logButton as HTMLButtonElement).disabled).toBe(false);
+
+    fireEvent.click(logButton);
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalledTimes(2);
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("locks draft inputs once retries are bound to an existing entry", async () => {
+    const onSaved = vi.fn().mockRejectedValueOnce(new Error("Save callback failed"));
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} onSaved={onSaved} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/what are you eating/i), {
+      target: { value: "Late lunch" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Save callback failed")).toBeTruthy();
+    });
+
+    expect(
+      (screen.getByPlaceholderText(/what are you eating/i) as HTMLTextAreaElement).disabled,
+    ).toBe(true);
+    expect((screen.getByRole("button", { name: /photo/i }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it("lets the user remove a failed file while retrying an existing entry", async () => {
+    mockUploadEncryptedImage.mockRejectedValueOnce(new Error("Image upload failed"));
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} />);
+
+    fireEvent.change(screen.getByLabelText(/photo/i), {
+      target: {
+        files: [new File(["a"], "meal.jpg", { type: "image/jpeg" })],
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Image upload failed")).toBeTruthy();
+    });
+
+    const removeButton = screen.getByRole("button", { name: /remove meal\.jpg/i });
+    expect((removeButton as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(removeButton);
+
+    expect(screen.queryByText("meal.jpg")).toBeNull();
+    expect((screen.getByRole("button", { name: /^log$/i }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it("lets a created text entry complete after removing the only failed file", async () => {
+    const onSaved = vi.fn();
+    mockUploadEncryptedImage.mockRejectedValueOnce(new Error("Image upload failed"));
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} onSaved={onSaved} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/what are you eating/i), {
+      target: { value: "Late lunch" },
+    });
+    fireEvent.change(screen.getByLabelText(/photo/i), {
+      target: {
+        files: [new File(["a"], "meal.jpg", { type: "image/jpeg" })],
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Image upload failed")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /remove meal\.jpg/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalledWith("food-1");
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows completing save after partial upload success and removing the failed remainder", async () => {
+    const onSaved = vi.fn();
+    mockUploadEncryptedImage
+      .mockResolvedValueOnce({ key: "img-1", images: ["img-1"] })
+      .mockRejectedValueOnce(new Error("Second upload failed"));
+
+    render(<FoodInlineComposer year={2026} month={3} day={20} onSaved={onSaved} />);
+
+    fireEvent.change(screen.getByLabelText(/photo/i), {
+      target: {
+        files: [
+          new File(["a"], "first.jpg", { type: "image/jpeg" }),
+          new File(["b"], "second.jpg", { type: "image/jpeg" }),
+        ],
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Second upload failed")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /remove second\.jpg/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^log$/i }));
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalledWith("food-1");
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
