@@ -1,6 +1,7 @@
+import type { MealSlotCardState, FilledEntry } from "@/components/food/food-meal-slot-card";
 import type { MealSlot } from "@/lib/food";
 
-type DayEntry = {
+type DayEntry = FilledEntry & {
   id: string;
   meal_slot: MealSlot | null;
   tags: string[] | null;
@@ -20,7 +21,7 @@ export function groupEntriesByMealSlot(entries: DayEntry[]): MealSlotGroups {
   };
 }
 
-export function buildMealSlotState(slot: MealSlot, entries: DayEntry[]) {
+export function buildMealSlotState(slot: MealSlot, entries: DayEntry[]): MealSlotCardState {
   const slotEntries = groupEntriesByMealSlot(entries)[slot];
   const skippedEntry = slotEntries.find((entry) => entry.tags?.includes("skipped"));
   const realEntries = slotEntries.filter((entry) => !entry.tags?.includes("skipped"));
@@ -29,14 +30,14 @@ export function buildMealSlotState(slot: MealSlot, entries: DayEntry[]) {
     return {
       kind: "skipped" as const,
       skippedEntry,
-      entries: [] as DayEntry[],
+      entries: [] as [],
     };
   }
 
   if (realEntries.length === 0) {
     return {
       kind: "empty" as const,
-      entries: [] as DayEntry[],
+      entries: [] as [],
     };
   }
 

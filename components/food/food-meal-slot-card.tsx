@@ -8,7 +8,7 @@ import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import { FoodInlineComposer } from "@/components/food/food-inline-composer";
 import type { MealSlot } from "@/lib/food";
 
-type FilledEntry = {
+export type FilledEntry = {
   id: string;
   content: string;
   logged_at: string;
@@ -36,7 +36,7 @@ type FilledState = {
   entries: FilledEntry[];
 };
 
-type MealSlotCardState = EmptyState | SkippedState | FilledState;
+export type MealSlotCardState = EmptyState | SkippedState | FilledState;
 
 interface FoodMealSlotCardProps {
   slot: MealSlot;
