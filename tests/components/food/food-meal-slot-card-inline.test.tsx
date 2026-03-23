@@ -16,11 +16,13 @@ vi.mock("@/components/food/food-inline-composer", () => ({
     month,
     day,
     mealSlot,
+    onSaved,
   }: {
     year: number;
     month: number;
     day: number;
     mealSlot?: string;
+    onSaved?: (entryId: string) => void | Promise<void>;
   }) => (
     <div
       data-testid="food-inline-composer"
@@ -30,12 +32,22 @@ vi.mock("@/components/food/food-inline-composer", () => ({
       data-meal-slot={mealSlot ?? ""}
     >
       composer
+      <button
+        type="button"
+        onClick={() => {
+          void Promise.resolve(onSaved?.("saved-entry-1")).catch(() => {});
+        }}
+      >
+        Finish Save
+      </button>
     </div>
   ),
 }));
 
 describe("FoodMealSlotCard inline actions", () => {
-  it("opens the inline composer for an empty slot", () => {
+  it("opens the inline composer for an empty slot", async () => {
+    const onEntrySaved = vi.fn();
+
     render(
       <FoodMealSlotCard
         slot="lunch"
@@ -44,6 +56,7 @@ describe("FoodMealSlotCard inline actions", () => {
         month={3}
         day={20}
         state={{ kind: "empty", entries: [] }}
+        onEntrySaved={onEntrySaved}
       />,
     );
 
@@ -56,9 +69,18 @@ describe("FoodMealSlotCard inline actions", () => {
     expect(composer.getAttribute("data-month")).toBe("3");
     expect(composer.getAttribute("data-day")).toBe("20");
     expect(composer.getAttribute("data-meal-slot")).toBe("lunch");
+
+    fireEvent.click(screen.getByRole("button", { name: /finish save/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("food-inline-composer")).toBeNull();
+    });
+    expect(onEntrySaved).toHaveBeenCalledWith("saved-entry-1");
   });
 
-  it("opens the inline composer from a filled slot append action", () => {
+  it("opens the inline composer from a filled slot append action", async () => {
+    const onEntrySaved = vi.fn();
+
     render(
       <FoodMealSlotCard
         slot="breakfast"
@@ -78,6 +100,7 @@ describe("FoodMealSlotCard inline actions", () => {
             },
           ],
         }}
+        onEntrySaved={onEntrySaved}
       />,
     );
 
@@ -88,6 +111,48 @@ describe("FoodMealSlotCard inline actions", () => {
     expect(composer.getAttribute("data-month")).toBe("3");
     expect(composer.getAttribute("data-day")).toBe("20");
     expect(composer.getAttribute("data-meal-slot")).toBe("breakfast");
+
+    fireEvent.click(screen.getByRole("button", { name: /finish save/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("food-inline-composer")).toBeNull();
+    });
+    expect(onEntrySaved).toHaveBeenCalledWith("saved-entry-1");
+  });
+
+  it("keeps the inline composer open when the parent save callback rejects", async () => {
+    const onEntrySaved = vi.fn().mockRejectedValue(new Error("Refresh failed"));
+
+    render(
+      <FoodMealSlotCard
+        slot="breakfast"
+        slotLabel="Breakfast"
+        year={2026}
+        month={3}
+        day={20}
+        state={{
+          kind: "filled",
+          entries: [
+            {
+              id: "1",
+              content: "Eggs",
+              logged_at: "2026-03-20T08:00:00.000Z",
+              images: null,
+              hour: 8,
+            },
+          ],
+        }}
+        onEntrySaved={onEntrySaved}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /add another breakfast/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finish save/i }));
+
+    await waitFor(() => {
+      expect(onEntrySaved).toHaveBeenCalledWith("saved-entry-1");
+    });
+    expect(screen.getByTestId("food-inline-composer")).toBeTruthy();
   });
 
   it("keeps delete confirmation local to a single entry row", async () => {

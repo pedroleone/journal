@@ -50,6 +50,7 @@ interface FoodMealSlotCardProps {
   onSkip?: () => void;
   onUndoSkip?: () => void;
   onDeleteEntry?: (entryId: string) => void | Promise<void>;
+  onEntrySaved?: (entryId: string) => void | Promise<void>;
 }
 
 function formatSlotTime(loggedAt: string, hour: number | null) {
@@ -75,6 +76,7 @@ export function FoodMealSlotCard({
   onSkip,
   onUndoSkip,
   onDeleteEntry,
+  onEntrySaved,
 }: FoodMealSlotCardProps) {
   const [composerOpen, setComposerOpen] = useState(false);
   const hasComposerContext = year !== undefined && month !== undefined && day !== undefined;
@@ -92,7 +94,8 @@ export function FoodMealSlotCard({
     setComposerOpen(false);
   }
 
-  function handleComposerSaved() {
+  async function handleComposerSaved(entryId: string) {
+    await onEntrySaved?.(entryId);
     setComposerOpen(false);
   }
 
