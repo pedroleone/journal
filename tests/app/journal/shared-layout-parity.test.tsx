@@ -7,7 +7,6 @@ import WritePage from "@/app/journal/write/page";
 
 const push = vi.fn();
 const replace = vi.fn();
-const mediaQueryMock = vi.fn();
 const onlineStatusMock = vi.fn();
 const browseSearchParamsMock = vi.fn();
 const writeSearchParamsMock = vi.fn();
@@ -26,10 +25,6 @@ vi.mock("next/navigation", async () => {
     },
   };
 });
-
-vi.mock("@/hooks/use-media-query", () => ({
-  useMediaQuery: () => mediaQueryMock(),
-}));
 
 vi.mock("@/hooks/use-online-status", () => ({
   useOnlineStatus: () => onlineStatusMock(),
@@ -93,7 +88,6 @@ vi.mock("@/hooks/use-auto-save", () => ({
 describe("Journal layout parity", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mediaQueryMock.mockReturnValue(false);
     onlineStatusMock.mockReturnValue(true);
     browseSearchParamsMock.mockReturnValue(new URLSearchParams("date=2026-03-19"));
     writeSearchParamsMock.mockReturnValue(new URLSearchParams("year=2026&month=3&day=20"));
@@ -106,25 +100,6 @@ describe("Journal layout parity", () => {
           ok: true,
           json: vi.fn().mockResolvedValue([
             { id: "entry-1", year: 2026, month: 3, day: 19 },
-          ]),
-        });
-      }
-
-      if (url.includes("/api/entries?year=2026&month=3&day=19")) {
-        return Promise.resolve({
-          ok: true,
-          json: vi.fn().mockResolvedValue([
-            {
-              id: "entry-1",
-              source: "web",
-              year: 2026,
-              month: 3,
-              day: 19,
-              hour: null,
-              content: "Browse entry",
-              created_at: "2026-03-19T20:00:00.000Z",
-              images: [],
-            },
           ]),
         });
       }
@@ -143,20 +118,18 @@ describe("Journal layout parity", () => {
     }) as typeof fetch;
   });
 
-  it("renders browse and write with the same flat archive action placement", async () => {
+  it("renders browse and write with the same flat browse-entry action placement", async () => {
     const browse = render(<BrowsePage />);
-    const browseArchiveButton = await screen.findByRole("button", { name: /archive/i });
-    await screen.findByRole("button", { name: /archive/i });
-
-    expect(browseArchiveButton.closest(".mb-6")).toBeNull();
+    await screen.findByRole("heading", { name: /march 2026/i });
     expect(document.querySelector(".journal-browse-shell")).toBeNull();
+    expect(screen.queryByRole("button", { name: /archive/i })).toBeNull();
 
     browse.unmount();
 
     render(<WritePage />);
 
-    const writeArchiveButton = await screen.findByRole("button", { name: /archive/i });
-    expect(writeArchiveButton.closest(".mb-6")).toBeNull();
+    const writeBrowseLink = await screen.findByRole("link", { name: /browse entries/i });
+    expect(writeBrowseLink.getAttribute("href")).toBe("/journal/browse?date=2026-03-20");
     expect(screen.getByTestId("markdown-editor").closest(".journal-browse-shell")).toBeNull();
   });
 });

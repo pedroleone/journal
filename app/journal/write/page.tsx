@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Archive,
   Check,
   Loader2,
   AlertCircle,
@@ -24,9 +24,6 @@ import { useAutoSave } from "@/hooks/use-auto-save";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
 import { useLocale } from "@/hooks/use-locale";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { JournalArchivePanel } from "@/components/journal/journal-archive-panel";
-import type { DateSelection } from "@/components/journal/date-tree";
 
 function formatWriteDate(date: Date, localeCode: string): string {
   return date.toLocaleDateString(localeCode, {
@@ -82,15 +79,12 @@ export default function WritePage() {
   const [loading, setLoading] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [readyForEditing, setReadyForEditing] = useState(false);
-  const [dates, setDates] = useState<Array<{ id: string; year: number; month: number; day: number }>>([]);
-  const [archiveOpen, setArchiveOpen] = useState(false);
   const [imageKeys, setImageKeys] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [entryError, setEntryError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [writeLightboxIndex, setWriteLightboxIndex] = useState<number | null>(null);
   const isOnline = useOnlineStatus();
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const { t } = useLocale();
   const { images } = useImages(imageKeys);
 
@@ -221,22 +215,6 @@ export default function WritePage() {
   });
 
   useEffect(() => {
-    if (!isOnline) return;
-    let cancelled = false;
-    fetch("/api/entries/dates")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => {
-        if (cancelled) return;
-        setDates(data);
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isOnline]);
-
-  useEffect(() => {
     if (!content.trim() || status === "saved") return;
 
     function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -354,19 +332,6 @@ export default function WritePage() {
     };
   })();
 
-  function handleArchiveSelect(selection: DateSelection) {
-    if (selection.month == null || selection.day == null) return;
-
-    const nextDate = new Date(selection.year, selection.month - 1, selection.day);
-    setDate(nextDate);
-    setLoadedEntryId(null);
-    router.replace(
-      `/journal/write?year=${selection.year}&month=${selection.month}&day=${selection.day}`,
-    );
-
-    if (isMobile) setArchiveOpen(false);
-  }
-
   if (!isOnline && !readyForEditing) {
     return (
       <div className="flex h-full items-center justify-center px-6">
@@ -396,19 +361,6 @@ export default function WritePage() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <JournalArchivePanel
-        open={archiveOpen}
-        isMobile={isMobile}
-        dates={dates}
-        selected={{
-          year: date.getFullYear(),
-          month: date.getMonth() + 1,
-          day: date.getDate(),
-        }}
-        onSelect={handleArchiveSelect}
-        onClose={() => setArchiveOpen(false)}
-        onExport={() => router.push("/settings")}
-      />
       {isDragging && (
         <div className="pointer-events-none fixed inset-0 z-40 m-4 rounded-xl ring-2 ring-primary/50 bg-primary/5 transition-all" />
       )}
@@ -444,15 +396,12 @@ export default function WritePage() {
               </PopoverContent>
             </Popover>
 
-            <button
-              type="button"
-              onClick={() => setArchiveOpen((current) => !current)}
-              aria-pressed={archiveOpen}
+            <Link
+              href={`/journal/browse?date=${date.toISOString().slice(0, 10)}`}
               className="inline-flex items-center gap-2 rounded-md border border-border/60 bg-secondary/35 px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary/60"
             >
-              <Archive className="h-4 w-4 text-[var(--journal)]" />
-              Archive
-            </button>
+              Browse Entries
+            </Link>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">

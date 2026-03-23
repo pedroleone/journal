@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
@@ -20,10 +21,23 @@ interface Entry {
   images: string[] | null;
 }
 
+interface EntryDate {
+  id: string;
+  year: number;
+  month: number;
+  day: number;
+}
+
 const MONTH_NAMES = [
   "", "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
+
+function compareEntryDates(left: EntryDate, right: EntryDate): number {
+  if (left.year !== right.year) return left.year - right.year;
+  if (left.month !== right.month) return left.month - right.month;
+  return left.day - right.day;
+}
 
 export default function EntryPage({
   params,
@@ -33,6 +47,7 @@ export default function EntryPage({
   const { id } = use(params);
   const router = useRouter();
   const [entry, setEntry] = useState<Entry | null>(null);
+  const [entryDates, setEntryDates] = useState<EntryDate[]>([]);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
@@ -43,14 +58,19 @@ export default function EntryPage({
   useEffect(() => {
     if (!isOnline) return;
 
-    fetch(`/api/entries/${id}`)
-      .then((res) => {
+    Promise.all([
+      fetch(`/api/entries/${id}`).then((res) => {
         if (!res.ok) throw new Error("Not found");
         return res.json();
-      })
-      .then((data) => {
-        setEntry(data);
-        setEditContent(data.content);
+      }),
+      fetch("/api/entries/dates")
+        .then((res) => (res.ok ? res.json() : Promise.reject()))
+        .catch(() => []),
+    ])
+      .then(([entryData, dateData]) => {
+        setEntry(entryData);
+        setEditContent(entryData.content);
+        setEntryDates(dateData);
         setLoading(false);
       })
       .catch(() => {
@@ -120,6 +140,13 @@ export default function EntryPage({
   }
 
   const dateStr = `${MONTH_NAMES[entry.month]} ${entry.day}, ${entry.year}`;
+  const sortedEntryDates = [...entryDates].sort(compareEntryDates);
+  const entryIndex = sortedEntryDates.findIndex((date) => date.id === entry.id);
+  const previousEntryId = entryIndex > 0 ? sortedEntryDates[entryIndex - 1]?.id ?? null : null;
+  const nextEntryId =
+    entryIndex >= 0 && entryIndex < sortedEntryDates.length - 1
+      ? sortedEntryDates[entryIndex + 1]?.id ?? null
+      : null;
 
   return (
     <div className="animate-page mx-auto max-w-2xl px-6 py-10 space-y-8">
@@ -137,6 +164,35 @@ export default function EntryPage({
 
       <div>
         <h1 className="font-display text-2xl tracking-tight">{dateStr}</h1>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-5">
+        <Button
+          variant="outline"
+          onClick={() => setEditing(true)}
+          disabled={!isOnline || editing}
+        >
+          Edit Entry
+        </Button>
+        <Button variant="destructive" onClick={handleDelete} disabled={!isOnline}>
+          Delete Entry
+        </Button>
+        {previousEntryId ? (
+          <Link
+            href={`/journal/entry/${previousEntryId}`}
+            className="inline-flex items-center rounded-full border border-border/60 px-4 py-2 text-sm text-foreground transition-colors hover:bg-secondary/50"
+          >
+            Previous Entry
+          </Link>
+        ) : null}
+        {nextEntryId ? (
+          <Link
+            href={`/journal/entry/${nextEntryId}`}
+            className="inline-flex items-center rounded-full border border-border/60 px-4 py-2 text-sm text-foreground transition-colors hover:bg-secondary/50"
+          >
+            Next Entry
+          </Link>
+        ) : null}
       </div>
 
       {editing ? (
@@ -164,18 +220,6 @@ export default function EntryPage({
           {entry.images?.length ? (
             <EncryptedImageGallery imageKeys={entry.images} />
           ) : null}
-          <div className="flex gap-2 border-t pt-6">
-            <Button
-              variant="outline"
-              onClick={() => setEditing(true)}
-              disabled={!isOnline}
-            >
-              Edit
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={!isOnline}>
-              Delete
-            </Button>
-          </div>
         </div>
       )}
     </div>

@@ -6,7 +6,6 @@ import WritePage from "@/app/journal/write/page";
 
 const push = vi.fn();
 const replace = vi.fn();
-const useMediaQueryMock = vi.fn();
 const useOnlineStatusMock = vi.fn();
 const useSearchParamsMock = vi.fn();
 const useAutoSaveMock = vi.fn();
@@ -14,10 +13,6 @@ const useAutoSaveMock = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, replace }),
   useSearchParams: () => useSearchParamsMock(),
-}));
-
-vi.mock("@/hooks/use-media-query", () => ({
-  useMediaQuery: () => useMediaQueryMock(),
 }));
 
 vi.mock("@/hooks/use-online-status", () => ({
@@ -77,30 +72,14 @@ vi.mock("@/hooks/use-auto-save", () => ({
   useAutoSave: () => useAutoSaveMock(),
 }));
 
-vi.mock("@/components/ui/collapsible-sidebar", () => ({
-  CollapsibleSidebar: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/components/journal/date-tree", () => ({
-  DateTree: () => <div>date-tree</div>,
-}));
-
 describe("WritePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useMediaQueryMock.mockReturnValue(false);
     useOnlineStatusMock.mockReturnValue(true);
     useSearchParamsMock.mockReturnValue(new URLSearchParams("year=2026&month=3&day=18"));
     useAutoSaveMock.mockReturnValue({ status: "idle", save: vi.fn() });
     global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
-
-      if (url.includes("/api/entries/dates")) {
-        return Promise.resolve({
-          ok: true,
-          json: vi.fn().mockResolvedValue([]),
-        });
-      }
 
       if (url.includes("/api/entries?")) {
         return Promise.resolve({
@@ -135,20 +114,22 @@ describe("WritePage", () => {
     const { container } = render(<WritePage />);
 
     expect(await screen.findByRole("button", { name: /wednesday, march 18, 2026/i })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /archive/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /browse entries/i }).getAttribute("href")).toBe(
+      "/journal/browse?date=2026-03-18",
+    );
     expect(screen.getByTestId("markdown-editor").className).toContain("journal-prose");
     expect(container.querySelector(".journal-meta-row")).toBeNull();
     expect(container.querySelector(".journal-browse-shell")).toBeNull();
   });
 
-  it("does not render the desktop journal date tree while editing", async () => {
+  it("does not render the old archive browser while editing", async () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams("entry=entry-1"));
     useAutoSaveMock.mockReturnValue({ status: "saved", save: vi.fn() });
 
     render(<WritePage />);
 
     await screen.findByText(/editing/i);
-    expect(screen.queryByText("date-tree")).toBeNull();
+    expect(screen.queryByRole("button", { name: /archive/i })).toBeNull();
   });
 
   it("renders editing in the same flat structure as browse", async () => {
@@ -157,7 +138,7 @@ describe("WritePage", () => {
 
     const { container } = render(<WritePage />);
 
-    expect(await screen.findByRole("button", { name: /archive/i })).toBeTruthy();
+    expect(await screen.findByRole("link", { name: /browse entries/i })).toBeTruthy();
     expect(container.querySelector(".journal-meta-row")).toBeNull();
     expect(container.querySelector(".journal-browse-shell")).toBeNull();
     expect(screen.getAllByText(/saved/i).length).toBeGreaterThan(0);

@@ -7,7 +7,6 @@ import WritePage from "@/app/journal/write/page";
 const useSearchParamsMock = vi.fn();
 const useOnlineStatusMock = vi.fn();
 const useAutoSaveMock = vi.fn();
-const useMediaQueryMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
@@ -16,10 +15,6 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/hooks/use-online-status", () => ({
   useOnlineStatus: () => useOnlineStatusMock(),
-}));
-
-vi.mock("@/hooks/use-media-query", () => ({
-  useMediaQuery: () => useMediaQueryMock(),
 }));
 
 vi.mock("@/hooks/use-locale", () => ({
@@ -79,7 +74,6 @@ describe("WritePage polish", () => {
     vi.clearAllMocks();
     useSearchParamsMock.mockReturnValue(new URLSearchParams("year=2026&month=3&day=20"));
     useOnlineStatusMock.mockReturnValue(true);
-    useMediaQueryMock.mockReturnValue(false);
     useAutoSaveMock.mockReturnValue({ status: "idle", save: vi.fn() });
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -101,7 +95,7 @@ describe("WritePage polish", () => {
   it("renders write controls without the old boxed meta row", async () => {
     const { container } = render(<WritePage />);
 
-    await screen.findByRole("button", { name: /archive/i });
+    await screen.findByRole("link", { name: /browse entries/i });
     expect(container.querySelector(".journal-meta-row")).toBeNull();
     expect(container.querySelector(".journal-browse-shell")).toBeNull();
   });
