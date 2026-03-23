@@ -16,6 +16,7 @@ describe("FoodMealSlotCard", () => {
       <FoodMealSlotCard
         slot="lunch"
         slotLabel="Lunch"
+        returnTo="/food?date=2026-03-20&view=day"
         state={{
           kind: "filled",
           entries: [
@@ -33,8 +34,12 @@ describe("FoodMealSlotCard", () => {
 
     expect(screen.getByText("Chicken bowl")).toBeTruthy();
     expect(screen.getByText("12:00")).toBeTruthy();
-    expect(screen.getByRole("link", { name: /open/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /edit/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /open/i }).getAttribute("href")).toBe(
+      "/food/entry/1?returnTo=%2Ffood%3Fdate%3D2026-03-20%26view%3Dday",
+    );
+    expect(screen.getByRole("link", { name: /edit/i }).getAttribute("href")).toBe(
+      "/food/entry/1?returnTo=%2Ffood%3Fdate%3D2026-03-20%26view%3Dday&edit=true",
+    );
     expect(screen.getByTestId("encrypted-image-gallery")).toBeTruthy();
   });
 

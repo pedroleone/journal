@@ -4,7 +4,7 @@ import { getModeFromPathname } from "@/lib/mode-context";
 describe("getModeFromPathname", () => {
   it("treats food routes as food mode", () => {
     expect(getModeFromPathname("/food")).toBe("food");
-    expect(getModeFromPathname("/food/browse")).toBe("food");
+    expect(getModeFromPathname("/food/entry/123")).toBe("food");
   });
 
   it("defaults non-food routes to journal mode", () => {

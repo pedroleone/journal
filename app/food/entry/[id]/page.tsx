@@ -38,6 +38,21 @@ function formatLoggedAt(iso: string) {
   });
 }
 
+export function getSafeReturnTo(value: string | null) {
+  if (!value) return "/food";
+
+  try {
+    const url = new URL(value, "http://localhost");
+    if (url.origin !== "http://localhost" || url.pathname !== "/food") {
+      return "/food";
+    }
+
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return "/food";
+  }
+}
+
 export default function FoodEntryPage({
   params,
 }: {
@@ -46,6 +61,7 @@ export default function FoodEntryPage({
   const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [entry, setEntry] = useState<FoodEntry | null>(null);
   const [imageKeys, setImageKeys] = useState<string[]>([]);
@@ -162,7 +178,7 @@ export default function FoodEntryPage({
         throw new Error("Failed to delete entry");
       }
 
-      router.push("/food/browse?mode=food");
+      router.push(returnTo);
     } catch {
       setError("Failed to delete food entry");
     } finally {
@@ -199,9 +215,9 @@ export default function FoodEntryPage({
         <Button
           variant="outline"
           className="mt-4"
-          onClick={() => router.push("/food/browse?mode=food")}
+          onClick={() => router.push(returnTo)}
         >
-          Back to Browse
+          Back to Food
         </Button>
       </div>
     );
@@ -216,7 +232,7 @@ export default function FoodEntryPage({
       )}
 
       <button
-        onClick={() => router.push("/food/browse?mode=food")}
+        onClick={() => router.push(returnTo)}
         className="text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         &larr; Back

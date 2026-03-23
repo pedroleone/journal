@@ -1,6 +1,7 @@
 export type Translations = {
   localeCode: string; // BCP 47 tag for date/number formatting
   nav: {
+    dashboard: string;
     journal: string;
     food: string;
     notes: string;
@@ -70,6 +71,13 @@ export type Translations = {
     edit: string;
     add: string;
     undo: string;
+    inbox: (count: number) => string;
+    dayView: string;
+    jumpToDate: string;
+    assignToSelectedDay: (entryLabel: string) => string;
+    delete: string;
+    cancel: string;
+    loading: string;
   };
   notes: {
     searchNotes: string;
@@ -203,6 +211,7 @@ export type Translations = {
 export const en: Translations = {
   localeCode: "en-US",
   nav: {
+    dashboard: "Dashboard",
     journal: "Journal",
     food: "Food",
     notes: "Notes",
@@ -273,6 +282,13 @@ export const en: Translations = {
     edit: "Edit",
     add: "Add",
     undo: "Undo",
+    inbox: (count) => `Inbox (${count})`,
+    dayView: "Day View",
+    jumpToDate: "Jump to date",
+    assignToSelectedDay: (entryLabel) => `Assign ${entryLabel} to selected day`,
+    delete: "Delete",
+    cancel: "Cancel",
+    loading: "Loading...",
   },
   notes: {
     searchNotes: "Search notes...",
@@ -408,6 +424,7 @@ export const en: Translations = {
 export const ptBr: Translations = {
   localeCode: "pt-BR",
   nav: {
+    dashboard: "Painel",
     journal: "Di\u00e1rio",
     food: "Alimenta\u00e7\u00e3o",
     notes: "Notas",
@@ -480,6 +497,13 @@ export const ptBr: Translations = {
     edit: "Editar",
     add: "Adicionar",
     undo: "Desfazer",
+    inbox: (count) => `Caixa de entrada (${count})`,
+    dayView: "Ver dia",
+    jumpToDate: "Ir para data",
+    assignToSelectedDay: (entryLabel) => `Atribuir ${entryLabel} ao dia selecionado`,
+    delete: "Excluir",
+    cancel: "Cancelar",
+    loading: "Carregando...",
   },
   notes: {
     searchNotes: "Buscar notas...",

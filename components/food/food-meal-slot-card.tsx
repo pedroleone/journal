@@ -51,6 +51,7 @@ interface FoodMealSlotCardProps {
   onUndoSkip?: () => void;
   onDeleteEntry?: (entryId: string) => void | Promise<void>;
   onEntrySaved?: (entryId: string) => void | Promise<void>;
+  returnTo?: string;
 }
 
 function formatSlotTime(loggedAt: string, hour: number | null) {
@@ -77,6 +78,7 @@ export function FoodMealSlotCard({
   onUndoSkip,
   onDeleteEntry,
   onEntrySaved,
+  returnTo,
 }: FoodMealSlotCardProps) {
   const [composerOpen, setComposerOpen] = useState(false);
   const hasComposerContext = year !== undefined && month !== undefined && day !== undefined;
@@ -207,6 +209,7 @@ export function FoodMealSlotCard({
             key={entry.id}
             entry={entry}
             onDeleteEntry={onDeleteEntry}
+            returnTo={returnTo}
           />
         ))}
       </div>
@@ -217,10 +220,17 @@ export function FoodMealSlotCard({
 interface FoodMealSlotEntryRowProps {
   entry: FilledEntry;
   onDeleteEntry?: (entryId: string) => void | Promise<void>;
+  returnTo?: string;
 }
 
-function FoodMealSlotEntryRow({ entry, onDeleteEntry }: FoodMealSlotEntryRowProps) {
+function FoodMealSlotEntryRow({ entry, onDeleteEntry, returnTo }: FoodMealSlotEntryRowProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const entryHref = returnTo
+    ? `/food/entry/${entry.id}?returnTo=${encodeURIComponent(returnTo)}`
+    : `/food/entry/${entry.id}`;
+  const editHref = returnTo
+    ? `${entryHref}&edit=true`
+    : `/food/entry/${entry.id}?edit=true`;
 
   async function handleDelete() {
     if (!onDeleteEntry) return;
@@ -242,10 +252,10 @@ function FoodMealSlotEntryRow({ entry, onDeleteEntry }: FoodMealSlotEntryRowProp
       ) : null}
       <div className="mt-3 flex items-center gap-2">
         <Button variant="outline" size="sm" asChild>
-          <Link href={`/food/entry/${entry.id}?edit=true`}>Edit</Link>
+          <Link href={editHref}>Edit</Link>
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <Link href={`/food/entry/${entry.id}`}>Open</Link>
+          <Link href={entryHref}>Open</Link>
         </Button>
         {onDeleteEntry ? (
           confirmDelete ? (

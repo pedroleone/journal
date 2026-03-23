@@ -32,7 +32,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   const setMode = useCallback(
     (newMode: Mode) => {
       if (newMode === mode) return;
-      if (newMode === "food") router.push("/food/browse");
+      if (newMode === "food") router.push("/food");
       else if (newMode === "notes") router.push("/notes/browse");
       else if (newMode === "library") router.push("/library/browse");
       else router.push("/journal/browse");

@@ -1,13 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { CalendarDays } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FoodMealSlotCard } from "@/components/food/food-meal-slot-card";
-import { FoodQuickAdd } from "@/components/food/food-quick-add";
+import { FoodInboxPanel } from "@/components/food/food-inbox-panel";
+import { FoodPageShell } from "@/components/food/food-page-shell";
 import { buildMealSlotState } from "@/components/food/food-day-state";
-import { Button } from "@/components/ui/button";
 import type { MealSlot } from "@/lib/food";
 import { MEAL_SLOTS } from "@/lib/food";
 import { useLocale } from "@/hooks/use-locale";
@@ -26,26 +24,67 @@ interface FoodEntryView {
   tags: string[] | null;
 }
 
-function formatDateLabel(date: Date, localeCode: string) {
-  return date.toLocaleDateString(localeCode, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
 function getMealSlotLabel(slot: MealSlot, t: ReturnType<typeof useLocale>["t"]) {
   return t.food[slot];
+}
+
+function parseWorkspaceDate(value: string | null): Date | null {
+  if (!value) return null;
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function formatWorkspaceDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export default function FoodPage() {
   const { t } = useLocale();
   const router = useRouter();
-  const selectedDate = useMemo(() => new Date(), []);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchParamKey = searchParams.toString();
+  const initialDate = useMemo(
+    () => parseWorkspaceDate(searchParams.get("date")) ?? new Date(),
+    [searchParamKey],
+  );
+  const initialView = searchParams.get("view") === "inbox" ? "inbox" : "day";
+  const [selectedDate, setSelectedDate] = useState(
+    () => initialDate,
+  );
   const [dayEntries, setDayEntries] = useState<FoodEntryView[]>([]);
   const [uncategorizedEntries, setUncategorizedEntries] = useState<FoodEntryView[]>([]);
   const [uncategorizedCount, setUncategorizedCount] = useState(0);
-  const [view, setView] = useState<"day" | "inbox">("day");
+  const [view, setView] = useState<"day" | "inbox">(() => initialView);
+  const [dayLoading, setDayLoading] = useState(true);
+  const [inboxLoading, setInboxLoading] = useState(true);
+  const selectedDateRef = useRef(selectedDate);
+  const viewRef = useRef(view);
+  const skipNextUrlSyncRef = useRef(false);
+  const externalSearchKeyRef = useRef<string | null>(null);
+  const dayRequestRef = useRef(0);
+  const inboxRequestRef = useRef(0);
+  selectedDateRef.current = selectedDate;
+  viewRef.current = view;
 
   const mealSlots = useMemo(
     () =>
@@ -55,51 +94,82 @@ export default function FoodPage() {
       })),
     [t],
   );
-
-  const loadDayEntries = useCallback(async () => {
+  const workspaceReturnTo = useMemo(() => {
     const params = new URLSearchParams({
-      year: String(selectedDate.getFullYear()),
-      month: String(selectedDate.getMonth() + 1),
-      day: String(selectedDate.getDate()),
+      date: formatWorkspaceDate(selectedDate),
+      view,
+    });
+    return `${pathname}?${params.toString()}`;
+  }, [pathname, selectedDate, view]);
+
+  const loadDayEntries = useCallback(async (date = selectedDateRef.current) => {
+    const requestId = ++dayRequestRef.current;
+    setDayLoading(true);
+    if (requestId === dayRequestRef.current) {
+      setDayEntries([]);
+    }
+    const params = new URLSearchParams({
+      year: String(date.getFullYear()),
+      month: String(date.getMonth() + 1),
+      day: String(date.getDate()),
     });
 
-    const response = await fetch(`/api/food?${params}`);
-    if (!response.ok) return;
+    try {
+      const response = await fetch(`/api/food?${params}`);
+      if (!response.ok) {
+        if (requestId === dayRequestRef.current) {
+          setDayEntries([]);
+          setDayLoading(false);
+        }
+        return;
+      }
 
-    const data: FoodEntryView[] = await response.json();
-    setDayEntries(data);
-  }, [selectedDate]);
-
-  const loadUncategorizedCount = useCallback(async () => {
-    const response = await fetch("/api/food?uncategorized=true");
-    if (!response.ok) return;
-
-    const data: FoodEntryView[] = await response.json();
-    setUncategorizedEntries(data);
-    setUncategorizedCount(data.length);
+      const data: FoodEntryView[] = await response.json();
+      if (requestId !== dayRequestRef.current) return;
+      setDayEntries(data);
+      setDayLoading(false);
+    } catch {
+      if (requestId === dayRequestRef.current) {
+        setDayEntries([]);
+        setDayLoading(false);
+      }
+    }
   }, []);
 
-  const handleAddToSlot = useCallback(
-    async (slot: MealSlot) => {
-      const response = await fetch("/api/food", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: "",
-          images: [],
-          meal_slot: slot,
-          year: selectedDate.getFullYear(),
-          month: selectedDate.getMonth() + 1,
-          day: selectedDate.getDate(),
-        }),
-      });
+  const loadUncategorized = useCallback(async () => {
+    const requestId = ++inboxRequestRef.current;
+    setInboxLoading(true);
+    if (requestId === inboxRequestRef.current) {
+      setUncategorizedEntries([]);
+    }
+    try {
+      const response = await fetch("/api/food?uncategorized=true");
+      if (!response.ok) {
+        if (requestId === inboxRequestRef.current) {
+          setUncategorizedEntries([]);
+          setUncategorizedCount(0);
+          setInboxLoading(false);
+        }
+        return;
+      }
 
-      if (!response.ok) return;
-      const data = (await response.json()) as { id: string };
-      router.push(`/food/entry/${data.id}?edit=true`);
-    },
-    [router, selectedDate],
-  );
+      const data: FoodEntryView[] = await response.json();
+      if (requestId !== inboxRequestRef.current) return;
+      setUncategorizedEntries(data);
+      setUncategorizedCount(data.length);
+      setInboxLoading(false);
+    } catch {
+      if (requestId === inboxRequestRef.current) {
+        setUncategorizedEntries([]);
+        setUncategorizedCount(0);
+        setInboxLoading(false);
+      }
+    }
+  }, []);
+
+  const refreshVisibleWorkspace = useCallback(async () => {
+    await Promise.all([loadDayEntries(), loadUncategorized()]);
+  }, [loadDayEntries, loadUncategorized]);
 
   const handleSkipSlot = useCallback(
     async (slot: MealSlot) => {
@@ -134,103 +204,168 @@ export default function FoodPage() {
     [loadDayEntries],
   );
 
+  const handleDeleteEntry = useCallback(
+    async (entryId: string) => {
+      const response = await fetch(`/api/food/${entryId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) return;
+      await loadDayEntries();
+    },
+    [loadDayEntries],
+  );
+
+  const handleAssignEntry = useCallback(
+    async (entryId: string, mealSlot: MealSlot | null) => {
+      const response = await fetch(`/api/food/${entryId}/assign`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          year: selectedDate.getFullYear(),
+          month: selectedDate.getMonth() + 1,
+          day: selectedDate.getDate(),
+          meal_slot: mealSlot,
+        }),
+      });
+
+      if (!response.ok) return;
+      await refreshVisibleWorkspace();
+    },
+    [refreshVisibleWorkspace, selectedDate],
+  );
+
+  const handleDeleteInboxEntry = useCallback(
+    async (entryId: string) => {
+      const response = await fetch(`/api/food/${entryId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) return;
+      await refreshVisibleWorkspace();
+    },
+    [refreshVisibleWorkspace],
+  );
+
+  const handleEntrySaved = useCallback(async () => {
+    await loadDayEntries();
+  }, [loadDayEntries]);
+
   useEffect(() => {
-    void loadDayEntries();
-    void loadUncategorizedCount();
-  }, [loadDayEntries, loadUncategorizedCount]);
+    void loadDayEntries(selectedDate);
+  }, [loadDayEntries, selectedDate]);
+
+  useEffect(() => {
+    void loadUncategorized();
+  }, [loadUncategorized]);
+
+  useEffect(() => {
+    const nextDate = searchParams.has("date")
+      ? parseWorkspaceDate(searchParams.get("date")) ?? new Date()
+      : selectedDateRef.current;
+    const nextView = searchParams.has("view")
+      ? searchParams.get("view") === "inbox"
+        ? "inbox"
+        : "day"
+      : viewRef.current;
+    const nextDateKey = formatWorkspaceDate(nextDate);
+    const shouldSyncFromUrl =
+      formatWorkspaceDate(selectedDateRef.current) !== nextDateKey || viewRef.current !== nextView;
+
+    if (!shouldSyncFromUrl) return;
+
+    skipNextUrlSyncRef.current = true;
+    externalSearchKeyRef.current = searchParamKey;
+    setSelectedDate((currentDate) =>
+      formatWorkspaceDate(currentDate) === nextDateKey ? currentDate : nextDate,
+    );
+    setView((currentView) => (currentView === nextView ? currentView : nextView));
+  }, [searchParamKey]);
+
+  useEffect(() => {
+    if (skipNextUrlSyncRef.current) {
+      skipNextUrlSyncRef.current = false;
+      return;
+    }
+    if (externalSearchKeyRef.current === searchParamKey) {
+      return;
+    }
+
+    const currentHref = searchParamKey ? `${pathname}?${searchParamKey}` : pathname;
+    if (currentHref !== workspaceReturnTo) {
+      router.replace(workspaceReturnTo, { scroll: false });
+    }
+  }, [pathname, router, searchParamKey, workspaceReturnTo]);
 
   return (
-    <div className="animate-page min-h-dvh bg-[var(--surface-canvas)]">
-      <div className="mx-auto flex w-full max-w-7xl flex-col">
-        <header className="flex min-h-14 flex-wrap items-center gap-3 border-b border-border/60 bg-[var(--surface-topbar)] px-4 py-3">
-          <Link href="/" className="text-sm font-medium text-[var(--food)] hover:opacity-80">
-            Dashboard
-          </Link>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-sm font-medium">Food</span>
-          <span className="ml-auto text-sm text-muted-foreground">
-            {formatDateLabel(selectedDate, t.localeCode)}
-          </span>
-        </header>
-
-        <div className="px-4 py-4">
-          <div className="mb-5 flex flex-wrap items-center gap-3">
-            <FoodQuickAdd
-              year={selectedDate.getFullYear()}
-              month={selectedDate.getMonth() + 1}
-              day={selectedDate.getDate()}
-              onSaved={async () => {
-                setView("inbox");
-                await Promise.all([loadDayEntries(), loadUncategorizedCount()]);
-              }}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              onClick={() => setView("inbox")}
-            >
-              {`Inbox (${uncategorizedCount})`}
-            </Button>
-            <Button variant="outline" size="sm" type="button">
-              <CalendarDays className="h-4 w-4" />
-              Calendar
-            </Button>
-            {view === "inbox" ? (
-              <Button variant="ghost" size="sm" type="button" onClick={() => setView("day")}>
-                Day View
-              </Button>
-            ) : null}
+    <FoodPageShell
+      date={selectedDate}
+      inboxCount={uncategorizedCount}
+      view={view}
+      onDateChange={(date) => {
+        externalSearchKeyRef.current = null;
+        setSelectedDate(date);
+      }}
+      onQuickAddSaved={async () => {
+        externalSearchKeyRef.current = null;
+        setView("inbox");
+        await refreshVisibleWorkspace();
+      }}
+      onOpenInbox={() => {
+        externalSearchKeyRef.current = null;
+        setView("inbox");
+      }}
+      onOpenDayView={() => {
+        externalSearchKeyRef.current = null;
+        setView("day");
+      }}
+    >
+      {view === "inbox" ? (
+        inboxLoading ? (
+          <div className="rounded-3xl border border-border/60 bg-card/20 p-6 text-sm text-muted-foreground">
+            {t.food.loading}
           </div>
+        ) : (
+          <FoodInboxPanel
+            entries={uncategorizedEntries}
+            mealSlots={mealSlots}
+            onAssignEntry={handleAssignEntry}
+            onDeleteEntry={handleDeleteInboxEntry}
+            returnTo={workspaceReturnTo}
+          />
+        )
+      ) : (
+        dayLoading ? (
+          <div className="rounded-3xl border border-border/60 bg-card/20 p-6 text-sm text-muted-foreground">
+            {t.food.loading}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {mealSlots.map((slot) => {
+              const state = buildMealSlotState(slot.value, dayEntries);
+              const skippedId = state.kind === "skipped" ? state.skippedEntry.id : null;
 
-          {view === "inbox" ? (
-            <section className="space-y-4">
-              <div className="rounded-3xl border border-border/60 bg-card/30 p-4">
-                <h2 className="text-lg font-semibold tracking-tight">
-                  {t.food.uncategorizedEntries}
-                </h2>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {uncategorizedEntries.map((entry) => (
-                  <article
-                    key={entry.id}
-                    className="rounded-3xl border border-border/60 bg-card/30 p-4"
-                  >
-                    <p className="text-sm leading-relaxed">{entry.content || t.food.photoEntry}</p>
-                    <div className="mt-3 flex items-center gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/food/entry/${entry.id}`}>{t.food.open}</Link>
-                      </Button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {mealSlots.map((slot) => {
-                const state = buildMealSlotState(slot.value, dayEntries);
-                const skippedId = state.kind === "skipped" ? state.skippedEntry.id : null;
-
-                return (
-                  <FoodMealSlotCard
-                    key={slot.value}
-                    slot={slot.value}
-                    slotLabel={slot.label}
-                    state={state}
-                    canSkip={slot.value !== "observation"}
-                    onAdd={() => void handleAddToSlot(slot.value)}
-                    onSkip={() => void handleSkipSlot(slot.value)}
-                    onUndoSkip={
-                      skippedId ? () => void handleUndoSkip(skippedId) : undefined
-                    }
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+              return (
+                <FoodMealSlotCard
+                  key={slot.value}
+                  slot={slot.value}
+                  slotLabel={slot.label}
+                  state={state}
+                  canSkip={slot.value !== "observation"}
+                  year={selectedDate.getFullYear()}
+                  month={selectedDate.getMonth() + 1}
+                  day={selectedDate.getDate()}
+                  onSkip={() => void handleSkipSlot(slot.value)}
+                  onUndoSkip={skippedId ? () => void handleUndoSkip(skippedId) : undefined}
+                  onDeleteEntry={handleDeleteEntry}
+                  onEntrySaved={handleEntrySaved}
+                  returnTo={workspaceReturnTo}
+                />
+              );
+            })}
+          </div>
+        )
+      )}
+    </FoodPageShell>
   );
 }
