@@ -57,8 +57,14 @@ describe("LibraryQuadrant", () => {
             status: "in_progress",
             rating: null,
             cover_image: null,
+            added_at: "2026-03-01T00:00:00.000Z",
+            finished_at: null,
+            updated_at: "2026-03-20T00:00:00.000Z",
           },
         ],
+      } as Response)
+      .mockResolvedValueOnce({
+        json: async () => [],
       } as Response)
       .mockResolvedValueOnce({
         json: async () => [],

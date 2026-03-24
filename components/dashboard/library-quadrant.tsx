@@ -15,7 +15,13 @@ interface LibraryItem {
   status: MediaStatus;
   rating: number | null;
   cover_image: string | null;
+  added_at: string;
+  finished_at: string | null;
+  updated_at: string;
 }
+
+const DASHBOARD_ITEM_LIMIT = 6;
+const RECENT_FINISHED_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 const STATUS_COLORS: Record<string, string> = {
   in_progress: "bg-[var(--library-dim)] text-[var(--library)]",
@@ -70,25 +76,42 @@ function ItemRow({ item }: { item: LibraryItem }) {
 export function LibraryQuadrant() {
   const [inProgress, setInProgress] = useState<LibraryItem[]>([]);
   const [recentFinished, setRecentFinished] = useState<LibraryItem[]>([]);
+  const [backlog, setBacklog] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/library?status=in_progress").then((r) => r.json()),
       fetch("/api/library?status=finished").then((r) => r.json()),
+      fetch("/api/library?status=backlog").then((r) => r.json()),
     ])
-      .then(([ip, fin]: [LibraryItem[], LibraryItem[]]) => {
+      .then(([ip, fin, backlogItems]: [LibraryItem[], LibraryItem[], LibraryItem[]]) => {
         setInProgress(ip);
-        setRecentFinished(fin.slice(0, 3));
+        setRecentFinished(fin);
+        setBacklog(backlogItems);
       })
       .catch(() => {
         setInProgress([]);
         setRecentFinished([]);
+        setBacklog([]);
       })
       .finally(() => setLoading(false));
   }, []);
 
-  const total = inProgress.length + recentFinished.length;
+  const recentFinishedItems = recentFinished
+    .filter((item) => {
+      if (!item.finished_at) return false;
+      return Date.now() - new Date(item.finished_at).getTime() <= RECENT_FINISHED_WINDOW_MS;
+    })
+    .sort((a, b) => new Date(b.finished_at ?? 0).getTime() - new Date(a.finished_at ?? 0).getTime());
+
+  const prioritizedItems = [
+    ...inProgress.toSorted((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
+    ...recentFinishedItems,
+    ...backlog.toSorted((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime()),
+  ].slice(0, DASHBOARD_ITEM_LIMIT);
+
+  const total = inProgress.length + recentFinishedItems.length + backlog.length;
 
   return (
     <QuadrantCard
@@ -121,28 +144,11 @@ export function LibraryQuadrant() {
             <div key={i} className="h-8 animate-pulse rounded bg-muted/30" />
           ))}
         </div>
-      ) : total > 0 ? (
+      ) : prioritizedItems.length > 0 ? (
         <div className="space-y-1">
-          {inProgress.length > 0 && (
-            <>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                In Progress
-              </p>
-              {inProgress.slice(0, 3).map((item) => (
-                <ItemRow key={item.id} item={item} />
-              ))}
-            </>
-          )}
-          {recentFinished.length > 0 && (
-            <>
-              <p className="mt-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                Recently Finished
-              </p>
-              {recentFinished.map((item) => (
-                <ItemRow key={item.id} item={item} />
-              ))}
-            </>
-          )}
+          {prioritizedItems.map((item) => (
+            <ItemRow key={item.id} item={item} />
+          ))}
         </div>
       ) : (
         <p className="py-6 text-center text-sm text-muted-foreground">
