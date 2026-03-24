@@ -159,6 +159,7 @@ export function NoteDetail({
   const [imageError, setImageError] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
   const { images } = useImages(note.images);
   const isNew = note.id === "__new__";
   const { t } = useLocale();
@@ -181,7 +182,15 @@ export function NoteDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [note.id]);
 
-  async function handleTitleBlur(e: React.FocusEvent<HTMLInputElement>) {
+  useEffect(() => {
+    const titleElement = titleRef.current;
+    if (!titleElement) return;
+
+    titleElement.style.height = "0px";
+    titleElement.style.height = `${titleElement.scrollHeight}px`;
+  }, [titleDraft]);
+
+  async function handleTitleBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
     if (isNew) {
       const nextFocused = e.relatedTarget;
       if (nextFocused instanceof Node && editorRef.current?.contains(nextFocused)) {
@@ -198,11 +207,27 @@ export function NoteDetail({
   async function handleContentBlur() {
     if (contentDraft === note.content) return;
     setSavingContent(true);
-    try { await onUpdate({ content: contentDraft }); } finally { setSavingContent(false); }
+    try {
+      const nextUpdate: { title?: string | null; content: string } = { content: contentDraft };
+      if (isNew) {
+        const nextTitle = titleDraft.trim() || null;
+        if (nextTitle !== note.title) {
+          nextUpdate.title = nextTitle;
+        }
+      }
+      await onUpdate(nextUpdate);
+    } finally { setSavingContent(false); }
   }
 
   function handleContentKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Escape") setContentDraft(note.content);
+  }
+
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.blur();
+    }
   }
 
   async function commitTagInput() {
@@ -335,12 +360,15 @@ export function NoteDetail({
       <div className="flex-1 px-10 sm:px-16 md:px-24 lg:px-32 xl:px-40 py-12 max-w-4xl w-full mx-auto">
 
         {/* Title */}
-        <input
-          className="w-full bg-transparent font-display text-4xl sm:text-5xl font-semibold tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground mb-5"
+        <textarea
+          ref={titleRef}
+          rows={1}
+          className="w-full resize-none overflow-hidden bg-transparent font-display text-4xl sm:text-5xl font-semibold tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground mb-5"
           placeholder={t.notes.untitled}
           value={titleDraft}
           onChange={(e) => setTitleDraft(e.target.value)}
           onBlur={handleTitleBlur}
+          onKeyDown={handleTitleKeyDown}
         />
 
         {/* Tags row */}

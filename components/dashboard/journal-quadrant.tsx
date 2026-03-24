@@ -48,6 +48,12 @@ function buildDateFromParts(value: LatestJournalDate): Date {
   return new Date(value.year, value.month - 1, value.day);
 }
 
+function differenceInCalendarDays(left: Date, right: Date): number {
+  const leftUtc = Date.UTC(left.getFullYear(), left.getMonth(), left.getDate());
+  const rightUtc = Date.UTC(right.getFullYear(), right.getMonth(), right.getDate());
+  return Math.round((leftUtc - rightUtc) / 86_400_000);
+}
+
 export function JournalQuadrant({ date }: JournalQuadrantProps) {
   const [snapshot, setSnapshot] = useState<JournalSnapshot | null>(null);
   const [latestDate, setLatestDate] = useState<LatestJournalDate | null | undefined>(undefined);
@@ -112,7 +118,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
   const content = entry?.content ?? entry?.encrypted_content ?? "";
   const wordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;
   const latestAgeLabel = latestDate
-    ? `${Math.round((date.getTime() - buildDateFromParts(latestDate).getTime()) / 86_400_000)} days ago`
+    ? `${differenceInCalendarDays(date, buildDateFromParts(latestDate))} days ago`
     : latestDate === null
       ? "Empty journal"
       : null;
