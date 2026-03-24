@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { LibraryDetail, type LibraryDetailData } from "@/components/library/library-detail";
 
@@ -36,6 +36,8 @@ vi.mock("@/hooks/use-locale", () => ({
         writeThought: "Write thought",
         adding: "Adding",
         delete: "Delete",
+        addToLibrary: "Add to library",
+        type: "Type",
       },
     },
   }),
@@ -48,8 +50,18 @@ vi.mock("@/components/ui/markdown-editor", () => ({
 }));
 
 vi.mock("@/components/library/vocabulary-input", () => ({
-  VocabularyInput: ({ placeholder }: { placeholder?: string }) => (
-    <div data-testid="vocabulary-input">{placeholder}</div>
+  VocabularyInput: ({
+    field,
+    mediaType,
+    placeholder,
+  }: {
+    field: string;
+    mediaType?: string;
+    placeholder?: string;
+  }) => (
+    <div data-testid={`vocabulary-input-${field}`}>
+      {placeholder}:{mediaType ?? "none"}
+    </div>
   ),
 }));
 
@@ -98,5 +110,24 @@ describe("LibraryDetail layout", () => {
     expect(container.querySelector(".overflow-y-auto")).toBeNull();
     expect(container.querySelector("[class*='lg:overflow-y-auto']")).toBeNull();
     expect(container.querySelector("[class*='lg\\:h-\\[calc\\(100\\%-49px\\)\\]']")).toBeNull();
+  });
+
+  it("uses the full editor for new items instead of the reduced quick-add form", () => {
+    render(
+      <LibraryDetail
+        item={makeItem({ id: "__new__", type: "game", title: "" })}
+        onUpdate={vi.fn(async () => undefined)}
+        onAddNote={vi.fn(async () => undefined)}
+        onUpdateNote={vi.fn(async () => undefined)}
+        onDelete={vi.fn(async () => undefined)}
+        onDeleteNote={vi.fn(async () => undefined)}
+      />,
+    );
+
+    expect(screen.getByTestId("status-transition")).toBeTruthy();
+    expect(screen.getByText("Year")).toBeTruthy();
+    expect(screen.getByTestId("vocabulary-input-platform").textContent).toContain("game");
+    expect(screen.getByTestId("vocabulary-input-genres").textContent).toContain("game");
+    expect(screen.getByRole("button", { name: "Add to library" })).toBeTruthy();
   });
 });

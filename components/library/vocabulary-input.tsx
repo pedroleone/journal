@@ -8,6 +8,7 @@ interface VocabularyInputProps {
   values: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
+  mediaType?: string;
 }
 
 interface VocabSuggestion {
@@ -15,18 +16,23 @@ interface VocabSuggestion {
   count: number;
 }
 
-export function VocabularyInput({ field, values, onChange, placeholder }: VocabularyInputProps) {
+export function VocabularyInput({ field, values, onChange, placeholder, mediaType }: VocabularyInputProps) {
   const [suggestions, setSuggestions] = useState<VocabSuggestion[]>([]);
   const [input, setInput] = useState("");
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch(`/api/library/vocabulary?field=${field}`)
+    const params = new URLSearchParams({ field });
+    if (field === "genres" && mediaType) {
+      params.set("type", mediaType);
+    }
+
+    fetch(`/api/library/vocabulary?${params.toString()}`)
       .then((r) => r.json())
       .then(setSuggestions)
       .catch(() => undefined);
-  }, [field]);
+  }, [field, mediaType]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

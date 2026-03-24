@@ -41,6 +41,7 @@ export interface LibraryDetailData {
 interface LibraryDetailProps {
   item: LibraryDetailData;
   onUpdate: (data: Record<string, unknown>) => Promise<void>;
+  onCreate?: (data: Record<string, unknown>) => Promise<void>;
   onAddNote: (content: string) => Promise<void>;
   onUpdateNote: (noteId: string, content: string) => Promise<void>;
   onDelete: () => Promise<void>;
@@ -141,6 +142,7 @@ function NoteBlock({ note, onSave, onDelete }: NoteBlockProps) {
 export function LibraryDetail({
   item,
   onUpdate,
+  onCreate,
   onAddNote,
   onUpdateNote,
   onDelete,
@@ -187,22 +189,35 @@ export function LibraryDetail({
   async function handleCreate() {
     const newTitle = titleDraft.trim();
     if (!newTitle) return;
-    await onUpdate({
+    await onCreate?.({
+      type: item.type,
       title: newTitle,
-      creator: creatorDraft.trim() || undefined,
-      url: urlDraft.trim() || undefined,
+      creator: creatorDraft.trim() || null,
+      url: urlDraft.trim() || null,
+      status: item.status,
+      rating: item.rating,
+      reactions: item.reactions,
+      genres: item.genres,
+      metadata: {
+        ...(item.metadata ?? {}),
+        year: yearDraft !== "" ? Number(yearDraft) : null,
+      },
+      content: contentDraft || null,
     }).catch(() => undefined);
   }
 
   function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (isNew && e.key === "Enter") {
+    if (isNew && e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       void handleCreate();
     }
   }
 
   async function handleTitleBlur() {
-    if (isNew) return;
+    if (isNew) {
+      await onUpdate({ title: titleDraft }).catch(() => undefined);
+      return;
+    }
     const newTitle = titleDraft.trim();
     if (newTitle && newTitle !== item.title) {
       await onUpdate({ title: newTitle }).catch(() => undefined);
@@ -210,7 +225,10 @@ export function LibraryDetail({
   }
 
   async function handleCreatorBlur() {
-    if (isNew) return;
+    if (isNew) {
+      await onUpdate({ creator: creatorDraft.trim() || null }).catch(() => undefined);
+      return;
+    }
     const val = creatorDraft.trim() || null;
     if (val !== item.creator) {
       await onUpdate({ creator: val }).catch(() => undefined);
@@ -218,7 +236,10 @@ export function LibraryDetail({
   }
 
   async function handleUrlBlur() {
-    if (isNew) return;
+    if (isNew) {
+      await onUpdate({ url: urlDraft.trim() || null }).catch(() => undefined);
+      return;
+    }
     const val = urlDraft.trim() || null;
     if (val !== item.url) {
       await onUpdate({ url: val }).catch(() => undefined);
@@ -226,18 +247,17 @@ export function LibraryDetail({
   }
 
   async function handleYearBlur() {
-    if (isNew) return;
     const val = yearDraft !== "" ? Number(yearDraft) : null;
-    const current = (item.metadata as Record<string, unknown>)?.year as number | null ?? null;
-    if (val !== current) {
-      await onUpdate({ metadata: { ...item.metadata, year: val } }).catch(() => undefined);
+    const current = (item.metadata as Record<string, unknown> | null)?.year as number | null ?? null;
+    if (isNew || val !== current) {
+      await onUpdate({ metadata: { ...(item.metadata ?? {}), year: val } }).catch(() => undefined);
     }
   }
 
   async function handleContentBlur() {
-    if (contentDraft === (item.content ?? "")) return;
+    if (!isNew && contentDraft === (item.content ?? "")) return;
     setSavingContent(true);
-    try { await onUpdate({ content: contentDraft }); } finally { setSavingContent(false); }
+    try { await onUpdate({ content: contentDraft || null }); } finally { setSavingContent(false); }
   }
 
   async function handleAddNote() {
@@ -271,92 +291,33 @@ export function LibraryDetail({
     }
   }
 
-  // For new items, show the old single-column form layout
-  if (isNew) {
-    return (
-      <div className="flex flex-col min-h-full">
-        <div className="flex-1 px-10 sm:px-16 md:px-24 lg:px-32 xl:px-40 py-12 max-w-4xl w-full mx-auto">
-          {/* Type selector - only for new items */}
-          <div className="mb-8">
-            <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.type}</label>
-            <select
-              className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
-              value={item.type}
-              onChange={(e) => onUpdate({ type: e.target.value })}
-            >
-              {MEDIA_TYPES.map((mt) => (
-                <option key={mt} value={mt}>{typeLabels[mt]}</option>
-              ))}
-            </select>
-          </div>
-
-          <input
-            className="w-full bg-transparent font-display text-4xl sm:text-5xl font-semibold tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground mb-5"
-            placeholder={item.type === "album" ? t.library.albumName : t.library.title}
-            value={titleDraft}
-            onChange={(e) => setTitleDraft(e.target.value)}
-            onBlur={handleTitleBlur}
-            onKeyDown={handleTitleKeyDown}
-            autoFocus
-            autoComplete="off"
-            data-1p-ignore
-          />
-
-          {item.type === "album" && (
-            <input
-              className="w-full bg-transparent font-display text-2xl sm:text-3xl font-medium tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground/70 mb-5"
-              placeholder={t.library.artistName}
-              value={creatorDraft}
-              onChange={(e) => setCreatorDraft(e.target.value)}
-              onBlur={handleCreatorBlur}
-              autoComplete="off"
-              data-1p-ignore
-            />
-          )}
-
-          {item.type !== "album" && (
-            <div className="mb-4">
-              <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{creatorLabel}</label>
-              <input
-                className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
-                placeholder={creatorLabel}
-                value={creatorDraft}
-                onChange={(e) => setCreatorDraft(e.target.value)}
-                onBlur={handleCreatorBlur}
-                autoComplete="off"
-                data-1p-ignore
-              />
-            </div>
-          )}
-
-          <div className="mb-10">
-            <button
-              onClick={handleCreate}
-              disabled={!titleDraft.trim()}
-              className="rounded-md bg-foreground text-background px-4 py-2 text-sm font-medium disabled:opacity-30 hover:opacity-80 transition-opacity"
-            >
-              {t.library.addToLibrary}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Existing item: two-column layout
   return (
     <div className="flex flex-col min-h-full">
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 lg:px-10 py-3 border-b border-border/40">
-        <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
-          {formatDate(item.created_at)}
-        </time>
+        {isNew ? (
+          <span className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
+            {typeLabels[item.type]}
+          </span>
+        ) : (
+          <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
+            {formatDate(item.created_at)}
+          </time>
+        )}
 
         <div className="flex items-center gap-1">
           {savingContent && (
             <span className="text-[11px] text-muted-foreground/50 mr-2 tracking-wide">{t.library.saving}</span>
           )}
-          {confirmDelete ? (
+          {isNew ? (
+            <button
+              onClick={() => void handleCreate()}
+              disabled={!titleDraft.trim()}
+              className="rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background disabled:opacity-30 hover:opacity-80 transition-opacity"
+            >
+              {t.library.addToLibrary}
+            </button>
+          ) : confirmDelete ? (
             <div className="flex items-center gap-2">
               <button onClick={onDelete} className="text-xs font-medium text-destructive hover:text-destructive/80 px-2 py-1 rounded">
                 {t.library.deleteItem}
@@ -457,6 +418,21 @@ export function LibraryDetail({
 
           {/* Metadata fields */}
           <div className="space-y-4">
+            {isNew && (
+              <div>
+                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.type}</label>
+                <select
+                  className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
+                  value={item.type}
+                  onChange={(e) => onUpdate({ type: e.target.value })}
+                >
+                  {MEDIA_TYPES.map((mt) => (
+                    <option key={mt} value={mt}>{typeLabels[mt]}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Creator (hidden for albums) */}
             {item.type !== "album" && (
               <div>
@@ -531,6 +507,7 @@ export function LibraryDetail({
                   values={((item.metadata as Record<string, unknown>)?.platform as string[]) ?? []}
                   onChange={(vals) => onUpdate({ metadata: { ...item.metadata, platform: vals } })}
                   placeholder={t.library.platform}
+                  mediaType={item.type}
                 />
               </div>
             )}
@@ -582,6 +559,7 @@ export function LibraryDetail({
                 values={item.genres ?? []}
                 onChange={(vals) => onUpdate({ genres: vals.length > 0 ? vals : null })}
                 placeholder={t.library.genres}
+                mediaType={item.type}
               />
             </div>
           </div>
@@ -612,7 +590,7 @@ export function LibraryDetail({
             />
 
             {/* Thought log */}
-            {item.notes.length > 0 && (
+            {!isNew && item.notes.length > 0 && (
               <div className="mt-12 space-y-8">
                 {item.notes.map((note) => (
                   <NoteBlock
@@ -626,7 +604,8 @@ export function LibraryDetail({
             )}
 
             {/* Add thought */}
-            <div className="mt-12">
+            {!isNew && (
+              <div className="mt-12">
               {addingNote ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-4 mb-5">
@@ -670,7 +649,8 @@ export function LibraryDetail({
                   <span className="text-xs tracking-wide">{t.library.addThought}</span>
                 </button>
               )}
-            </div>
+              </div>
+            )}
 
             <div className="h-10" />
           </div>

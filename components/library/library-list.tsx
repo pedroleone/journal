@@ -30,7 +30,6 @@ interface LibraryListProps {
   onSelect: (id: string) => void;
   onFilterChange: <K extends keyof LibraryFilters>(key: K, value: LibraryFilters[K]) => void;
   onNew: () => void;
-  onQuickAdd?: (type: MediaType, title: string, creator?: string) => Promise<void>;
   onBulkStatus?: (ids: string[], status: MediaStatus) => Promise<void>;
   genres: VocabEntry[];
   reactions: VocabEntry[];
@@ -61,19 +60,13 @@ function formatDate(iso: string): string {
   });
 }
 
-export function LibraryList({ items, selectedId, filters, onSelect, onFilterChange, onNew, onQuickAdd, onBulkStatus, genres, reactions, platforms }: LibraryListProps) {
+export function LibraryList({ items, selectedId, filters, onSelect, onFilterChange, onNew, onBulkStatus, genres, reactions, platforms }: LibraryListProps) {
   const [searchInput, setSearchInput] = useState(filters.search ?? "");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [quickAddType, setQuickAddType] = useState<MediaType>("book");
-  const [quickAddTitle, setQuickAddTitle] = useState("");
-  const [quickAddCreator, setQuickAddCreator] = useState("");
-  const [quickAddSubmitting, setQuickAddSubmitting] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState<MediaStatus>("finished");
   const [bulkUpdating, setBulkUpdating] = useState(false);
-  const quickAddInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLocale();
 
   const types: (MediaType | null)[] = [null, "book", "album", "movie", "game", "video", "misc"];
@@ -104,25 +97,6 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
     debounceRef.current = setTimeout(() => {
       onFilterChange("search", value || null);
     }, 300);
-  }
-
-  async function handleQuickAddSubmit() {
-    if (!quickAddTitle.trim() || !onQuickAdd || quickAddSubmitting) return;
-    setQuickAddSubmitting(true);
-    try {
-      await onQuickAdd(quickAddType, quickAddTitle.trim(), quickAddCreator.trim() || undefined);
-      setQuickAddTitle("");
-      setQuickAddCreator("");
-      // Stay open for batch adds, refocus input
-      setTimeout(() => quickAddInputRef.current?.focus(), 0);
-    } finally {
-      setQuickAddSubmitting(false);
-    }
-  }
-
-  function handleQuickAddKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter") void handleQuickAddSubmit();
-    if (e.key === "Escape") { setQuickAddOpen(false); setQuickAddTitle(""); setQuickAddCreator(""); }
   }
 
   function toggleSelected(id: string) {
@@ -303,98 +277,15 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
         </div>
       )}
 
-      {/* Footer: quick add + new item */}
+      {/* Footer: new item */}
       {!selectMode && (
-        <div className="border-t border-border/60 p-3 space-y-2">
-          {quickAddOpen ? (
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-1">
-                {MEDIA_TYPES.map((mt) => {
-                  const Icon = TYPE_ICONS[mt];
-                  return (
-                    <button
-                      key={mt}
-                      onClick={() => setQuickAddType(mt)}
-                      className={cn(
-                        "rounded-md p-1.5 transition-colors",
-                        quickAddType === mt
-                          ? "bg-secondary text-foreground"
-                          : "text-muted-foreground hover:bg-secondary/50",
-                      )}
-                      title={typeLabels[mt]}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="flex gap-2">
-                {quickAddType === "album" ? (
-                  <>
-                    <input
-                      ref={quickAddInputRef}
-                      className="flex-1 bg-transparent border border-border/60 rounded-md px-2 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
-                      placeholder={t.library.albumName}
-                      value={quickAddTitle}
-                      onChange={(e) => setQuickAddTitle(e.target.value)}
-                      onKeyDown={handleQuickAddKeyDown}
-                      autoFocus
-                      autoComplete="off"
-                      data-1p-ignore
-                    />
-                    <input
-                      className="flex-1 bg-transparent border border-border/60 rounded-md px-2 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
-                      placeholder={t.library.artistPlaceholder}
-                      value={quickAddCreator}
-                      onChange={(e) => setQuickAddCreator(e.target.value)}
-                      onKeyDown={handleQuickAddKeyDown}
-                      autoComplete="off"
-                      data-1p-ignore
-                    />
-                  </>
-                ) : (
-                  <input
-                    ref={quickAddInputRef}
-                    className="flex-1 bg-transparent border border-border/60 rounded-md px-2 py-1 text-sm placeholder:text-muted-foreground/60 focus:outline-none"
-                    placeholder={t.library.titlePlaceholder}
-                    value={quickAddTitle}
-                    onChange={(e) => setQuickAddTitle(e.target.value)}
-                    onKeyDown={handleQuickAddKeyDown}
-                    autoFocus
-                    autoComplete="off"
-                    data-1p-ignore
-                  />
-                )}
-                <button
-                  onClick={handleQuickAddSubmit}
-                  disabled={quickAddSubmitting || !quickAddTitle.trim()}
-                  className="rounded-md bg-foreground text-background px-3 py-1 text-xs font-medium disabled:opacity-40 hover:opacity-80 transition-opacity"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              {onQuickAdd && (
-                <button
-                  onClick={() => setQuickAddOpen(true)}
-                  className="flex-1 rounded-md py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary/50"
-                >
-                  {t.library.quickAdd}
-                </button>
-              )}
-              <button
-                onClick={onNew}
-                className={cn(
-                  "rounded-md py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary/50",
-                  onQuickAdd ? "flex-1" : "w-full",
-                )}
-              >
-                {t.library.newItem}
-              </button>
-            </div>
-          )}
+        <div className="border-t border-border/60 p-3">
+          <button
+            onClick={onNew}
+            className="w-full rounded-md py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary/50"
+          >
+            {t.library.newItem}
+          </button>
         </div>
       )}
     </div>

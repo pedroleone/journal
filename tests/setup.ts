@@ -42,5 +42,6 @@ vi.mock("@/lib/db", () => ({
     orderBy: vi.fn().mockReturnThis(),
     limit: vi.fn().mockResolvedValue([]),
     reverse: vi.fn().mockReturnValue([]),
+    all: vi.fn().mockResolvedValue([]),
   },
 }));

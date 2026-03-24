@@ -47,27 +47,31 @@ export default function LibraryNewPage() {
 
   async function handleUpdate(data: Record<string, unknown>) {
     if (!draft) return;
-    const next = { ...draft, ...data } as LibraryDetailData;
-    setDraft(next);
+    setDraft((current) => current ? { ...current, ...data } as LibraryDetailData : current);
+  }
 
-    if (!next.title.trim()) return;
+  async function handleCreate(data: Record<string, unknown>) {
+    if (!draft) return;
 
-    // Create the item
+    const payload: Record<string, unknown> = {
+      type: draft.type,
+      status: draft.status,
+      rating: draft.rating,
+      reactions: draft.reactions,
+      genres: draft.genres,
+      metadata: draft.metadata,
+      content: draft.content,
+      ...data,
+    };
+
+    const title = typeof payload.title === "string" ? payload.title.trim() : "";
+    if (!title) return;
+    payload.title = title;
+
     const res = await fetch("/api/library", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: next.type,
-        title: next.title,
-        creator: next.creator || undefined,
-        url: next.url || undefined,
-        status: next.status,
-        rating: next.rating || undefined,
-        reactions: next.reactions || undefined,
-        genres: next.genres || undefined,
-        metadata: next.metadata || undefined,
-        content: next.content || undefined,
-      }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) return;
 
@@ -102,6 +106,7 @@ export default function LibraryNewPage() {
             key={draft.type}
             item={draft}
             onUpdate={handleUpdate}
+            onCreate={handleCreate}
             onAddNote={noop}
             onUpdateNote={noop}
             onDelete={handleDelete}

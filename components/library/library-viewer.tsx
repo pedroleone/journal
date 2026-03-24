@@ -114,33 +114,6 @@ export function LibraryViewer(props: LibraryViewerProps) {
     if (current.id === NEW_ITEM_ID) {
       const next = { ...current, ...data } as LibraryDetailData;
       setItem(next);
-
-      if (!next.title.trim()) return;
-
-      const res = await fetch("/api/library", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: next.type,
-          title: next.title,
-          creator: next.creator || undefined,
-          url: next.url || undefined,
-          status: next.status,
-          rating: next.rating || undefined,
-          reactions: next.reactions || undefined,
-          genres: next.genres || undefined,
-          metadata: next.metadata || undefined,
-          content: next.content || undefined,
-        }),
-      });
-      if (!res.ok) return;
-
-      const created = await res.json();
-      setLoading(true);
-      setItem(null);
-      setPendingType(null);
-      await props.onItemsChanged();
-      await props.onCreated(created.id);
       return;
     }
 
@@ -156,6 +129,40 @@ export function LibraryViewer(props: LibraryViewerProps) {
       props.onItemsChanged(),
       refreshCurrent(current.id, { showLoading: false }),
     ]);
+  }
+
+  async function handleCreate(data: Record<string, unknown>) {
+    const current = itemRef.current;
+    if (!current || current.id !== NEW_ITEM_ID) return;
+
+    const payload: Record<string, unknown> = {
+      type: current.type,
+      status: current.status,
+      rating: current.rating,
+      reactions: current.reactions,
+      genres: current.genres,
+      metadata: current.metadata,
+      content: current.content,
+      ...data,
+    };
+
+    const title = typeof payload.title === "string" ? payload.title.trim() : "";
+    if (!title) return;
+    payload.title = title;
+
+    const res = await fetch("/api/library", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return;
+
+    const created = await res.json();
+    setLoading(true);
+    setItem(null);
+    setPendingType(null);
+    await props.onItemsChanged();
+    await props.onCreated(created.id);
   }
 
   async function handleDelete() {
@@ -270,6 +277,7 @@ export function LibraryViewer(props: LibraryViewerProps) {
       key={item.id}
       item={item}
       onUpdate={handleUpdate}
+      onCreate={handleCreate}
       onAddNote={handleAddNote}
       onUpdateNote={handleUpdateNote}
       onDelete={handleDelete}

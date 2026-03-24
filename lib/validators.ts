@@ -204,6 +204,7 @@ export const bulkStatusUpdateSchema = z.object({
 
 export const vocabularyQuerySchema = z.object({
   field: z.enum(["reactions", "genres", "platform"]),
+  type: mediaTypeEnum.optional(),
 });
 
 const backupImageBlobSchema = z.object({

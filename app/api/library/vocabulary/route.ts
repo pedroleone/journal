@@ -8,10 +8,10 @@ import { vocabularyQuerySchema } from "@/lib/validators";
 import { DEFAULT_REACTIONS } from "@/lib/library";
 
 export const GET = withAuth(async (userId, request: NextRequest) => {
-  const parsed = parseQuery(request, vocabularyQuerySchema, ["field"]);
+  const parsed = parseQuery(request, vocabularyQuerySchema, ["field", "type"]);
   if (!parsed.success) return parsed.response;
 
-  const { field } = parsed.data;
+  const { field, type } = parsed.data;
 
   let results: { value: string; count: number }[];
 
@@ -31,6 +31,7 @@ export const GET = withAuth(async (userId, request: NextRequest) => {
       sql`SELECT je.value as value, COUNT(*) as count
           FROM ${mediaItems}, json_each(${mediaItems.genres}) je
           WHERE ${mediaItems.userId} = ${userId}
+            ${type ? sql`AND ${mediaItems.type} = ${type}` : sql``}
           GROUP BY je.value
           ORDER BY count DESC`,
     );
