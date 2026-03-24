@@ -17,6 +17,7 @@ Create a calmer, more uniform typography system for the app by reducing font-rol
 - No full visual redesign of layouts, spacing, or color tokens.
 - No new branding system beyond typography cleanup.
 - No per-domain typography personalities for journal, notes, food, and library.
+- No redesign of exported document typography beyond keeping export-page UI aligned with the app system.
 - No changes to encryption, routing, or data behavior.
 
 ## Current Problems
@@ -175,6 +176,8 @@ The main cleanup target is not every text node. It is the shared hierarchy point
 - content titles
 - metadata labels
 - reading blocks
+
+For `app/export/page.tsx`, only the in-app route UI should join the shared typography system. The generated export document markup can keep its simpler document-oriented font fallback unless implementation reveals a low-cost alignment opportunity.
 
 ## Risks
 
