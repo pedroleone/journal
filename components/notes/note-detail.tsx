@@ -157,6 +157,7 @@ export function NoteDetail({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState("");
+  const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { images } = useImages(note.images);
   const isNew = note.id === "__new__";
@@ -180,7 +181,14 @@ export function NoteDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [note.id]);
 
-  async function handleTitleBlur() {
+  async function handleTitleBlur(e: React.FocusEvent<HTMLInputElement>) {
+    if (isNew) {
+      const nextFocused = e.relatedTarget;
+      if (nextFocused instanceof Node && editorRef.current?.contains(nextFocused)) {
+        return;
+      }
+    }
+
     const newTitle = titleDraft.trim() || null;
     if (newTitle !== note.title) {
       await onUpdate({ title: newTitle }).catch(() => undefined);
@@ -268,7 +276,7 @@ export function NoteDetail({
   }
 
   return (
-    <div className="relative flex flex-col min-h-full">
+    <div ref={editorRef} className="relative flex flex-col min-h-full">
       {/* Top bar: date left, actions right */}
       <div className="sticky top-0 z-10 flex items-center justify-between px-10 py-3 bg-background/80 backdrop-blur-sm border-b border-border/40">
         <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">

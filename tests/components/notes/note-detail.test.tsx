@@ -57,6 +57,67 @@ describe("NoteDetail", () => {
     vi.clearAllMocks();
   });
 
+  it("does not create a new note when title focus moves within the editor", () => {
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <NoteDetail
+        note={buildNote({
+          id: "__new__",
+          title: null,
+          tags: null,
+          images: null,
+          content: "",
+        })}
+        onUpdate={onUpdate}
+        onAddSubnote={vi.fn().mockResolvedValue(undefined)}
+        onUpdateSubnote={vi.fn().mockResolvedValue(undefined)}
+        onDelete={vi.fn().mockResolvedValue(undefined)}
+        onDeleteSubnote={vi.fn().mockResolvedValue(undefined)}
+        onImagesChange={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    const titleInput = screen.getByPlaceholderText(/untitled/i);
+    const tagInput = screen.getByPlaceholderText(/add tag/i);
+
+    fireEvent.change(titleInput, { target: { value: "Draft title" } });
+    fireEvent.blur(titleInput, { relatedTarget: tagInput });
+
+    expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it("saves a new note title when focus leaves the editor", async () => {
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <NoteDetail
+        note={buildNote({
+          id: "__new__",
+          title: null,
+          tags: null,
+          images: null,
+          content: "",
+        })}
+        onUpdate={onUpdate}
+        onAddSubnote={vi.fn().mockResolvedValue(undefined)}
+        onUpdateSubnote={vi.fn().mockResolvedValue(undefined)}
+        onDelete={vi.fn().mockResolvedValue(undefined)}
+        onDeleteSubnote={vi.fn().mockResolvedValue(undefined)}
+        onImagesChange={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    const titleInput = screen.getByPlaceholderText(/untitled/i);
+
+    fireEvent.change(titleInput, { target: { value: "Draft title" } });
+    fireEvent.blur(titleInput);
+
+    await waitFor(() => {
+      expect(onUpdate).toHaveBeenCalledWith({ title: "Draft title" });
+    });
+  });
+
   it("resets draft and transient UI state when the note changes", async () => {
     deleteEncryptedImageMock.mockRejectedValueOnce(new Error("boom"));
 

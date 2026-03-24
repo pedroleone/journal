@@ -347,7 +347,7 @@ export function LibraryDetail({
   return (
     <div className="flex flex-col min-h-full">
       {/* Top bar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-6 lg:px-10 py-3 bg-background/80 backdrop-blur-sm border-b border-border/40">
+      <div className="flex items-center justify-between px-6 lg:px-10 py-3 border-b border-border/40">
         <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
           {formatDate(item.created_at)}
         </time>
@@ -376,7 +376,7 @@ export function LibraryDetail({
       {/* Two-column layout */}
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Left column: cover, title, metadata */}
-        <div className="lg:w-1/3 lg:min-w-[280px] lg:max-w-[400px] lg:border-r border-border/40 p-6 lg:p-8 space-y-6 lg:overflow-y-auto lg:h-[calc(100%-49px)]">
+        <div className="lg:w-1/3 lg:min-w-[280px] lg:max-w-[400px] lg:border-r border-border/40 p-6 lg:p-8 space-y-6">
           {/* Cover image */}
           <input
             ref={coverInputRef}
@@ -588,7 +588,7 @@ export function LibraryDetail({
         </div>
 
         {/* Right column: reactions, content, thoughts */}
-        <div className="flex-1 overflow-y-auto lg:h-[calc(100%-49px)] p-6 lg:p-8 lg:pl-10">
+        <div className="flex-1 p-6 lg:p-8 lg:pl-10">
           <div className="max-w-3xl">
             {/* Reactions */}
             <div className="mb-8">

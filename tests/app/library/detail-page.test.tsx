@@ -40,13 +40,14 @@ describe("LibraryDetailPage", () => {
     });
   });
 
-  it("uses page-level scrolling on mobile while preserving desktop clipping", async () => {
+  it("lets the browser handle page scrolling for library detail pages", async () => {
     render(<LibraryDetailPage />);
 
     const detail = await screen.findByTestId("library-detail");
     const content = detail.parentElement;
 
-    expect(content?.className).toContain("overflow-y-auto");
-    expect(content?.className).toContain("lg:overflow-hidden");
+    expect(content?.className).toContain("flex-1");
+    expect(content?.className).not.toContain("overflow-y-auto");
+    expect(content?.className).not.toContain("lg:overflow-hidden");
   });
 });

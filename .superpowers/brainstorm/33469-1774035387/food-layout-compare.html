@@ -1,0 +1,293 @@
+<style>
+  .food-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .food-card {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 22px;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+      #11161d;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.26);
+  }
+
+  .food-frame {
+    padding: 18px;
+    background:
+      radial-gradient(circle at top right, rgba(78, 186, 160, 0.18), transparent 36%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+      #0f141b;
+    min-height: 560px;
+    color: #eef4f0;
+  }
+
+  .food-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    color: #c8d4cd;
+    font-size: 13px;
+  }
+
+  .food-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: #9eb2aa;
+    font-size: 13px;
+  }
+
+  .food-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .food-action {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #e8f0eb;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .meal-grid-preview {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .meal-box {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.035);
+    min-height: 126px;
+  }
+
+  .meal-box.tall {
+    min-height: 208px;
+  }
+
+  .meal-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    color: #dfe8e3;
+    font-size: 12px;
+  }
+
+  .meal-title {
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: #9fe3c8;
+  }
+
+  .meal-line {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+    margin-bottom: 8px;
+  }
+
+  .meal-line.short {
+    width: 62%;
+  }
+
+  .meal-image {
+    margin-top: 10px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(159, 227, 200, 0.24), rgba(255, 255, 255, 0.06));
+    height: 74px;
+  }
+
+  .stack {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .stack-item {
+    border-radius: 12px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #98aba4;
+    font-size: 12px;
+    margin-top: 36px;
+  }
+
+  .plus {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(159, 227, 200, 0.32);
+    color: #9fe3c8;
+  }
+
+  .choice-summary {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: #a9bab3;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 1100px) {
+    .food-cards,
+    .meal-grid-preview {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<h2>Food Layout Direction</h2>
+<p class="subtitle">Both options keep the Concept D expanded page, the header actions, and a separate inbox organizer. The main difference is how meal slots behave when a day has more than one entry.</p>
+
+<div class="cards food-cards">
+  <div class="card food-card" data-choice="stack-in-grid" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="food-frame">
+        <div class="food-topbar">
+          <span>Expanded Food Page</span>
+          <span>Wed, Mar 19</span>
+        </div>
+        <div class="food-breadcrumb">
+          <span>&larr; Dashboard</span>
+          <span>/</span>
+          <span>Food</span>
+        </div>
+        <div class="food-actions">
+          <div class="food-action">Quick Add</div>
+          <div class="food-action">Inbox (4)</div>
+          <div class="food-action">Calendar</div>
+        </div>
+        <div class="meal-grid-preview">
+          <div class="meal-box tall">
+            <div class="meal-head">
+              <span class="meal-title">Breakfast</span>
+              <span>8:30 AM</span>
+            </div>
+            <div class="stack">
+              <div class="stack-item">
+                <div class="meal-line"></div>
+                <div class="meal-line short"></div>
+              </div>
+              <div class="stack-item">
+                <div class="meal-line short"></div>
+                <div class="meal-line short"></div>
+              </div>
+            </div>
+          </div>
+          <div class="meal-box">
+            <div class="meal-head">
+              <span class="meal-title">Lunch</span>
+              <span>12:45 PM</span>
+            </div>
+            <div class="meal-line"></div>
+            <div class="meal-line short"></div>
+            <div class="meal-image"></div>
+          </div>
+          <div class="meal-box">
+            <div class="meal-head">
+              <span class="meal-title">Dinner</span>
+              <span></span>
+            </div>
+            <div class="empty-state">
+              <span>Empty slot</span>
+              <span class="plus">+</span>
+            </div>
+          </div>
+        </div>
+        <div class="choice-summary">
+          Cards grow naturally and show every meal entry inline. Best when the page should feel like the whole day's food log, even on heavier days.
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Inline Stacked Cards</h3>
+      <p>Multiple entries stay visible inside the meal card, with each card expanding as needed.</p>
+    </div>
+  </div>
+
+  <div class="card food-card" data-choice="single-preview-plus-open" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="food-frame">
+        <div class="food-topbar">
+          <span>Expanded Food Page</span>
+          <span>Wed, Mar 19</span>
+        </div>
+        <div class="food-breadcrumb">
+          <span>&larr; Dashboard</span>
+          <span>/</span>
+          <span>Food</span>
+        </div>
+        <div class="food-actions">
+          <div class="food-action">Quick Add</div>
+          <div class="food-action">Inbox (4)</div>
+          <div class="food-action">Calendar</div>
+        </div>
+        <div class="meal-grid-preview">
+          <div class="meal-box">
+            <div class="meal-head">
+              <span class="meal-title">Breakfast</span>
+              <span>8:30 AM</span>
+            </div>
+            <div class="meal-line"></div>
+            <div class="meal-line short"></div>
+            <div class="choice-summary" style="margin-top:12px; padding-top:10px;">
+              +2 more entries
+            </div>
+          </div>
+          <div class="meal-box">
+            <div class="meal-head">
+              <span class="meal-title">Lunch</span>
+              <span>12:45 PM</span>
+            </div>
+            <div class="meal-line"></div>
+            <div class="meal-line short"></div>
+            <div class="meal-image"></div>
+          </div>
+          <div class="meal-box">
+            <div class="meal-head">
+              <span class="meal-title">Dinner</span>
+              <span></span>
+            </div>
+            <div class="empty-state">
+              <span>Empty slot</span>
+              <span class="plus">+</span>
+            </div>
+          </div>
+        </div>
+        <div class="choice-summary">
+          The grid stays cleaner and more uniform, but extra taps are needed to inspect full meal history within a busy slot.
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Primary Preview + Open Slot</h3>
+      <p>Show one featured item per slot in the grid and reveal additional entries through a secondary action.</p>
+    </div>
+  </div>
+</div>
