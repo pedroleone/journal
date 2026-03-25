@@ -36,12 +36,20 @@ export function DashboardHome() {
   return (
     <div className="flex h-dvh flex-col">
       <TopBar date={date} onDateChange={handleDateChange} />
-      <QuadrantGrid>
-        <JournalQuadrant date={date} />
-        <FoodQuadrant date={date} />
-        <NotesQuadrant />
-        <LibraryQuadrant />
-      </QuadrantGrid>
+      <QuadrantGrid
+        main={
+          <>
+            <JournalQuadrant date={date} />
+            <FoodQuadrant date={date} />
+          </>
+        }
+        sidebar={
+          <>
+            <NotesQuadrant />
+            <LibraryQuadrant />
+          </>
+        }
+      />
     </div>
   );
 }
