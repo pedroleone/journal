@@ -5,7 +5,7 @@ import {
   findOwned,
   notFoundResponse,
   deleteNoContent,
-  encryptContentFields,
+  storeEncryptedContent,
 } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
@@ -23,7 +23,7 @@ export const PUT = withAuth<{ id: string; noteId: string }>(async (userId, reque
   if ("images" in parsed.data) updateData.images = parsed.data.images ?? null;
 
   if (parsed.data.content !== undefined) {
-    const encrypted = await encryptContentFields(parsed.data.content);
+    const encrypted = await storeEncryptedContent(parsed.data.content);
     Object.assign(updateData, encrypted);
   }
 

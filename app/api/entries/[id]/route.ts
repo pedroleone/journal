@@ -5,8 +5,8 @@ import {
   findOwned,
   notFoundResponse,
   deleteNoContent,
-  encryptContentFields,
-  decryptRecord,
+  readEncryptedContent,
+  storeEncryptedContent,
 } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { deleteOwnerEntryAndImages } from "@/lib/entry-images";
@@ -18,7 +18,7 @@ export const GET = withAuth<{ id: string }>(async (userId, _request, { params })
   const record = await findOwned(entries, params.id, userId);
   if (!record) return notFoundResponse();
 
-  return jsonNoStore(await decryptRecord(record));
+  return jsonNoStore(await readEncryptedContent(record));
 });
 
 export const PUT = withAuth<{ id: string }>(async (userId, request, { params }) => {
@@ -26,7 +26,7 @@ export const PUT = withAuth<{ id: string }>(async (userId, request, { params }) 
   if (!parsed.success) return parsed.response;
 
   const now = new Date().toISOString();
-  const encrypted = await encryptContentFields(parsed.data.content);
+  const encrypted = await storeEncryptedContent(parsed.data.content);
   const updateData: {
     encrypted_content: string;
     iv: string;
