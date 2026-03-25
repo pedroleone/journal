@@ -6,6 +6,7 @@ import { Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { useImages } from "@/hooks/use-images";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
@@ -71,6 +72,7 @@ export default function FoodEntryPage({
   const [readyForViewing, setReadyForViewing] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [deletingEntry, setDeletingEntry] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
@@ -170,7 +172,6 @@ export default function FoodEntryPage({
 
   async function handleDelete() {
     if (!entry || !isOnline) return;
-    if (!confirm("Delete this food entry?")) return;
 
     setDeletingEntry(true);
     setError("");
@@ -336,10 +337,24 @@ export default function FoodEntryPage({
           ) : null}
         </div>
 
-        <Button variant="destructive" onClick={handleDelete} disabled={!isOnline || deletingEntry}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive"
+          onClick={() => setDeleteOpen(true)}
+          disabled={!isOnline || deletingEntry}
+        >
           {deletingEntry ? "Deleting..." : "Delete"}
         </Button>
       </div>
+
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDelete}
+        title="Delete food entry"
+        description="This food entry will be permanently deleted. This action cannot be undone."
+      />
     </div>
   );
 }

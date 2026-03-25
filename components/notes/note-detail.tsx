@@ -5,6 +5,7 @@ import { Trash2, Plus, X, Paperclip, Loader2 } from "lucide-react";
 import { useImages } from "@/hooks/use-images";
 import { uploadEncryptedImage, deleteEncryptedImage } from "@/lib/client-images";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { useLocale } from "@/hooks/use-locale";
 
 export interface Subnote {
@@ -108,31 +109,22 @@ function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
           <span className="text-[11px] text-muted-foreground/50 tracking-wide">{t.notes.saving}</span>
         )}
         <div className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {confirmDelete ? (
-            <>
-              <button
-                onClick={onDelete}
-                className="text-[11px] text-destructive hover:text-destructive/80 font-medium"
-              >
-                {t.notes.delete}
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-[11px] text-muted-foreground hover:text-foreground"
-              >
-                {t.notes.cancel}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="text-muted-foreground/50 hover:text-destructive transition-colors"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          )}
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="text-muted-foreground/50 hover:text-destructive transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        onConfirm={onDelete}
+        title="Delete entry"
+        description="This entry will be permanently deleted. This action cannot be undone."
+      />
     </div>
   );
 }
@@ -329,30 +321,20 @@ export function NoteDetail({
           >
             {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
           </button>
-          {confirmDelete ? (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onDelete}
-                className="text-xs font-medium text-destructive hover:text-destructive/80 px-2 py-1 rounded"
-              >
-                {t.notes.deleteNote}
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded"
-              >
-                {t.notes.cancel}
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="p-1.5 rounded text-muted-foreground/40 hover:text-destructive transition-colors"
-              aria-label="Delete note"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="p-1.5 rounded text-muted-foreground/40 hover:text-destructive transition-colors"
+            aria-label="Delete note"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <ConfirmDeleteDialog
+            open={confirmDelete}
+            onOpenChange={setConfirmDelete}
+            onConfirm={onDelete}
+            title="Delete note"
+            description="This note and all its entries will be permanently deleted. This action cannot be undone."
+          />
         </div>
       </div>
 

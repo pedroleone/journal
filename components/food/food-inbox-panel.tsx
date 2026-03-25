@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import type { MealSlot } from "@/lib/food";
 import { useLocale } from "@/hooks/use-locale";
@@ -152,45 +153,30 @@ export function FoodInboxPanel({
                   </Link>
                 </Button>
                 {onDeleteEntry ? (
-                  confirmDeleteId === entry.id ? (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                        disabled={organizerBusy}
-                        onClick={() => void handleDelete(entry.id)}
-                      >
-                        {t.food.delete}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                        disabled={organizerBusy}
-                        onClick={() => setConfirmDeleteId(null)}
-                      >
-                        {t.food.cancel}
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      type="button"
-                      disabled={organizerBusy}
-                      aria-label={`${t.food.delete} ${entry.content || "entry"}`}
-                      onClick={() => setConfirmDeleteId(entry.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    type="button"
+                    disabled={organizerBusy}
+                    aria-label={`${t.food.delete} ${entry.content || "entry"}`}
+                    onClick={() => setConfirmDeleteId(entry.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 ) : null}
               </div>
             </article>
           ))}
         </div>
       )}
+
+      <ConfirmDeleteDialog
+        open={confirmDeleteId !== null}
+        onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
+        onConfirm={() => { if (confirmDeleteId) void handleDelete(confirmDeleteId); }}
+        title="Delete food entry"
+        description="This food entry will be permanently deleted. This action cannot be undone."
+      />
     </section>
   );
 }

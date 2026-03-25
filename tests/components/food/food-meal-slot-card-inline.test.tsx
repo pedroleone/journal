@@ -155,7 +155,7 @@ describe("FoodMealSlotCard inline actions", () => {
     expect(screen.getByTestId("food-inline-composer")).toBeTruthy();
   });
 
-  it("keeps delete confirmation local to a single entry row", async () => {
+  it("opens delete confirmation dialog and invokes the callback on confirm", async () => {
     const onDeleteEntry = vi.fn().mockResolvedValue(undefined);
 
     render(
@@ -189,22 +189,22 @@ describe("FoodMealSlotCard inline actions", () => {
     );
 
     const firstRow = screen.getByText("Soup").closest("article");
-    const secondRow = screen.getByText("Salad").closest("article");
-
     expect(firstRow).not.toBeNull();
-    expect(secondRow).not.toBeNull();
 
+    // Click trash icon to open dialog
     fireEvent.click(within(firstRow as HTMLElement).getByRole("button", { name: /delete entry/i }));
 
-    expect(within(firstRow as HTMLElement).getByRole("button", { name: /^delete$/i })).toBeTruthy();
-    expect(within(firstRow as HTMLElement).getByRole("button", { name: /cancel/i })).toBeTruthy();
-    expect(within(secondRow as HTMLElement).getByRole("button", { name: /delete entry/i })).toBeTruthy();
+    // Dialog should appear with Delete and Cancel buttons
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    expect(screen.getByText("Delete food entry")).toBeTruthy();
 
-    fireEvent.click(within(firstRow as HTMLElement).getByRole("button", { name: /cancel/i }));
+    // Cancel closes the dialog without deleting
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
     expect(onDeleteEntry).not.toHaveBeenCalled();
 
+    // Open again and confirm
     fireEvent.click(within(firstRow as HTMLElement).getByRole("button", { name: /delete entry/i }));
-    fireEvent.click(within(firstRow as HTMLElement).getByRole("button", { name: /^delete$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
 
     await waitFor(() => {
       expect(onDeleteEntry).toHaveBeenCalledWith("1");

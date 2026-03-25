@@ -635,15 +635,14 @@ describe("FoodPage", () => {
     });
   });
 
-  it("supports inline inbox deletion with a soft confirmation and in-place refresh", async () => {
+  it("supports inline inbox deletion with a dialog confirmation and in-place refresh", async () => {
     render(<FoodPage />);
 
     fireEvent.click(await screen.findByRole("button", { name: /inbox \(2\)/i }));
     await screen.findByText(/uncategorized entries/i);
 
     fireEvent.click(screen.getByRole("button", { name: /delete loose apple/i }));
-    expect(screen.getByRole("button", { name: /^delete$/i })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /^cancel$/i })).toBeTruthy();
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
 
@@ -659,7 +658,7 @@ describe("FoodPage", () => {
     expect(screen.queryByText("Loose apple")).toBeNull();
   });
 
-  it("disables inbox delete while the organizer delete request is in flight", async () => {
+  it("completes inbox delete through the confirmation dialog", async () => {
     delayedDeleteIds.add("u1");
     render(<FoodPage />);
 
@@ -667,10 +666,8 @@ describe("FoodPage", () => {
     await screen.findByText(/uncategorized entries/i);
 
     fireEvent.click(screen.getByRole("button", { name: /delete loose apple/i }));
-    const confirmDeleteButton = screen.getByRole("button", { name: /^delete$/i });
-    fireEvent.click(confirmDeleteButton);
+    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
 
-    expect(confirmDeleteButton.hasAttribute("disabled")).toBe(true);
     expect(
       (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
         ([url, init]) => url === "/api/food/u1" && init?.method === "DELETE",

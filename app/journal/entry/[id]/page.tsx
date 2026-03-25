@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 
 interface Entry {
@@ -53,6 +54,7 @@ export default function EntryPage({
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [readyForViewing, setReadyForViewing] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const isOnline = useOnlineStatus();
 
   useEffect(() => {
@@ -101,7 +103,6 @@ export default function EntryPage({
 
   async function handleDelete() {
     if (!isOnline) return;
-    if (!confirm("Delete this entry?")) return;
     await fetch(`/api/entries/${id}`, { method: "DELETE" });
     router.push("/journal/browse");
   }
@@ -166,6 +167,14 @@ export default function EntryPage({
         <h1 className="font-display text-2xl tracking-tight">{dateStr}</h1>
       </div>
 
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDelete}
+        title="Delete journal entry"
+        description="This journal entry will be permanently deleted. This action cannot be undone."
+      />
+
       <div className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-5">
         <Button
           variant="outline"
@@ -173,9 +182,6 @@ export default function EntryPage({
           disabled={!isOnline || editing}
         >
           Edit Entry
-        </Button>
-        <Button variant="destructive" onClick={handleDelete} disabled={!isOnline}>
-          Delete Entry
         </Button>
         {previousEntryId ? (
           <Link
@@ -193,6 +199,15 @@ export default function EntryPage({
             Next Entry
           </Link>
         ) : null}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto text-muted-foreground hover:text-destructive"
+          onClick={() => setDeleteOpen(true)}
+          disabled={!isOnline}
+        >
+          Delete
+        </Button>
       </div>
 
       {editing ? (
