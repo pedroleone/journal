@@ -105,6 +105,7 @@ export default function LibraryNewPage() {
           <LibraryDetail
             key={draft.type}
             item={draft}
+            coverUploadDisabled
             onUpdate={handleUpdate}
             onCreate={handleCreate}
             onAddNote={noop}

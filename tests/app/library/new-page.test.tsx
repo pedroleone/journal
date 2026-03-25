@@ -31,6 +31,7 @@ vi.mock("@/hooks/use-locale", () => ({
 vi.mock("@/components/library/library-detail", () => ({
   LibraryDetail: (props: {
     item: { id: string; type: string };
+    coverUploadDisabled?: boolean;
     onUpdate: (data: Record<string, unknown>) => Promise<void>;
     onCreate?: (data: Record<string, unknown>) => Promise<void>;
   }) => {
@@ -63,6 +64,9 @@ describe("LibraryNewPage", () => {
     const detail = await screen.findByTestId("library-detail");
     expect(detail.textContent).toContain("__new__:game");
     expect(detailSpy).toHaveBeenCalled();
+    expect(detailSpy.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({ coverUploadDisabled: true }),
+    );
   });
 
   it("creates only when the editor explicitly saves", async () => {
