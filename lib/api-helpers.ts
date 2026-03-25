@@ -5,7 +5,7 @@ import type { Table } from "drizzle-orm";
 import { getRequiredUserId, unauthorizedResponse } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { NO_STORE_HEADERS, jsonNoStore } from "@/lib/http";
-import { encryptServerText, decryptServerText } from "@/lib/server-crypto";
+import { decryptServerText, encryptServerText } from "@/lib/server-crypto";
 
 // ---------------------------------------------------------------------------
 // 1. withAuth — wraps a handler so auth is checked before the handler runs
@@ -126,19 +126,35 @@ export function deleteNoContent() {
 }
 
 // ---------------------------------------------------------------------------
-// 6. encryptContentFields — encrypt text for DB insert/update
+// 6. encrypted content boundary — map between route content and DB fields
 // ---------------------------------------------------------------------------
 
-export async function encryptContentFields(content: string) {
+type RequiredEncryptedColumns = {
+  encrypted_content: string;
+  iv: string;
+};
+
+type OptionalEncryptedColumns = {
+  encrypted_content: string | null;
+  iv: string | null;
+};
+
+export async function storeEncryptedContent(content: string): Promise<RequiredEncryptedColumns> {
   const encrypted = await encryptServerText(content);
   return { encrypted_content: encrypted.ciphertext, iv: encrypted.iv };
 }
 
-// ---------------------------------------------------------------------------
-// 7. decryptRecord / decryptRecords — decrypt from DB
-// ---------------------------------------------------------------------------
+export async function storeOptionalEncryptedContent(
+  content: string | null | undefined,
+): Promise<OptionalEncryptedColumns> {
+  if (content === null || content === undefined) {
+    return { encrypted_content: null, iv: null };
+  }
 
-export async function decryptRecord<
+  return storeEncryptedContent(content);
+}
+
+export async function readEncryptedContent<
   T extends { encrypted_content: string; iv: string },
 >(record: T) {
   const { encrypted_content, iv, ...rest } = record;
@@ -146,8 +162,30 @@ export async function decryptRecord<
   return { ...rest, content };
 }
 
-export async function decryptRecords<
+export async function readEncryptedContentList<
   T extends { encrypted_content: string; iv: string },
 >(records: T[]) {
-  return Promise.all(records.map(decryptRecord));
+  return Promise.all(records.map(readEncryptedContent));
 }
+
+export async function readOptionalEncryptedContent<
+  T extends { encrypted_content: string | null; iv: string | null },
+>(record: T) {
+  const { encrypted_content, iv, ...rest } = record;
+  if (encrypted_content === null || iv === null) {
+    return { ...rest, content: null };
+  }
+
+  const content = await decryptServerText(encrypted_content, iv);
+  return { ...rest, content };
+}
+
+export async function readOptionalEncryptedContentList<
+  T extends { encrypted_content: string | null; iv: string | null },
+>(records: T[]) {
+  return Promise.all(records.map(readOptionalEncryptedContent));
+}
+
+export const encryptContentFields = storeEncryptedContent;
+export const decryptRecord = readEncryptedContent;
+export const decryptRecords = readEncryptedContentList;

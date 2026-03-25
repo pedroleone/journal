@@ -5,8 +5,8 @@ import {
   withAuth,
   parseBody,
   parseQuery,
-  encryptContentFields,
-  decryptRecords,
+  readEncryptedContentList,
+  storeEncryptedContent,
 } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
@@ -41,7 +41,7 @@ export const POST = withAuth(async (userId, request) => {
 
   const now = new Date().toISOString();
   const id = nanoid();
-  const encrypted = await encryptContentFields(parsed.data.content);
+  const encrypted = await storeEncryptedContent(parsed.data.content);
 
   await db.insert(entries).values({
     id,
@@ -78,5 +78,5 @@ export const GET = withAuth(async (userId, request: NextRequest) => {
 
   result.reverse();
 
-  return jsonNoStore(await decryptRecords(result));
+  return jsonNoStore(await readEncryptedContentList(result));
 });

@@ -5,7 +5,7 @@ import {
   withAuth,
   parseBody,
   parseQuery,
-  encryptContentFields,
+  storeOptionalEncryptedContent,
 } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
@@ -85,13 +85,7 @@ export const POST = withAuth(async (userId, request) => {
   const now = new Date().toISOString();
   const id = nanoid();
 
-  let encrypted_content: string | null = null;
-  let iv: string | null = null;
-  if (parsed.data.content) {
-    const encrypted = await encryptContentFields(parsed.data.content);
-    encrypted_content = encrypted.encrypted_content;
-    iv = encrypted.iv;
-  }
+  const encryptedContent = await storeOptionalEncryptedContent(parsed.data.content);
 
   await db.insert(mediaItems).values({
     id,
@@ -106,8 +100,7 @@ export const POST = withAuth(async (userId, request) => {
     genres: parsed.data.genres ?? null,
     metadata: parsed.data.metadata ?? null,
     cover_image: null,
-    encrypted_content,
-    iv,
+    ...encryptedContent,
     added_at: now,
     started_at: null,
     finished_at: null,

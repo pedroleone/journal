@@ -5,13 +5,13 @@ import {
   findOwned,
   notFoundResponse,
   deleteNoContent,
-  encryptContentFields,
-  decryptRecords,
+  readEncryptedContentList,
+  readOptionalEncryptedContent,
+  storeOptionalEncryptedContent,
 } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { mediaItems, mediaItemNotes } from "@/lib/schema";
-import { decryptServerText } from "@/lib/server-crypto";
 import { computeStatusTimestamps } from "@/lib/library";
 import { updateMediaItemSchema } from "@/lib/validators";
 import { deleteEncryptedObjectsWithBackup } from "@/lib/entry-images";
@@ -26,14 +26,10 @@ export const GET = withAuth<{ id: string }>(async (userId, _request, { params })
     .where(and(eq(mediaItemNotes.mediaItemId, params.id), eq(mediaItemNotes.userId, userId)))
     .orderBy(asc(mediaItemNotes.created_at));
 
-  const { encrypted_content, iv, ...fields } = item;
-  const content = encrypted_content && iv
-    ? await decryptServerText(encrypted_content, iv)
-    : null;
+  const decryptedItem = await readOptionalEncryptedContent(item);
+  const decryptedNotes = await readEncryptedContentList(noteResults);
 
-  const decryptedNotes = await decryptRecords(noteResults);
-
-  return jsonNoStore({ ...fields, content, notes: decryptedNotes });
+  return jsonNoStore({ ...decryptedItem, notes: decryptedNotes });
 });
 
 export const PUT = withAuth<{ id: string }>(async (userId, request, { params }) => {
@@ -73,7 +69,7 @@ export const PUT = withAuth<{ id: string }>(async (userId, request, { params }) 
   if ("finished_at" in parsed.data) updateData.finished_at = parsed.data.finished_at ?? null;
 
   if (parsed.data.content !== undefined) {
-    const encrypted = await encryptContentFields(parsed.data.content);
+    const encrypted = await storeOptionalEncryptedContent(parsed.data.content);
     Object.assign(updateData, encrypted);
   }
 

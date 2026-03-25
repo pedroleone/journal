@@ -5,9 +5,9 @@ import {
   findOwned,
   notFoundResponse,
   deleteNoContent,
-  encryptContentFields,
-  decryptRecord,
-  decryptRecords,
+  readEncryptedContent,
+  readEncryptedContentList,
+  storeEncryptedContent,
 } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
@@ -25,8 +25,8 @@ export const GET = withAuth<{ id: string }>(async (userId, _request, { params })
     .where(and(eq(noteSubnotes.noteId, params.id), eq(noteSubnotes.userId, userId)))
     .orderBy(asc(noteSubnotes.created_at));
 
-  const { content, ...noteFields } = await decryptRecord(noteResult);
-  const decryptedSubnotes = await decryptRecords(subnoteResults);
+  const { content, ...noteFields } = await readEncryptedContent(noteResult);
+  const decryptedSubnotes = await readEncryptedContentList(subnoteResults);
 
   return jsonNoStore({ ...noteFields, content, subnotes: decryptedSubnotes });
 });
@@ -43,7 +43,7 @@ export const PUT = withAuth<{ id: string }>(async (userId, request, { params }) 
   if ("images" in parsed.data) updateData.images = parsed.data.images ?? null;
 
   if (parsed.data.content !== undefined) {
-    const encrypted = await encryptContentFields(parsed.data.content);
+    const encrypted = await storeEncryptedContent(parsed.data.content);
     Object.assign(updateData, encrypted);
   }
 

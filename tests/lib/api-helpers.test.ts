@@ -146,34 +146,97 @@ describe("notFoundResponse / deleteNoContent", () => {
   });
 });
 
-describe("encryptContentFields", () => {
-  it("returns encrypted_content and iv", async () => {
-    const { encryptContentFields } = await import("@/lib/api-helpers");
-    const result = await encryptContentFields("hello");
+describe("storeEncryptedContent", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns encrypted_content and iv for required content", async () => {
+    const { storeEncryptedContent } = await import("@/lib/api-helpers");
+    const result = await storeEncryptedContent("hello");
     expect(result).toEqual({ encrypted_content: "mock-ct", iv: "mock-iv" });
     expect(vi.mocked(serverCrypto.encryptServerText)).toHaveBeenCalledWith("hello");
   });
 });
 
-describe("decryptRecord / decryptRecords", () => {
-  it("decryptRecord replaces encrypted fields with content", async () => {
-    const { decryptRecord } = await import("@/lib/api-helpers");
+describe("storeOptionalEncryptedContent", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns nullable storage fields when content is absent", async () => {
+    const { storeOptionalEncryptedContent } = await import("@/lib/api-helpers");
+    const result = await storeOptionalEncryptedContent(undefined);
+    expect(result).toEqual({ encrypted_content: null, iv: null });
+    expect(vi.mocked(serverCrypto.encryptServerText)).not.toHaveBeenCalled();
+  });
+
+  it("returns encrypted storage fields when content is present", async () => {
+    const { storeOptionalEncryptedContent } = await import("@/lib/api-helpers");
+    const result = await storeOptionalEncryptedContent("hello");
+    expect(result).toEqual({ encrypted_content: "mock-ct", iv: "mock-iv" });
+    expect(vi.mocked(serverCrypto.encryptServerText)).toHaveBeenCalledWith("hello");
+  });
+});
+
+describe("readEncryptedContent / readEncryptedContentList", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("readEncryptedContent replaces encrypted fields with content", async () => {
+    const { readEncryptedContent } = await import("@/lib/api-helpers");
     const record = { id: "1", encrypted_content: "ct", iv: "iv", other: "data" };
-    const result = await decryptRecord(record);
+    const result = await readEncryptedContent(record);
     expect(result).toEqual({ id: "1", other: "data", content: "decrypted" });
     expect(result).not.toHaveProperty("encrypted_content");
     expect(result).not.toHaveProperty("iv");
   });
 
-  it("decryptRecords works on arrays", async () => {
-    const { decryptRecords } = await import("@/lib/api-helpers");
+  it("readEncryptedContentList works on arrays", async () => {
+    const { readEncryptedContentList } = await import("@/lib/api-helpers");
     const records = [
       { id: "1", encrypted_content: "ct1", iv: "iv1" },
       { id: "2", encrypted_content: "ct2", iv: "iv2" },
     ];
-    const result = await decryptRecords(records);
+    const result = await readEncryptedContentList(records);
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual({ id: "1", content: "decrypted" });
     expect(result[1]).toEqual({ id: "2", content: "decrypted" });
+  });
+});
+
+describe("readOptionalEncryptedContent / readOptionalEncryptedContentList", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns content null when encrypted fields are absent", async () => {
+    const { readOptionalEncryptedContent } = await import("@/lib/api-helpers");
+    const record = { id: "1", encrypted_content: null, iv: null, other: "data" };
+    const result = await readOptionalEncryptedContent(record);
+    expect(result).toEqual({ id: "1", other: "data", content: null });
+    expect(vi.mocked(serverCrypto.decryptServerText)).not.toHaveBeenCalled();
+  });
+
+  it("decrypts optional content when encrypted fields are present", async () => {
+    const { readOptionalEncryptedContent } = await import("@/lib/api-helpers");
+    const record = { id: "1", encrypted_content: "ct", iv: "iv", other: "data" };
+    const result = await readOptionalEncryptedContent(record);
+    expect(result).toEqual({ id: "1", other: "data", content: "decrypted" });
+    expect(vi.mocked(serverCrypto.decryptServerText)).toHaveBeenCalledWith("ct", "iv");
+  });
+
+  it("readOptionalEncryptedContentList works on arrays", async () => {
+    const { readOptionalEncryptedContentList } = await import("@/lib/api-helpers");
+    const records = [
+      { id: "1", encrypted_content: "ct1", iv: "iv1" },
+      { id: "2", encrypted_content: null, iv: null },
+    ];
+    const result = await readOptionalEncryptedContentList(records);
+    expect(result).toEqual([
+      { id: "1", content: "decrypted" },
+      { id: "2", content: null },
+    ]);
   });
 });

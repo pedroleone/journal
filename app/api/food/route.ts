@@ -5,8 +5,8 @@ import {
   withAuth,
   parseBody,
   parseQuery,
-  encryptContentFields,
-  decryptRecords,
+  readEncryptedContentList,
+  storeEncryptedContent,
 } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
@@ -20,7 +20,7 @@ export const POST = withAuth(async (userId, request) => {
   const id = nanoid();
   const now = new Date();
   const nowIso = now.toISOString();
-  const encrypted = await encryptContentFields(parsed.data.content);
+  const encrypted = await storeEncryptedContent(parsed.data.content);
 
   // When meal_slot + date are provided, create an already-assigned entry
   const hasSlotInfo = parsed.data.meal_slot && parsed.data.year && parsed.data.month && parsed.data.day;
@@ -80,5 +80,5 @@ export const GET = withAuth(async (userId, request: NextRequest) => {
       ? await baseQuery.limit(parsed.data.limit)
       : await baseQuery;
 
-  return jsonNoStore(await decryptRecords(result));
+  return jsonNoStore(await readEncryptedContentList(result));
 });

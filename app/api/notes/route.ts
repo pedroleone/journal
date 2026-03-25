@@ -5,7 +5,7 @@ import {
   withAuth,
   parseBody,
   parseQuery,
-  encryptContentFields,
+  storeEncryptedContent,
 } from "@/lib/api-helpers";
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
@@ -45,7 +45,7 @@ export const POST = withAuth(async (userId, request) => {
 
   const now = new Date().toISOString();
   const id = nanoid();
-  const encrypted = await encryptContentFields(parsed.data.content);
+  const encrypted = await storeEncryptedContent(parsed.data.content);
 
   await db.insert(notes).values({
     id,
