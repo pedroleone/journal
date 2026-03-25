@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { renderMarkdownPreview } from "@/lib/markdown-preview";
 
 interface Entry {
   id: string;
@@ -229,9 +230,10 @@ export default function EntryPage({
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="whitespace-pre-wrap text-base leading-relaxed">
-            {entry.content}
-          </div>
+          <div
+            className="whitespace-pre-wrap text-base leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(entry.content) }}
+          />
           {entry.images?.length ? (
             <EncryptedImageGallery imageKeys={entry.images} />
           ) : null}
