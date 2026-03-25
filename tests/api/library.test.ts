@@ -62,6 +62,22 @@ describe("POST /api/library", () => {
     expect(typeof data.id).toBe("string");
   });
 
+  it("accepts null optional fields from the new item editor", async () => {
+    const res = await postItem({
+      type: "book",
+      title: "My Book",
+      creator: null,
+      url: null,
+      rating: null,
+      reactions: null,
+      genres: null,
+      metadata: null,
+      content: null,
+    });
+
+    expect(res.status).toBe(201);
+  });
+
   it("returns 400 when title is missing", async () => {
     const res = await postItem({ type: "book" });
     expect(res.status).toBe(400);
