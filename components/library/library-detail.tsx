@@ -1,14 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Trash2, Plus, Star, ImagePlus, X as XIcon } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Trash2, Plus, Star, ImagePlus, X as XIcon, Pencil } from "lucide-react";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { VocabularyInput } from "@/components/library/vocabulary-input";
 import { StatusTransition } from "@/components/library/status-transition";
 import { useLocale } from "@/hooks/use-locale";
+import { cn } from "@/lib/utils";
 import { MEDIA_TYPES, CREATOR_LABELS } from "@/lib/library";
 import type { MediaType, MediaStatus } from "@/lib/library";
+
+const STATUS_BADGE_COLORS: Record<MediaStatus, string> = {
+  backlog: "bg-muted text-muted-foreground",
+  in_progress: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  finished: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  dropped: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+};
 
 export interface LibraryNote {
   id: string;
@@ -67,6 +75,36 @@ function formatShortDate(iso: string, localeCode: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+export function getFieldDisplayMode(editMode: boolean): "view" | "edit" {
+  return editMode ? "edit" : "view";
+}
+
+function ViewModeField({ label, value }: { label: string; value: string }) {
+  if (!value) return null;
+  return (
+    <div className="space-y-1">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <p className="text-sm">{value}</p>
+    </div>
+  );
+}
+
+function ViewModeTagField({ label, values }: { label: string; values: string[] }) {
+  if (!values.length) return null;
+  return (
+    <div className="space-y-1">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {values.map((v) => (
+          <span key={v} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground">
+            {v}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 interface NoteBlockProps {
@@ -161,9 +199,44 @@ export function LibraryDetail({
   const [submittingNote, setSubmittingNote] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const isNew = item.id === "__new__";
   const { t } = useLocale();
+  const mode = getFieldDisplayMode(editMode || isNew);
+
+  const enterEditMode = useCallback(() => {
+    setEditMode(true);
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setTitleDraft(item.title);
+    setCreatorDraft(item.creator ?? "");
+    setUrlDraft(item.url ?? "");
+    setYearDraft((item.metadata as Record<string, unknown>)?.year as number | undefined ?? "");
+    setContentDraft(item.content ?? "");
+    setEditMode(false);
+  }, [item.title, item.creator, item.url, item.metadata, item.content]);
+
+  const saveAndExitEdit = useCallback(async () => {
+    // Trigger saves for any changed fields
+    const updates: Record<string, unknown> = {};
+    const newTitle = titleDraft.trim();
+    if (newTitle && newTitle !== item.title) updates.title = newTitle;
+    const creatorVal = creatorDraft.trim() || null;
+    if (creatorVal !== item.creator) updates.creator = creatorVal;
+    const urlVal = urlDraft.trim() || null;
+    if (urlVal !== item.url) updates.url = urlVal;
+    const yearVal = yearDraft !== "" ? Number(yearDraft) : null;
+    const currentYear = (item.metadata as Record<string, unknown> | null)?.year as number | null ?? null;
+    if (yearVal !== currentYear) updates.metadata = { ...(item.metadata ?? {}), year: yearVal };
+    if (contentDraft !== (item.content ?? "")) updates.content = contentDraft || null;
+
+    if (Object.keys(updates).length > 0) {
+      await onUpdate(updates).catch(() => undefined);
+    }
+    setEditMode(false);
+  }, [titleDraft, creatorDraft, urlDraft, yearDraft, contentDraft, item, onUpdate]);
 
   const typeLabels: Record<MediaType, string> = {
     book: t.library.book, album: t.library.album, movie: t.library.movie,
@@ -181,6 +254,7 @@ export function LibraryDetail({
     setConfirmDelete(false);
     setSavingContent(false);
     setSubmittingNote(false);
+    setEditMode(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
 
@@ -315,8 +389,36 @@ export function LibraryDetail({
             >
               {t.library.addToLibrary}
             </button>
+          ) : editMode ? (
+            <>
+              <button
+                onClick={() => void saveAndExitEdit()}
+                className="rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-80 transition-opacity"
+              >
+                {t.library.save}
+              </button>
+              <button
+                onClick={cancelEdit}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5"
+              >
+                {t.library.cancel}
+              </button>
+              <button onClick={() => setConfirmDelete(true)} className="p-1.5 rounded text-muted-foreground/40 hover:text-destructive transition-colors" aria-label="Delete item">
+                <Trash2 className="h-4 w-4" />
+              </button>
+              <ConfirmDeleteDialog
+                open={confirmDelete}
+                onOpenChange={setConfirmDelete}
+                onConfirm={onDelete}
+                title="Delete library item"
+                description="This library item and all its notes will be permanently deleted. This action cannot be undone."
+              />
+            </>
           ) : (
             <>
+              <button onClick={enterEditMode} className="p-1.5 rounded text-muted-foreground/40 hover:text-foreground transition-colors" aria-label="Edit item">
+                <Pencil className="h-4 w-4" />
+              </button>
               <button onClick={() => setConfirmDelete(true)} className="p-1.5 rounded text-muted-foreground/40 hover:text-destructive transition-colors" aria-label="Delete item">
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -368,7 +470,7 @@ export function LibraryDetail({
                 </button>
               </div>
             </div>
-          ) : (
+          ) : mode === "edit" ? (
             <button
               onClick={() => coverInputRef.current?.click()}
               disabled={uploadingCover}
@@ -377,190 +479,266 @@ export function LibraryDetail({
               <ImagePlus className="h-4 w-4" />
               {uploadingCover ? t.library.saving : t.library.addCover}
             </button>
-          )}
+          ) : null}
 
           {/* Title */}
-          <input
-            className="w-full bg-transparent font-display text-2xl sm:text-3xl font-semibold tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground"
-            placeholder={item.type === "album" ? t.library.albumName : t.library.title}
-            value={titleDraft}
-            onChange={(e) => setTitleDraft(e.target.value)}
-            onBlur={handleTitleBlur}
-            onKeyDown={handleTitleKeyDown}
-            autoComplete="off"
-            data-1p-ignore
-          />
-
-          {/* Artist (albums) */}
-          {item.type === "album" && (
+          {mode === "view" ? (
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight leading-tight text-foreground">
+              {item.title}
+            </h1>
+          ) : (
             <input
-              className="w-full bg-transparent font-display text-lg font-medium tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground/70"
-              placeholder={t.library.artistName}
-              value={creatorDraft}
-              onChange={(e) => setCreatorDraft(e.target.value)}
-              onBlur={handleCreatorBlur}
+              className="w-full bg-transparent font-display text-2xl sm:text-3xl font-semibold tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground"
+              placeholder={item.type === "album" ? t.library.albumName : t.library.title}
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={handleTitleBlur}
+              onKeyDown={handleTitleKeyDown}
               autoComplete="off"
               data-1p-ignore
             />
           )}
 
-          {/* Status transitions */}
-          <div>
-            <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1.5">{t.library.status}</label>
-            <StatusTransition
-              status={item.status}
-              type={item.type}
-              onStatusChange={(status) => onUpdate({ status })}
-            />
-          </div>
-
-          {/* Metadata fields */}
-          <div className="space-y-4">
-            {isNew && (
-              <div>
-                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.type}</label>
-                <select
-                  className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
-                  value={item.type}
-                  onChange={(e) => onUpdate({ type: e.target.value })}
-                >
-                  {MEDIA_TYPES.map((mt) => (
-                    <option key={mt} value={mt}>{typeLabels[mt]}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Creator (hidden for albums) */}
-            {item.type !== "album" && (
-              <div>
-                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{creatorLabel}</label>
-                <input
-                  className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
-                  placeholder={creatorLabel}
-                  value={creatorDraft}
-                  onChange={(e) => setCreatorDraft(e.target.value)}
-                  onBlur={handleCreatorBlur}
-                  autoComplete="off"
-                  data-1p-ignore
-                />
-              </div>
-            )}
-
-            {/* URL (hidden for albums) */}
-            {item.type !== "album" && (
-              <div>
-                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.url}</label>
-                <input
-                  className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
-                  placeholder="https://..."
-                  value={urlDraft}
-                  onChange={(e) => setUrlDraft(e.target.value)}
-                  onBlur={handleUrlBlur}
-                  autoComplete="off"
-                  data-1p-ignore
-                />
-              </div>
-            )}
-
-            {/* Year */}
-            <div>
-              <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.year}</label>
+          {/* Artist (albums) */}
+          {item.type === "album" && (
+            mode === "view" ? (
+              item.creator && (
+                <p className="font-display text-lg font-medium tracking-tight leading-tight text-foreground/70">
+                  {item.creator}
+                </p>
+              )
+            ) : (
               <input
-                type="number"
-                className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
-                placeholder="2024"
-                value={yearDraft}
-                onChange={(e) => setYearDraft(e.target.value === "" ? "" : Number(e.target.value))}
-                onBlur={handleYearBlur}
+                className="w-full bg-transparent font-display text-lg font-medium tracking-tight leading-tight focus:outline-none placeholder:text-muted-foreground/25 text-foreground/70"
+                placeholder={t.library.artistName}
+                value={creatorDraft}
+                onChange={(e) => setCreatorDraft(e.target.value)}
+                onBlur={handleCreatorBlur}
                 autoComplete="off"
                 data-1p-ignore
               />
-            </div>
+            )
+          )}
 
-            {/* Rating */}
-            {(item.status === "finished" || item.status === "dropped") && (
-              <div>
-                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.rating}</label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => onUpdate({ rating: item.rating === n ? null : n })}
-                      className="p-0.5 transition-colors"
-                    >
-                      <Star className={`h-5 w-5 ${n <= (item.rating ?? 0) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* Status transitions */}
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1.5">{t.library.status}</label>
+            {mode === "edit" ? (
+              <StatusTransition
+                status={item.status}
+                type={item.type}
+                onStatusChange={(status) => onUpdate({ status })}
+              />
+            ) : (
+              <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", STATUS_BADGE_COLORS[item.status])}>
+                {item.type === "album"
+                  ? (item.status === "in_progress" ? t.library.listening : item.status === "finished" ? t.library.listened : item.status === "backlog" ? t.library.backlog : t.library.dropped)
+                  : (item.status === "in_progress" ? t.library.inProgress : item.status === "finished" ? t.library.finished : item.status === "backlog" ? t.library.backlog : t.library.dropped)
+                }
+              </span>
             )}
+          </div>
 
-            {/* Type-specific metadata */}
-            {item.type === "game" && (
+          {/* Metadata fields */}
+          {mode === "view" ? (
+            <div className="space-y-4">
+              {/* Creator (hidden for albums — shown inline above) */}
+              {item.type !== "album" && (
+                <ViewModeField label={creatorLabel} value={item.creator ?? ""} />
+              )}
+
+              {/* URL */}
+              {item.type !== "album" && item.url && (
+                <div className="space-y-1">
+                  <span className="text-xs font-medium text-muted-foreground">{t.library.url}</span>
+                  <p className="text-sm">
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+                      {item.url}
+                    </a>
+                  </p>
+                </div>
+              )}
+
+              {/* Year */}
+              <ViewModeField label={t.library.year} value={String((item.metadata as Record<string, unknown>)?.year ?? "")} />
+
+              {/* Rating */}
+              {(item.status === "finished" || item.status === "dropped") && item.rating && (
+                <div className="space-y-1">
+                  <span className="text-xs font-medium text-muted-foreground">{t.library.rating}</span>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star key={n} className={`h-4 w-4 ${n <= (item.rating ?? 0) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/20"}`} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Type-specific metadata */}
+              {item.type === "game" && (
+                <ViewModeTagField label={t.library.platform} values={((item.metadata as Record<string, unknown>)?.platform as string[]) ?? []} />
+              )}
+              {item.type === "book" && (
+                <ViewModeField label={t.library.pages} value={String((item.metadata as Record<string, unknown>)?.pages ?? "")} />
+              )}
+              {item.type === "movie" && (
+                <ViewModeField label={t.library.duration} value={((item.metadata as Record<string, unknown>)?.duration as string) ?? ""} />
+              )}
+              {item.type === "video" && (
+                <ViewModeField label={t.library.channel} value={((item.metadata as Record<string, unknown>)?.channel as string) ?? ""} />
+              )}
+
+              {/* Genres */}
+              <ViewModeTagField label={t.library.genres} values={item.genres ?? []} />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {isNew && (
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.type}</label>
+                  <select
+                    className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
+                    value={item.type}
+                    onChange={(e) => onUpdate({ type: e.target.value })}
+                  >
+                    {MEDIA_TYPES.map((mt) => (
+                      <option key={mt} value={mt}>{typeLabels[mt]}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Creator (hidden for albums) */}
+              {item.type !== "album" && (
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{creatorLabel}</label>
+                  <input
+                    className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
+                    placeholder={creatorLabel}
+                    value={creatorDraft}
+                    onChange={(e) => setCreatorDraft(e.target.value)}
+                    onBlur={handleCreatorBlur}
+                    autoComplete="off"
+                    data-1p-ignore
+                  />
+                </div>
+              )}
+
+              {/* URL (hidden for albums) */}
+              {item.type !== "album" && (
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.url}</label>
+                  <input
+                    className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
+                    placeholder="https://..."
+                    value={urlDraft}
+                    onChange={(e) => setUrlDraft(e.target.value)}
+                    onBlur={handleUrlBlur}
+                    autoComplete="off"
+                    data-1p-ignore
+                  />
+                </div>
+              )}
+
+              {/* Year */}
               <div>
-                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.platform}</label>
+                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.year}</label>
+                <input
+                  type="number"
+                  className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
+                  placeholder="2024"
+                  value={yearDraft}
+                  onChange={(e) => setYearDraft(e.target.value === "" ? "" : Number(e.target.value))}
+                  onBlur={handleYearBlur}
+                  autoComplete="off"
+                  data-1p-ignore
+                />
+              </div>
+
+              {/* Rating */}
+              {(item.status === "finished" || item.status === "dropped") && (
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.rating}</label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => onUpdate({ rating: item.rating === n ? null : n })}
+                        className="p-0.5 transition-colors"
+                      >
+                        <Star className={`h-5 w-5 ${n <= (item.rating ?? 0) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Type-specific metadata */}
+              {item.type === "game" && (
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.platform}</label>
+                  <VocabularyInput
+                    field="platform"
+                    values={((item.metadata as Record<string, unknown>)?.platform as string[]) ?? []}
+                    onChange={(vals) => onUpdate({ metadata: { ...item.metadata, platform: vals } })}
+                    placeholder={t.library.platform}
+                    mediaType={item.type}
+                  />
+                </div>
+              )}
+              {item.type === "book" && (
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.pages}</label>
+                  <input
+                    type="number"
+                    className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
+                    value={(item.metadata as Record<string, unknown>)?.pages as number ?? ""}
+                    onChange={(e) => onUpdate({ metadata: { ...item.metadata, pages: e.target.value ? Number(e.target.value) : null } })}
+                    autoComplete="off"
+                    data-1p-ignore
+                  />
+                </div>
+              )}
+              {item.type === "movie" && (
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.duration}</label>
+                  <input
+                    className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
+                    placeholder="2h 30m"
+                    value={(item.metadata as Record<string, unknown>)?.duration as string ?? ""}
+                    onChange={(e) => onUpdate({ metadata: { ...item.metadata, duration: e.target.value || null } })}
+                    autoComplete="off"
+                    data-1p-ignore
+                  />
+                </div>
+              )}
+              {item.type === "video" && (
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.channel}</label>
+                  <input
+                    className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
+                    placeholder={t.library.channel}
+                    value={(item.metadata as Record<string, unknown>)?.channel as string ?? ""}
+                    onChange={(e) => onUpdate({ metadata: { ...item.metadata, channel: e.target.value || null } })}
+                    autoComplete="off"
+                    data-1p-ignore
+                  />
+                </div>
+              )}
+
+              {/* Genres */}
+              <div>
+                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.genres}</label>
                 <VocabularyInput
-                  field="platform"
-                  values={((item.metadata as Record<string, unknown>)?.platform as string[]) ?? []}
-                  onChange={(vals) => onUpdate({ metadata: { ...item.metadata, platform: vals } })}
-                  placeholder={t.library.platform}
+                  field="genres"
+                  values={item.genres ?? []}
+                  onChange={(vals) => onUpdate({ genres: vals.length > 0 ? vals : null })}
+                  placeholder={t.library.genres}
                   mediaType={item.type}
                 />
               </div>
-            )}
-            {item.type === "book" && (
-              <div>
-                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.pages}</label>
-                <input
-                  type="number"
-                  className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
-                  value={(item.metadata as Record<string, unknown>)?.pages as number ?? ""}
-                  onChange={(e) => onUpdate({ metadata: { ...item.metadata, pages: e.target.value ? Number(e.target.value) : null } })}
-                  autoComplete="off"
-                  data-1p-ignore
-                />
-              </div>
-            )}
-            {item.type === "movie" && (
-              <div>
-                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.duration}</label>
-                <input
-                  className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
-                  placeholder="2h 30m"
-                  value={(item.metadata as Record<string, unknown>)?.duration as string ?? ""}
-                  onChange={(e) => onUpdate({ metadata: { ...item.metadata, duration: e.target.value || null } })}
-                  autoComplete="off"
-                  data-1p-ignore
-                />
-              </div>
-            )}
-            {item.type === "video" && (
-              <div>
-                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.channel}</label>
-                <input
-                  className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none placeholder:text-muted-foreground/40"
-                  placeholder={t.library.channel}
-                  value={(item.metadata as Record<string, unknown>)?.channel as string ?? ""}
-                  onChange={(e) => onUpdate({ metadata: { ...item.metadata, channel: e.target.value || null } })}
-                  autoComplete="off"
-                  data-1p-ignore
-                />
-              </div>
-            )}
-
-            {/* Genres */}
-            <div>
-              <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.genres}</label>
-              <VocabularyInput
-                field="genres"
-                values={item.genres ?? []}
-                onChange={(vals) => onUpdate({ genres: vals.length > 0 ? vals : null })}
-                placeholder={t.library.genres}
-                mediaType={item.type}
-              />
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right column: reactions, content, thoughts */}
