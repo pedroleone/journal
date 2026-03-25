@@ -6,7 +6,7 @@ type DrizzleEnv = Pick<EnvMap, "TURSO_DATABASE_URL" | "TURSO_AUTH_TOKEN">;
 
 type ResolveDrizzleDbCredentialsOptions = {
   cwd?: string;
-  env?: DrizzleEnv;
+  env?: Partial<DrizzleEnv>;
 };
 
 type DrizzleDbCredentials = {

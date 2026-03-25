@@ -5,6 +5,7 @@ import { Search, X, Book, Disc3, Film, Gamepad2, Video, Package, CheckSquare } f
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
 import { FilterBar, type LibraryFilters } from "@/components/library/filter-bar";
+import { MEDIA_STATUSES } from "@/lib/library";
 import type { MediaType, MediaStatus } from "@/lib/library";
 
 export interface LibraryListItem {
