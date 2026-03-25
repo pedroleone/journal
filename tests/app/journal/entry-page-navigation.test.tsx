@@ -70,7 +70,7 @@ describe("EntryPage navigation", () => {
     expect(screen.getByRole("link", { name: /next entry/i }).getAttribute("href")).toBe(
       "/journal/entry/entry-3",
     );
-    expect(screen.getByRole("button", { name: /delete entry/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^delete$/i })).toBeTruthy();
   });
 
   it("omits unavailable navigation at the ends of the timeline", async () => {

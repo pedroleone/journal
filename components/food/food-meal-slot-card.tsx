@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { EncryptedImageGallery } from "@/components/encrypted-image-gallery";
 import { FoodInlineComposer } from "@/components/food/food-inline-composer";
 import type { MealSlot } from "@/lib/food";
@@ -258,16 +259,7 @@ function FoodMealSlotEntryRow({ entry, onDeleteEntry, returnTo }: FoodMealSlotEn
           <Link href={entryHref}>Open</Link>
         </Button>
         {onDeleteEntry ? (
-          confirmDelete ? (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => void handleDelete()}>
-                Delete
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
-                Cancel
-              </Button>
-            </>
-          ) : (
+          <>
             <Button
               variant="ghost"
               size="sm"
@@ -276,7 +268,14 @@ function FoodMealSlotEntryRow({ entry, onDeleteEntry, returnTo }: FoodMealSlotEn
             >
               <Trash2 className="h-4 w-4" />
             </Button>
-          )
+            <ConfirmDeleteDialog
+              open={confirmDelete}
+              onOpenChange={setConfirmDelete}
+              onConfirm={() => void handleDelete()}
+              title="Delete food entry"
+              description="This food entry will be permanently deleted. This action cannot be undone."
+            />
+          </>
         ) : null}
       </div>
     </article>

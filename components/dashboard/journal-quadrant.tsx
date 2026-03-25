@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Pen } from "lucide-react";
+import { useLocale } from "@/hooks/use-locale";
 import { QuadrantCard } from "./quadrant-card";
 
 interface JournalEntry {
@@ -39,9 +40,9 @@ function isSameCalendarDay(left: Date, right: Date): boolean {
     && left.getDate() === right.getDate();
 }
 
-function formatUpdatedLabel(value: string): string {
+function formatUpdatedLabel(value: string, localeCode: string): string {
   const date = new Date(value);
-  return `Last updated ${date.toLocaleString([], {
+  return `Last updated ${date.toLocaleString(localeCode, {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -60,6 +61,7 @@ function differenceInCalendarDays(left: Date, right: Date): number {
 }
 
 export function JournalQuadrant({ date }: JournalQuadrantProps) {
+  const { t } = useLocale();
   const [snapshot, setSnapshot] = useState<JournalSnapshot | null>(null);
   const [latestDateSnapshot, setLatestDateSnapshot] = useState<LatestDateSnapshot | null>(null);
   const year = date.getFullYear();
@@ -155,7 +157,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
       footer={
         loading ? null : entry && isToday ? (
           <>
-            {entry.updated_at ? <span>{formatUpdatedLabel(entry.updated_at)}</span> : null}
+            {entry.updated_at ? <span>{formatUpdatedLabel(entry.updated_at, t.localeCode)}</span> : null}
             <span>{wordCount} words</span>
           </>
         ) : isToday && latestAgeLabel ? (
@@ -169,7 +171,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
         <div className="flex min-h-20 items-center justify-center py-4">
           <Link
             href={`/journal/write?entry=${entry.id}`}
-            className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-[var(--journal)] px-6 py-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+            className="pointer-events-auto inline-flex items-center justify-center rounded-md bg-[var(--journal)] px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
           >
             Continue Writing
           </Link>
@@ -178,7 +180,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
         <div className="flex min-h-20 items-center justify-center py-4">
           <Link
             href={writeHref}
-            className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-[var(--journal)] px-8 py-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+            className="pointer-events-auto inline-flex items-center justify-center rounded-md bg-[var(--journal)] px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
           >
             Write
           </Link>

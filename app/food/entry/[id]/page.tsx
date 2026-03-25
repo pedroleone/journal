@@ -6,9 +6,11 @@ import { Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { useImages } from "@/hooks/use-images";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
+import { useLocale } from "@/hooks/use-locale";
 import type { MealSlot } from "@/lib/food";
 
 interface FoodEntry {
@@ -27,8 +29,8 @@ interface FoodEntry {
   updated_at: string;
 }
 
-function formatLoggedAt(iso: string) {
-  return new Date(iso).toLocaleString([], {
+function formatLoggedAt(iso: string, localeCode: string) {
+  return new Date(iso).toLocaleString(localeCode, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -59,6 +61,7 @@ export default function FoodEntryPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
@@ -69,6 +72,7 @@ export default function FoodEntryPage({
   const [readyForViewing, setReadyForViewing] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [deletingEntry, setDeletingEntry] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
@@ -168,7 +172,6 @@ export default function FoodEntryPage({
 
   async function handleDelete() {
     if (!entry || !isOnline) return;
-    if (!confirm("Delete this food entry?")) return;
 
     setDeletingEntry(true);
     setError("");
@@ -240,7 +243,7 @@ export default function FoodEntryPage({
 
       <div className="space-y-2">
         <h1 className="font-display text-2xl tracking-tight">Food Entry</h1>
-        <p className="text-sm text-muted-foreground">{formatLoggedAt(entry.logged_at)}</p>
+        <p className="text-sm text-muted-foreground">{formatLoggedAt(entry.logged_at, t.localeCode)}</p>
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
@@ -334,10 +337,24 @@ export default function FoodEntryPage({
           ) : null}
         </div>
 
-        <Button variant="destructive" onClick={handleDelete} disabled={!isOnline || deletingEntry}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive"
+          onClick={() => setDeleteOpen(true)}
+          disabled={!isOnline || deletingEntry}
+        >
           {deletingEntry ? "Deleting..." : "Delete"}
         </Button>
       </div>
+
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDelete}
+        title="Delete food entry"
+        description="This food entry will be permanently deleted. This action cannot be undone."
+      />
     </div>
   );
 }

@@ -62,8 +62,8 @@
   --border-strong: #d2c4b3;
   --border-subtle: #e4dacc;
   /* Domain accent colors */
-  --journal: #6f6fe4;
-  --journal-dim: rgba(111, 111, 228, 0.12);
+  --journal: #6070e4;
+  --journal-dim: rgba(96, 112, 228, 0.12);
   --food: #4b9e88;
   --food-dim: rgba(75, 158, 136, 0.12);
   --notes: #9d72db;
@@ -121,8 +121,8 @@
   --text-muted: #55556a;
   --border-strong: #2a2a3a;
   --border-subtle: #1e1e2c;
-  --journal: #7c7cff;
-  --journal-dim: rgba(124, 124, 255, 0.15);
+  --journal: #7c8aff;
+  --journal-dim: rgba(124, 138, 255, 0.15);
   --food: #4caf93;
   --food-dim: rgba(76, 175, 147, 0.15);
   --notes: #b07cff;

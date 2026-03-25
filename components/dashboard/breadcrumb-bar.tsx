@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Settings } from "lucide-react";
 import { useBreadcrumbActions } from "./breadcrumb-actions";
 import type { Mode } from "@/lib/mode-context";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -53,7 +53,16 @@ export function BreadcrumbBar({ domain, date }: BreadcrumbBarProps) {
           </span>
         </>
       )}
-      {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
+      <div className="ml-auto flex items-center gap-2">
+        {actions}
+        <Link
+          href="/settings"
+          className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label="Settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Link>
+      </div>
     </header>
   );
 }
