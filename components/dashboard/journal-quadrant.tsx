@@ -170,7 +170,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
         <div className="flex min-h-20 items-center justify-center py-4">
           <Link
             href={`/journal/write?entry=${entry.id}`}
-            className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-[var(--journal)] px-6 py-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+            className="pointer-events-auto inline-flex items-center justify-center rounded-md bg-[var(--journal)] px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
           >
             Continue Writing
           </Link>
@@ -179,7 +179,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
         <div className="flex min-h-20 items-center justify-center py-4">
           <Link
             href={writeHref}
-            className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-[var(--journal)] px-8 py-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+            className="pointer-events-auto inline-flex items-center justify-center rounded-md bg-[var(--journal)] px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
           >
             Write
           </Link>

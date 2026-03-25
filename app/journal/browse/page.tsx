@@ -169,7 +169,7 @@ export default function BrowsePage() {
               <div className="mt-6">
                 <Link
                   href={`/journal/write?year=${selectedEmptyDay.year}&month=${selectedEmptyDay.month}&day=${selectedEmptyDay.day}`}
-                  className="inline-flex items-center justify-center rounded-full bg-[var(--journal)] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                  className="inline-flex items-center justify-center rounded-md bg-[var(--journal)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
                 >
                   Write for this day
                 </Link>
