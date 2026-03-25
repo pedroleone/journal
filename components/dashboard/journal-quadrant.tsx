@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Pen } from "lucide-react";
+import { useLocale } from "@/hooks/use-locale";
 import { QuadrantCard } from "./quadrant-card";
 
 interface JournalEntry {
@@ -34,9 +35,9 @@ function isSameCalendarDay(left: Date, right: Date): boolean {
     && left.getDate() === right.getDate();
 }
 
-function formatUpdatedLabel(value: string): string {
+function formatUpdatedLabel(value: string, localeCode: string): string {
   const date = new Date(value);
-  return `Last updated ${date.toLocaleString([], {
+  return `Last updated ${date.toLocaleString(localeCode, {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -55,6 +56,7 @@ function differenceInCalendarDays(left: Date, right: Date): number {
 }
 
 export function JournalQuadrant({ date }: JournalQuadrantProps) {
+  const { t } = useLocale();
   const [snapshot, setSnapshot] = useState<JournalSnapshot | null>(null);
   const [latestDate, setLatestDate] = useState<LatestJournalDate | null | undefined>(undefined);
   const year = date.getFullYear();
@@ -154,7 +156,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
       footer={
         loading ? null : entry && isToday ? (
           <>
-            {entry.updated_at ? <span>{formatUpdatedLabel(entry.updated_at)}</span> : null}
+            {entry.updated_at ? <span>{formatUpdatedLabel(entry.updated_at, t.localeCode)}</span> : null}
             <span>{wordCount} words</span>
           </>
         ) : isToday && latestAgeLabel ? (

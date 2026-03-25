@@ -36,8 +36,8 @@ function toDateKey(value: JournalCalendarDay): string {
   return `${value.year}-${String(value.month).padStart(2, "0")}-${String(value.day).padStart(2, "0")}`;
 }
 
-function formatSelectedDate(value: JournalCalendarDay): string {
-  return new Date(value.year, value.month - 1, value.day).toLocaleDateString([], {
+function formatSelectedDate(value: JournalCalendarDay, localeCode: string): string {
+  return new Date(value.year, value.month - 1, value.day).toLocaleDateString(localeCode, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -158,7 +158,7 @@ export default function BrowsePage() {
           {selectedEmptyDay ? (
             <section className="rounded-[28px] border border-border/60 bg-card/35 px-6 py-7">
               <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                {formatSelectedDate(selectedEmptyDay)}
+                {formatSelectedDate(selectedEmptyDay, t.localeCode)}
               </p>
               <h2 className="mt-3 font-display text-3xl tracking-tight text-foreground">
                 No entry for this day

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useImages } from "@/hooks/use-images";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { deleteEncryptedImage, uploadEncryptedImage } from "@/lib/client-images";
+import { useLocale } from "@/hooks/use-locale";
 import type { MealSlot } from "@/lib/food";
 
 interface FoodEntry {
@@ -27,8 +28,8 @@ interface FoodEntry {
   updated_at: string;
 }
 
-function formatLoggedAt(iso: string) {
-  return new Date(iso).toLocaleString([], {
+function formatLoggedAt(iso: string, localeCode: string) {
+  return new Date(iso).toLocaleString(localeCode, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -59,6 +60,7 @@ export default function FoodEntryPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
@@ -240,7 +242,7 @@ export default function FoodEntryPage({
 
       <div className="space-y-2">
         <h1 className="font-display text-2xl tracking-tight">Food Entry</h1>
-        <p className="text-sm text-muted-foreground">{formatLoggedAt(entry.logged_at)}</p>
+        <p className="text-sm text-muted-foreground">{formatLoggedAt(entry.logged_at, t.localeCode)}</p>
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

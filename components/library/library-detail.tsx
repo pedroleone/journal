@@ -50,8 +50,8 @@ interface LibraryDetailProps {
   onDeleteCover?: () => Promise<void>;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString([], {
+function formatDate(iso: string, localeCode: string): string {
+  return new Date(iso).toLocaleString(localeCode, {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -60,8 +60,8 @@ function formatDate(iso: string): string {
   });
 }
 
-function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString([], {
+function formatShortDate(iso: string, localeCode: string): string {
+  return new Date(iso).toLocaleDateString(localeCode, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -100,7 +100,7 @@ function NoteBlock({ note, onSave, onDelete }: NoteBlockProps) {
       <div className="mb-6 flex items-center gap-4">
         <div className="h-px flex-1 bg-border/50" />
         <span className="text-[11px] tracking-widest uppercase text-muted-foreground/60 font-medium select-none">
-          {formatShortDate(note.created_at)}
+          {formatShortDate(note.created_at, t.localeCode)}
         </span>
         <div className="h-px flex-1 bg-border/50" />
       </div>
@@ -301,7 +301,7 @@ export function LibraryDetail({
           </span>
         ) : (
           <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
-            {formatDate(item.created_at)}
+            {formatDate(item.created_at, t.localeCode)}
           </time>
         )}
 

@@ -38,13 +38,13 @@ export function QuadrantCard({
           href={href}
           aria-hidden="true"
           tabIndex={-1}
-          className="absolute inset-0 rounded-md"
+          className="absolute inset-0 rounded-md pointer-events-none"
         />
-        <div className="relative z-10 flex-1 overflow-hidden pointer-events-none">
+        <div className="relative z-10 flex-1 overflow-hidden">
           {children}
         </div>
         {footer && (
-          <div className="relative z-10 mt-3 flex items-center gap-3 text-xs text-muted-foreground pointer-events-none">
+          <div className="relative z-10 mt-3 flex items-center gap-3 text-xs text-muted-foreground">
             {footer}
           </div>
         )}

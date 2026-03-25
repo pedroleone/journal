@@ -44,8 +44,8 @@ function rangeContains(entry: ExportableEntry, from: Date | null, to: Date | nul
   return true;
 }
 
-function formatFullDate(entry: ExportableEntry) {
-  return new Date(entry.year, entry.month - 1, entry.day).toLocaleDateString([], {
+function formatFullDate(entry: ExportableEntry, localeCode: string) {
+  return new Date(entry.year, entry.month - 1, entry.day).toLocaleDateString(localeCode, {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -250,7 +250,7 @@ export default function ExportPage() {
                   ({ entry, text, images }) => `
                     <article>
                       <div class="meta">${entry.kind} · ${entry.source}</div>
-                      <h2>${formatFullDate(entry)}</h2>
+                      <h2>${formatFullDate(entry, t.localeCode)}</h2>
                       <pre style="white-space: pre-wrap; font: inherit;">${text || "(no text)"}</pre>
                       ${images.map((src) => `<img src="${src}" alt="" />`).join("")}
                     </article>
@@ -270,8 +270,8 @@ export default function ExportPage() {
         .map(({ entry, text, images }) => {
           const header =
             format === "markdown"
-              ? `## ${formatFullDate(entry)}\n\n_${entry.kind} · ${entry.source}_`
-              : `${formatFullDate(entry)}\n${entry.kind.toUpperCase()} · ${entry.source.toUpperCase()}`;
+              ? `## ${formatFullDate(entry, t.localeCode)}\n\n_${entry.kind} · ${entry.source}_`
+              : `${formatFullDate(entry, t.localeCode)}\n${entry.kind.toUpperCase()} · ${entry.source.toUpperCase()}`;
           const imageSection =
             images.length === 0
               ? ""
@@ -418,7 +418,7 @@ export default function ExportPage() {
                               checked={monthIds.every((id) => selectedIds.includes(id))}
                               onChange={() => toggleEntries(monthIds)}
                             />
-                            {new Date(yearGroup.year, monthGroup.month - 1, 1).toLocaleDateString([], {
+                            {new Date(yearGroup.year, monthGroup.month - 1, 1).toLocaleDateString(t.localeCode, {
                               month: "long",
                             })}
                           </label>

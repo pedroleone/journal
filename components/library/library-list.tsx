@@ -52,8 +52,8 @@ const STATUS_COLORS: Record<MediaStatus, string> = {
   dropped: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString([], {
+function formatDate(iso: string, localeCode: string): string {
+  return new Date(iso).toLocaleDateString(localeCode, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -238,7 +238,7 @@ export function LibraryList({ items, selectedId, filters, onSelect, onFilterChan
                     </span>
                   )}
                   <span className="text-xs text-muted-foreground ml-auto">
-                    {formatDate(item.updated_at)}
+                    {formatDate(item.updated_at, t.localeCode)}
                   </span>
                 </div>
               </button>

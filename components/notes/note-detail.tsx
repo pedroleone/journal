@@ -36,8 +36,8 @@ interface NoteDetailProps {
   onImagesChange: (noteId: string, images: string[]) => Promise<void> | void;
 }
 
-function formatNoteDate(iso: string): string {
-  return new Date(iso).toLocaleString([], {
+function formatNoteDate(iso: string, localeCode: string): string {
+  return new Date(iso).toLocaleString(localeCode, {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -46,8 +46,8 @@ function formatNoteDate(iso: string): string {
   });
 }
 
-function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString([], {
+function formatShortDate(iso: string, localeCode: string): string {
+  return new Date(iso).toLocaleDateString(localeCode, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -88,7 +88,7 @@ function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
       <div className="mb-6 flex items-center gap-4">
         <div className="h-px flex-1 bg-border/50" />
         <span className="text-[11px] tracking-widest uppercase text-muted-foreground/60 font-medium select-none">
-          {formatShortDate(subnote.created_at)}
+          {formatShortDate(subnote.created_at, t.localeCode)}
         </span>
         <div className="h-px flex-1 bg-border/50" />
       </div>
@@ -305,7 +305,7 @@ export function NoteDetail({
       {/* Top bar: date left, actions right */}
       <div className="sticky top-0 z-10 flex items-center justify-between px-10 py-3 bg-background/80 backdrop-blur-sm border-b border-border/40">
         <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
-          {formatNoteDate(note.created_at)}
+          {formatNoteDate(note.created_at, t.localeCode)}
         </time>
 
         <div className="flex items-center gap-1">
