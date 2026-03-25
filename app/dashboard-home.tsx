@@ -34,19 +34,19 @@ export function DashboardHome() {
   }
 
   return (
-    <div className="flex h-dvh flex-col">
+    <div className="flex h-dvh flex-col overflow-hidden">
       <TopBar date={date} onDateChange={handleDateChange} />
       <QuadrantGrid
         main={
           <>
+            <LibraryQuadrant />
             <JournalQuadrant date={date} />
-            <FoodQuadrant date={date} />
           </>
         }
         sidebar={
           <>
             <NotesQuadrant />
-            <LibraryQuadrant />
+            <FoodQuadrant date={date} />
           </>
         }
       />
