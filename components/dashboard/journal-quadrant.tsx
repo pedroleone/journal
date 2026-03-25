@@ -22,6 +22,11 @@ interface JournalSnapshot {
   entry: JournalEntry | null;
 }
 
+interface LatestDateSnapshot {
+  requestKey: string;
+  value: LatestJournalDate | null;
+}
+
 interface LatestJournalDate {
   year: number;
   month: number;
@@ -56,7 +61,7 @@ function differenceInCalendarDays(left: Date, right: Date): number {
 
 export function JournalQuadrant({ date }: JournalQuadrantProps) {
   const [snapshot, setSnapshot] = useState<JournalSnapshot | null>(null);
-  const [latestDate, setLatestDate] = useState<LatestJournalDate | null | undefined>(undefined);
+  const [latestDateSnapshot, setLatestDateSnapshot] = useState<LatestDateSnapshot | null>(null);
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -83,40 +88,36 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
     };
   }, [day, month, requestKey, year]);
 
-  useEffect(() => {
-    if (!isToday) {
-      setLatestDate(undefined);
-      return;
-    }
+  const entry = snapshot?.requestKey === requestKey ? snapshot.entry : null;
+  const loading = snapshot?.requestKey !== requestKey;
+  const shouldLoadLatestDate = isToday && !loading && !entry;
 
-    if (snapshot?.requestKey !== requestKey) return;
-    if (snapshot.entry) {
-      setLatestDate(undefined);
-      return;
-    }
+  useEffect(() => {
+    if (!shouldLoadLatestDate) return;
 
     let cancelled = false;
     fetch("/api/entries/dates")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: LatestJournalDate[]) => {
         if (cancelled) return;
-        setLatestDate(data[0] ?? null);
+        setLatestDateSnapshot({ requestKey, value: data[0] ?? null });
       })
       .catch(() => {
         if (cancelled) return;
-        setLatestDate(null);
+        setLatestDateSnapshot({ requestKey, value: null });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [isToday, requestKey, snapshot]);
-
-  const entry = snapshot?.requestKey === requestKey ? snapshot.entry : null;
-  const loading = snapshot?.requestKey !== requestKey;
+  }, [requestKey, shouldLoadLatestDate]);
 
   const content = entry?.content ?? entry?.encrypted_content ?? "";
   const wordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;
+  const latestDate =
+    shouldLoadLatestDate && latestDateSnapshot?.requestKey === requestKey
+      ? latestDateSnapshot.value
+      : undefined;
   const latestAgeLabel = latestDate
     ? `${differenceInCalendarDays(date, buildDateFromParts(latestDate))} days ago`
     : latestDate === null

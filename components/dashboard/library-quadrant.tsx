@@ -78,6 +78,7 @@ export function LibraryQuadrant() {
   const [recentFinished, setRecentFinished] = useState<LibraryItem[]>([]);
   const [backlog, setBacklog] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [renderTime] = useState(() => Date.now());
 
   useEffect(() => {
     Promise.all([
@@ -101,7 +102,7 @@ export function LibraryQuadrant() {
   const recentFinishedItems = recentFinished
     .filter((item) => {
       if (!item.finished_at) return false;
-      return Date.now() - new Date(item.finished_at).getTime() <= RECENT_FINISHED_WINDOW_MS;
+      return renderTime - new Date(item.finished_at).getTime() <= RECENT_FINISHED_WINDOW_MS;
     })
     .sort((a, b) => new Date(b.finished_at ?? 0).getTime() - new Date(a.finished_at ?? 0).getTime());
 
