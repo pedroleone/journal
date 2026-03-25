@@ -7,7 +7,7 @@ import { FoodInboxPanel } from "@/components/food/food-inbox-panel";
 import { FoodPageShell } from "@/components/food/food-page-shell";
 import { buildMealSlotState } from "@/components/food/food-day-state";
 import type { MealSlot } from "@/lib/food";
-import { MEAL_SLOTS } from "@/lib/food";
+import { MEAL_SLOTS, getVisibleSlots } from "@/lib/food";
 import { useLocale } from "@/hooks/use-locale";
 
 interface FoodEntryView {
@@ -75,6 +75,7 @@ export default function FoodPage() {
   const [uncategorizedEntries, setUncategorizedEntries] = useState<FoodEntryView[]>([]);
   const [uncategorizedCount, setUncategorizedCount] = useState(0);
   const [view, setView] = useState<"day" | "inbox">(() => initialView);
+  const [snacksExpanded, setSnacksExpanded] = useState(false);
   const [dayLoading, setDayLoading] = useState(true);
   const [inboxLoading, setInboxLoading] = useState(true);
   const selectedDateRef = useRef(selectedDate);
@@ -341,21 +342,22 @@ export default function FoodPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {mealSlots.map((slot) => {
-              const state = buildMealSlotState(slot.value, dayEntries);
+            {getVisibleSlots(dayEntries, snacksExpanded).map((slotValue) => {
+              const slotLabel = getMealSlotLabel(slotValue, t);
+              const state = buildMealSlotState(slotValue, dayEntries);
               const skippedId = state.kind === "skipped" ? state.skippedEntry.id : null;
 
               return (
                 <FoodMealSlotCard
-                  key={slot.value}
-                  slot={slot.value}
-                  slotLabel={slot.label}
+                  key={slotValue}
+                  slot={slotValue}
+                  slotLabel={slotLabel}
                   state={state}
-                  canSkip={slot.value !== "observation"}
+                  canSkip={slotValue !== "observation"}
                   year={selectedDate.getFullYear()}
                   month={selectedDate.getMonth() + 1}
                   day={selectedDate.getDate()}
-                  onSkip={() => void handleSkipSlot(slot.value)}
+                  onSkip={() => void handleSkipSlot(slotValue)}
                   onUndoSkip={skippedId ? () => void handleUndoSkip(skippedId) : undefined}
                   onDeleteEntry={handleDeleteEntry}
                   onEntrySaved={handleEntrySaved}
@@ -363,6 +365,14 @@ export default function FoodPage() {
                 />
               );
             })}
+            {!snacksExpanded && (
+              <button
+                onClick={() => setSnacksExpanded(true)}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                + Add snack
+              </button>
+            )}
           </div>
         )
       )}

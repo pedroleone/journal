@@ -17,6 +17,47 @@ export const MEAL_SLOTS: MealSlot[] = [
   "observation",
 ];
 
+const SLOT_ORDER: MealSlot[] = [
+  "breakfast",
+  "morning_snack",
+  "lunch",
+  "afternoon_snack",
+  "dinner",
+  "midnight_snack",
+  "observation",
+];
+
+const DEFAULT_VISIBLE: MealSlot[] = [
+  "breakfast",
+  "lunch",
+  "dinner",
+  "observation",
+];
+
+const SNACK_SLOTS: MealSlot[] = [
+  "morning_snack",
+  "afternoon_snack",
+  "midnight_snack",
+];
+
+export function getVisibleSlots(
+  entries: { meal_slot: MealSlot | string | null }[],
+  expanded: boolean,
+): MealSlot[] {
+  if (expanded) return [...SLOT_ORDER];
+
+  const filledSnacks = new Set(
+    entries
+      .filter((e) => e.meal_slot && SNACK_SLOTS.includes(e.meal_slot as MealSlot))
+      .map((e) => e.meal_slot as MealSlot),
+  );
+
+  const visible = new Set<MealSlot>(DEFAULT_VISIBLE);
+  for (const s of filledSnacks) visible.add(s);
+
+  return SLOT_ORDER.filter((s) => visible.has(s));
+}
+
 export function suggestMealSlot(hour: number): MealSlot {
   if (hour < 10) return "breakfast";
   if (hour < 12) return "morning_snack";
