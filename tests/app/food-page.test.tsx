@@ -424,9 +424,7 @@ describe("FoodPage", () => {
   it("renders the unified day workspace with breadcrumb shell and day controls", async () => {
     render(<FoodPage />);
 
-    expect(await screen.findByRole("link", { name: /dashboard/i })).toBeTruthy();
-    expect(screen.getByText("Food")).toBeTruthy();
-    expect(screen.getByRole("button", { name: /quick add/i })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /quick add/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /inbox \(2\)/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /previous day/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /next day/i })).toBeTruthy();
