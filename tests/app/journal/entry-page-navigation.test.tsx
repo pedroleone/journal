@@ -58,7 +58,7 @@ describe("EntryPage navigation", () => {
       }
 
       return Promise.reject(new Error(`Unhandled fetch: ${url}`));
-    }) as typeof fetch;
+    }) as unknown as typeof fetch;
 
     await act(async () => {
       render(<EntryPage params={Promise.resolve({ id: "entry-2" })} />);
@@ -106,7 +106,7 @@ describe("EntryPage navigation", () => {
       }
 
       return Promise.reject(new Error(`Unhandled fetch: ${url}`));
-    }) as typeof fetch;
+    }) as unknown as typeof fetch;
 
     await act(async () => {
       render(<EntryPage params={Promise.resolve({ id: "entry-1" })} />);

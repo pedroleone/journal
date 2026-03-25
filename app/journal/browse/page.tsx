@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -64,17 +64,16 @@ export default function BrowsePage() {
   );
   const [dates, setDates] = useState<DateEntry[]>([]);
   const [datesLoaded, setDatesLoaded] = useState(false);
-  const [selectedEmptyDay, setSelectedEmptyDay] = useState<JournalCalendarDay | null>(null);
-  const [visibleMonth, setVisibleMonth] = useState<JournalCalendarMonth>(() => getInitialMonth(explicitSelection));
-  const lastSyncedDateParamRef = useRef<string | null | undefined>(undefined);
+  const [visibleMonthState, setVisibleMonthState] = useState<{
+    anchorDateParam: string | null;
+    month: JournalCalendarMonth;
+  }>(() => ({
+    anchorDateParam: explicitDateParam,
+    month: getInitialMonth(explicitSelection),
+  }));
   const router = useRouter();
   const isOnline = useOnlineStatus();
   const { t } = useLocale();
-
-  useEffect(() => {
-    setVisibleMonth(getInitialMonth(explicitSelection));
-    setSelectedEmptyDay(null);
-  }, [explicitSelection]);
 
   useEffect(() => {
     if (!isOnline) return;
@@ -109,20 +108,14 @@ export default function BrowsePage() {
     return map;
   }, [dates]);
 
-  useEffect(() => {
-    if (!datesLoaded) return;
-    if (lastSyncedDateParamRef.current === explicitDateParam) return;
-
-    lastSyncedDateParamRef.current = explicitDateParam;
-
-    if (!explicitSelection) {
-      setSelectedEmptyDay(null);
-      return;
-    }
-
-    const dateKey = toDateKey(explicitSelection);
-    setSelectedEmptyDay(entriesByDate.has(dateKey) ? null : explicitSelection);
-  }, [datesLoaded, entriesByDate, explicitDateParam, explicitSelection]);
+  const visibleMonth =
+    visibleMonthState.anchorDateParam === explicitDateParam
+      ? visibleMonthState.month
+      : getInitialMonth(explicitSelection);
+  const selectedEmptyDay =
+    datesLoaded && explicitSelection && !entriesByDate.has(toDateKey(explicitSelection))
+      ? explicitSelection
+      : null;
 
   function handleSelectDay(day: JournalCalendarDay) {
     const dateKey = toDateKey(day);
@@ -133,7 +126,6 @@ export default function BrowsePage() {
       return;
     }
 
-    setSelectedEmptyDay(day);
     router.replace(`/journal/browse?date=${dateKey}`);
   }
 
@@ -152,7 +144,12 @@ export default function BrowsePage() {
             selectedDate={selectedEmptyDay}
             entryDates={Array.from(entriesByDate.keys())}
             onSelectDay={handleSelectDay}
-            onChangeMonth={setVisibleMonth}
+            onChangeMonth={(month) => {
+              setVisibleMonthState({
+                anchorDateParam: explicitDateParam,
+                month,
+              });
+            }}
           />
 
           {selectedEmptyDay ? (

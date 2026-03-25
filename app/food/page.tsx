@@ -62,12 +62,14 @@ export default function FoodPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
+  const viewParam = searchParams.get("view");
   const searchParamKey = searchParams.toString();
   const initialDate = useMemo(
-    () => parseWorkspaceDate(searchParams.get("date")) ?? new Date(),
-    [searchParamKey],
+    () => parseWorkspaceDate(dateParam) ?? new Date(),
+    [dateParam],
   );
-  const initialView = searchParams.get("view") === "inbox" ? "inbox" : "day";
+  const initialView = viewParam === "inbox" ? "inbox" : "day";
   const [selectedDate, setSelectedDate] = useState(
     () => initialDate,
   );
@@ -261,11 +263,11 @@ export default function FoodPage() {
   }, [loadUncategorized]);
 
   useEffect(() => {
-    const nextDate = searchParams.has("date")
-      ? parseWorkspaceDate(searchParams.get("date")) ?? new Date()
+    const nextDate = dateParam
+      ? parseWorkspaceDate(dateParam) ?? new Date()
       : selectedDateRef.current;
-    const nextView = searchParams.has("view")
-      ? searchParams.get("view") === "inbox"
+    const nextView = viewParam
+      ? viewParam === "inbox"
         ? "inbox"
         : "day"
       : viewRef.current;
@@ -281,7 +283,7 @@ export default function FoodPage() {
       formatWorkspaceDate(currentDate) === nextDateKey ? currentDate : nextDate,
     );
     setView((currentView) => (currentView === nextView ? currentView : nextView));
-  }, [searchParamKey]);
+  }, [dateParam, searchParamKey, viewParam]);
 
   useEffect(() => {
     if (skipNextUrlSyncRef.current) {

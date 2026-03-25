@@ -57,6 +57,7 @@ interface LibraryDetailProps {
   onDeleteNote: (noteId: string) => Promise<void>;
   onUploadCover?: (file: File) => Promise<void>;
   onDeleteCover?: () => Promise<void>;
+  coverUploadDisabled?: boolean;
 }
 
 function formatDate(iso: string, localeCode: string): string {
@@ -185,6 +186,7 @@ export function LibraryDetail({
   onDeleteNote,
   onUploadCover,
   onDeleteCover,
+  coverUploadDisabled = false,
 }: LibraryDetailProps) {
   const [titleDraft, setTitleDraft] = useState(item.title);
   const [creatorDraft, setCreatorDraft] = useState(item.creator ?? "");
@@ -202,6 +204,8 @@ export function LibraryDetail({
   const [editMode, setEditMode] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const isNew = item.id === "__new__";
+  // TODO: Support cover upload for unsaved library items by creating the item first and then uploading the selected cover.
+  const isCoverUploadDisabled = coverUploadDisabled || uploadingCover;
   const { t } = useLocale();
   const mode = getFieldDisplayMode(editMode || isNew);
 
@@ -363,6 +367,11 @@ export function LibraryDetail({
     }
   }
 
+  function handleEmptyCoverClick() {
+    if (isCoverUploadDisabled) return;
+    coverInputRef.current?.click();
+  }
+
   return (
     <div className="flex flex-col min-h-full">
       {/* Top bar */}
@@ -472,9 +481,14 @@ export function LibraryDetail({
             </div>
           ) : mode === "edit" ? (
             <button
-              onClick={() => coverInputRef.current?.click()}
-              disabled={uploadingCover}
-              className="w-full rounded-lg border-2 border-dashed border-border/50 py-8 flex items-center justify-center gap-2 text-sm text-muted-foreground/50 hover:text-muted-foreground hover:border-border transition-colors"
+              type="button"
+              onClick={handleEmptyCoverClick}
+              disabled={isCoverUploadDisabled}
+              className={`w-full rounded-lg border-2 border-dashed py-8 flex items-center justify-center gap-2 text-sm transition-colors ${
+                isCoverUploadDisabled
+                  ? "cursor-not-allowed border-border/30 text-muted-foreground/30 opacity-60"
+                  : "border-border/50 text-muted-foreground/50 hover:text-muted-foreground hover:border-border"
+              }`}
             >
               <ImagePlus className="h-4 w-4" />
               {uploadingCover ? t.library.saving : t.library.addCover}
