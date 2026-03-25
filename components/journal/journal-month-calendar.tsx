@@ -148,10 +148,8 @@ export function JournalMonthCalendar({
             >
               <div className="flex h-full flex-col justify-between">
                 <span className="text-sm font-medium text-foreground">{dayValue.day}</span>
-                {hasEntry ? (
+                {hasEntry && (
                   <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[var(--journal)]" aria-hidden="true" />
-                ) : (
-                  <span className="text-[11px] text-muted-foreground">Empty</span>
                 )}
               </div>
             </button>

@@ -5,6 +5,7 @@ import { Search, X, Tag, Check, ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
+import { formatRelativeDate } from "@/lib/i18n";
 
 export interface NoteListItem {
   id: string;
@@ -128,7 +129,7 @@ export function NoteList({ notes, selectedId, activeTag, onSelect, onTagFilter, 
               </p>
               <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs text-muted-foreground">
-                  {formatNoteDate(note.updated_at, t.localeCode)}
+                  {formatRelativeDate(note.updated_at, t.localeCode)}
                 </span>
                 {(note.tags ?? []).map((tag) => (
                   <span key={tag} className="rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
