@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { Plus } from "lucide-react";
 import { QuadrantCard } from "./quadrant-card";
 import { FoodInlineComposer } from "@/components/food/food-inline-composer";
