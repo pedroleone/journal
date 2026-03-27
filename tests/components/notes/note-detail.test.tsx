@@ -198,7 +198,6 @@ describe("NoteDetail", () => {
     fireEvent.change(screen.getByPlaceholderText(/add tag/i), {
       target: { value: "draft-tag" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /delete note/i }));
     fireEvent.click(screen.getByRole("button", { name: /add entry/i }));
     fireEvent.change(screen.getByPlaceholderText(/write a subnote/i), {
       target: { value: "subnote draft" },
@@ -208,7 +207,7 @@ describe("NoteDetail", () => {
     expect(await screen.findByText("Failed to remove image")).toBeTruthy();
     expect(screen.getByDisplayValue("draft-tag")).toBeTruthy();
     expect(screen.getByDisplayValue("subnote draft")).toBeTruthy();
-    expect(screen.getAllByText(/^cancel$/i)).toHaveLength(2);
+    expect(screen.getAllByText(/^cancel$/i)).toHaveLength(1);
 
     rerender(
       <NoteDetail

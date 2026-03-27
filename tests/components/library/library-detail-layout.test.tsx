@@ -130,4 +130,20 @@ describe("LibraryDetail layout", () => {
     expect(screen.getByTestId("vocabulary-input-genres").textContent).toContain("game");
     expect(screen.getByRole("button", { name: "Add to library" })).toBeTruthy();
   });
+
+  it("disables the empty cover upload control for unsaved items when requested", () => {
+    render(
+      <LibraryDetail
+        item={makeItem({ id: "__new__" })}
+        coverUploadDisabled
+        onUpdate={vi.fn(async () => undefined)}
+        onAddNote={vi.fn(async () => undefined)}
+        onUpdateNote={vi.fn(async () => undefined)}
+        onDelete={vi.fn(async () => undefined)}
+        onDeleteNote={vi.fn(async () => undefined)}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Add cover" })).toBeDisabled();
+  });
 });

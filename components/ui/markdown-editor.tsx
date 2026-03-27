@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
-import { EditorView } from "@codemirror/view";
+import { EditorView, Decoration, ViewPlugin, ViewUpdate, DecorationSet } from "@codemirror/view";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,42 @@ const baseTheme = EditorView.theme({
   "&.cm-editor": { outline: "none" },
   ".cm-activeLine": { backgroundColor: "transparent" },
   ".cm-placeholder": { color: "currentColor", opacity: "0.4" },
+  /* Horizontal rule: style lines containing only --- as visual dividers */
+  ".cm-hr-line": {
+    borderBottom: "1px solid currentColor",
+    opacity: "0.25",
+    lineHeight: "0.5em",
+    color: "transparent",
+  },
 });
+
+const hrLineDeco = Decoration.line({ class: "cm-hr-line" });
+
+function buildHrDecorations(view: EditorView): DecorationSet {
+  const decorations: { from: number; deco: Decoration }[] = [];
+  for (let i = 1; i <= view.state.doc.lines; i++) {
+    const line = view.state.doc.line(i);
+    if (/^---+$/.test(line.text.trim())) {
+      decorations.push({ from: line.from, deco: hrLineDeco });
+    }
+  }
+  return Decoration.set(decorations.map((d) => d.deco.range(d.from)));
+}
+
+const hrPlugin = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+      this.decorations = buildHrDecorations(view);
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = buildHrDecorations(update.view);
+      }
+    }
+  },
+  { decorations: (v) => v.decorations },
+);
 
 // CodeMirror's .cm-scroller has overflow:visible so it never scrolls itself.
 // After each update, find the rendered cursor element and call scrollIntoView
@@ -52,6 +87,7 @@ const baseExtensions = [
   EditorView.lineWrapping,
   syntaxHighlighting(markdownHighlight),
   baseTheme,
+  hrPlugin,
   scrollCursorIntoView,
 ];
 

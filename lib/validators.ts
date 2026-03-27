@@ -144,14 +144,14 @@ export const mediaStatusEnum = z.enum(["backlog", "in_progress", "finished", "dr
 export const createMediaItemSchema = z.object({
   type: mediaTypeEnum,
   title: z.string().min(1),
-  creator: z.string().optional(),
-  url: z.string().optional(),
+  creator: z.string().nullable().optional(),
+  url: z.string().nullable().optional(),
   status: mediaStatusEnum.default("backlog"),
-  rating: z.number().int().min(1).max(5).optional(),
+  rating: z.number().int().min(1).max(5).nullable().optional(),
   reactions: z.array(z.string().min(1)).nullable().optional(),
   genres: z.array(z.string().min(1)).nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
-  content: z.string().optional(),
+  content: z.string().nullable().optional(),
 });
 
 export const updateMediaItemSchema = z

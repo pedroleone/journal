@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -36,8 +36,8 @@ function toDateKey(value: JournalCalendarDay): string {
   return `${value.year}-${String(value.month).padStart(2, "0")}-${String(value.day).padStart(2, "0")}`;
 }
 
-function formatSelectedDate(value: JournalCalendarDay): string {
-  return new Date(value.year, value.month - 1, value.day).toLocaleDateString([], {
+function formatSelectedDate(value: JournalCalendarDay, localeCode: string): string {
+  return new Date(value.year, value.month - 1, value.day).toLocaleDateString(localeCode, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -64,17 +64,16 @@ export default function BrowsePage() {
   );
   const [dates, setDates] = useState<DateEntry[]>([]);
   const [datesLoaded, setDatesLoaded] = useState(false);
-  const [selectedEmptyDay, setSelectedEmptyDay] = useState<JournalCalendarDay | null>(null);
-  const [visibleMonth, setVisibleMonth] = useState<JournalCalendarMonth>(() => getInitialMonth(explicitSelection));
-  const lastSyncedDateParamRef = useRef<string | null | undefined>(undefined);
+  const [visibleMonthState, setVisibleMonthState] = useState<{
+    anchorDateParam: string | null;
+    month: JournalCalendarMonth;
+  }>(() => ({
+    anchorDateParam: explicitDateParam,
+    month: getInitialMonth(explicitSelection),
+  }));
   const router = useRouter();
   const isOnline = useOnlineStatus();
   const { t } = useLocale();
-
-  useEffect(() => {
-    setVisibleMonth(getInitialMonth(explicitSelection));
-    setSelectedEmptyDay(null);
-  }, [explicitSelection]);
 
   useEffect(() => {
     if (!isOnline) return;
@@ -109,20 +108,14 @@ export default function BrowsePage() {
     return map;
   }, [dates]);
 
-  useEffect(() => {
-    if (!datesLoaded) return;
-    if (lastSyncedDateParamRef.current === explicitDateParam) return;
-
-    lastSyncedDateParamRef.current = explicitDateParam;
-
-    if (!explicitSelection) {
-      setSelectedEmptyDay(null);
-      return;
-    }
-
-    const dateKey = toDateKey(explicitSelection);
-    setSelectedEmptyDay(entriesByDate.has(dateKey) ? null : explicitSelection);
-  }, [datesLoaded, entriesByDate, explicitDateParam, explicitSelection]);
+  const visibleMonth =
+    visibleMonthState.anchorDateParam === explicitDateParam
+      ? visibleMonthState.month
+      : getInitialMonth(explicitSelection);
+  const selectedEmptyDay =
+    datesLoaded && explicitSelection && !entriesByDate.has(toDateKey(explicitSelection))
+      ? explicitSelection
+      : null;
 
   function handleSelectDay(day: JournalCalendarDay) {
     const dateKey = toDateKey(day);
@@ -133,7 +126,6 @@ export default function BrowsePage() {
       return;
     }
 
-    setSelectedEmptyDay(day);
     router.replace(`/journal/browse?date=${dateKey}`);
   }
 
@@ -152,13 +144,18 @@ export default function BrowsePage() {
             selectedDate={selectedEmptyDay}
             entryDates={Array.from(entriesByDate.keys())}
             onSelectDay={handleSelectDay}
-            onChangeMonth={setVisibleMonth}
+            onChangeMonth={(month) => {
+              setVisibleMonthState({
+                anchorDateParam: explicitDateParam,
+                month,
+              });
+            }}
           />
 
           {selectedEmptyDay ? (
             <section className="rounded-[28px] border border-border/60 bg-card/35 px-6 py-7">
               <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                {formatSelectedDate(selectedEmptyDay)}
+                {formatSelectedDate(selectedEmptyDay, t.localeCode)}
               </p>
               <h2 className="mt-3 font-display text-3xl tracking-tight text-foreground">
                 No entry for this day
@@ -169,7 +166,7 @@ export default function BrowsePage() {
               <div className="mt-6">
                 <Link
                   href={`/journal/write?year=${selectedEmptyDay.year}&month=${selectedEmptyDay.month}&day=${selectedEmptyDay.day}`}
-                  className="inline-flex items-center justify-center rounded-full bg-[var(--journal)] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                  className="inline-flex items-center justify-center rounded-md bg-[var(--journal)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
                 >
                   Write for this day
                 </Link>

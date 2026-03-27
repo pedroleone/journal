@@ -58,7 +58,7 @@ describe("EntryPage navigation", () => {
       }
 
       return Promise.reject(new Error(`Unhandled fetch: ${url}`));
-    }) as typeof fetch;
+    }) as unknown as typeof fetch;
 
     await act(async () => {
       render(<EntryPage params={Promise.resolve({ id: "entry-2" })} />);
@@ -70,7 +70,7 @@ describe("EntryPage navigation", () => {
     expect(screen.getByRole("link", { name: /next entry/i }).getAttribute("href")).toBe(
       "/journal/entry/entry-3",
     );
-    expect(screen.getByRole("button", { name: /delete entry/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^delete$/i })).toBeTruthy();
   });
 
   it("omits unavailable navigation at the ends of the timeline", async () => {
@@ -106,7 +106,7 @@ describe("EntryPage navigation", () => {
       }
 
       return Promise.reject(new Error(`Unhandled fetch: ${url}`));
-    }) as typeof fetch;
+    }) as unknown as typeof fetch;
 
     await act(async () => {
       render(<EntryPage params={Promise.resolve({ id: "entry-1" })} />);

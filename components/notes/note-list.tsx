@@ -5,6 +5,7 @@ import { Search, X, Tag, Check, ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
+import { formatRelativeDate } from "@/lib/i18n";
 
 export interface NoteListItem {
   id: string;
@@ -24,16 +25,16 @@ interface NoteListProps {
   onNew: () => void;
 }
 
-function formatNoteDate(iso: string): string {
-  return new Date(iso).toLocaleDateString([], {
+function formatNoteDate(iso: string, localeCode: string): string {
+  return new Date(iso).toLocaleDateString(localeCode, {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-function getNoteLabel(note: NoteListItem): string {
-  return note.title?.trim() || formatNoteDate(note.created_at);
+function getNoteLabel(note: NoteListItem, localeCode: string): string {
+  return note.title?.trim() || formatNoteDate(note.created_at, localeCode);
 }
 
 export function NoteList({ notes, selectedId, activeTag, onSelect, onTagFilter, onNew }: NoteListProps) {
@@ -124,11 +125,11 @@ export function NoteList({ notes, selectedId, activeTag, onSelect, onTagFilter, 
               )}
             >
               <p className={cn("truncate text-sm", selectedId === note.id ? "font-medium" : "")}>
-                {getNoteLabel(note)}
+                {getNoteLabel(note, t.localeCode)}
               </p>
               <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs text-muted-foreground">
-                  {formatNoteDate(note.updated_at)}
+                  {formatRelativeDate(note.updated_at, t.localeCode)}
                 </span>
                 {(note.tags ?? []).map((tag) => (
                   <span key={tag} className="rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">

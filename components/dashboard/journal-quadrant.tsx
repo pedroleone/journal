@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Pen } from "lucide-react";
+import { useLocale } from "@/hooks/use-locale";
 import { QuadrantCard } from "./quadrant-card";
 
 interface JournalEntry {
@@ -22,6 +23,11 @@ interface JournalSnapshot {
   entry: JournalEntry | null;
 }
 
+interface LatestDateSnapshot {
+  requestKey: string;
+  value: LatestJournalDate | null;
+}
+
 interface LatestJournalDate {
   year: number;
   month: number;
@@ -34,9 +40,9 @@ function isSameCalendarDay(left: Date, right: Date): boolean {
     && left.getDate() === right.getDate();
 }
 
-function formatUpdatedLabel(value: string): string {
+function formatUpdatedLabel(value: string, localeCode: string): string {
   const date = new Date(value);
-  return `Last updated ${date.toLocaleString([], {
+  return `Last updated ${date.toLocaleString(localeCode, {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -55,8 +61,9 @@ function differenceInCalendarDays(left: Date, right: Date): number {
 }
 
 export function JournalQuadrant({ date }: JournalQuadrantProps) {
+  const { t } = useLocale();
   const [snapshot, setSnapshot] = useState<JournalSnapshot | null>(null);
-  const [latestDate, setLatestDate] = useState<LatestJournalDate | null | undefined>(undefined);
+  const [latestDateSnapshot, setLatestDateSnapshot] = useState<LatestDateSnapshot | null>(null);
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -83,40 +90,36 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
     };
   }, [day, month, requestKey, year]);
 
-  useEffect(() => {
-    if (!isToday) {
-      setLatestDate(undefined);
-      return;
-    }
+  const entry = snapshot?.requestKey === requestKey ? snapshot.entry : null;
+  const loading = snapshot?.requestKey !== requestKey;
+  const shouldLoadLatestDate = isToday && !loading && !entry;
 
-    if (snapshot?.requestKey !== requestKey) return;
-    if (snapshot.entry) {
-      setLatestDate(undefined);
-      return;
-    }
+  useEffect(() => {
+    if (!shouldLoadLatestDate) return;
 
     let cancelled = false;
     fetch("/api/entries/dates")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: LatestJournalDate[]) => {
         if (cancelled) return;
-        setLatestDate(data[0] ?? null);
+        setLatestDateSnapshot({ requestKey, value: data[0] ?? null });
       })
       .catch(() => {
         if (cancelled) return;
-        setLatestDate(null);
+        setLatestDateSnapshot({ requestKey, value: null });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [isToday, requestKey, snapshot]);
-
-  const entry = snapshot?.requestKey === requestKey ? snapshot.entry : null;
-  const loading = snapshot?.requestKey !== requestKey;
+  }, [requestKey, shouldLoadLatestDate]);
 
   const content = entry?.content ?? entry?.encrypted_content ?? "";
   const wordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;
+  const latestDate =
+    shouldLoadLatestDate && latestDateSnapshot?.requestKey === requestKey
+      ? latestDateSnapshot.value
+      : undefined;
   const latestAgeLabel = latestDate
     ? `${differenceInCalendarDays(date, buildDateFromParts(latestDate))} days ago`
     : latestDate === null
@@ -154,7 +157,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
       footer={
         loading ? null : entry && isToday ? (
           <>
-            {entry.updated_at ? <span>{formatUpdatedLabel(entry.updated_at)}</span> : null}
+            {entry.updated_at ? <span>{formatUpdatedLabel(entry.updated_at, t.localeCode)}</span> : null}
             <span>{wordCount} words</span>
           </>
         ) : isToday && latestAgeLabel ? (
@@ -168,7 +171,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
         <div className="flex min-h-20 items-center justify-center py-4">
           <Link
             href={`/journal/write?entry=${entry.id}`}
-            className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-[var(--journal)] px-6 py-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+            className="pointer-events-auto inline-flex items-center justify-center rounded-md bg-[var(--journal)] px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
           >
             Continue Writing
           </Link>
@@ -177,7 +180,7 @@ export function JournalQuadrant({ date }: JournalQuadrantProps) {
         <div className="flex min-h-20 items-center justify-center py-4">
           <Link
             href={writeHref}
-            className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-[var(--journal)] px-8 py-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+            className="pointer-events-auto inline-flex items-center justify-center rounded-md bg-[var(--journal)] px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
           >
             Write
           </Link>

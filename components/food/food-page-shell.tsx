@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { DateNavigator } from "@/components/shared/date-navigator";
 import { FoodQuickAdd } from "@/components/food/food-quick-add";
@@ -24,14 +23,6 @@ function formatDateInput(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-}
-
-function formatDateLabel(date: Date, localeCode: string) {
-  return date.toLocaleDateString(localeCode, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function parseDateInput(value: string): Date | null {
@@ -70,17 +61,6 @@ export function FoodPageShell({
   return (
     <div className="animate-page min-h-dvh bg-[var(--surface-canvas)]">
       <div className="mx-auto flex w-full max-w-7xl flex-col">
-        <header className="flex min-h-14 flex-wrap items-center gap-3 border-b border-border/60 bg-[var(--surface-topbar)] px-4 py-3">
-          <Link href="/" className="text-sm font-medium text-[var(--food)] hover:opacity-80">
-            {t.nav.dashboard}
-          </Link>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-sm font-medium">{t.nav.food}</span>
-          <span className="ml-auto text-sm text-muted-foreground">
-            {formatDateLabel(date, t.localeCode)}
-          </span>
-        </header>
-
         <div className="px-4 py-4">
           <div className="mb-5 flex flex-wrap items-center gap-3">
             <DateNavigator date={date} onDateChange={onDateChange} />

@@ -5,6 +5,7 @@ import { Trash2, Plus, X, Paperclip, Loader2 } from "lucide-react";
 import { useImages } from "@/hooks/use-images";
 import { uploadEncryptedImage, deleteEncryptedImage } from "@/lib/client-images";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { useLocale } from "@/hooks/use-locale";
 
 export interface Subnote {
@@ -36,8 +37,8 @@ interface NoteDetailProps {
   onImagesChange: (noteId: string, images: string[]) => Promise<void> | void;
 }
 
-function formatNoteDate(iso: string): string {
-  return new Date(iso).toLocaleString([], {
+function formatNoteDate(iso: string, localeCode: string): string {
+  return new Date(iso).toLocaleString(localeCode, {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -46,8 +47,8 @@ function formatNoteDate(iso: string): string {
   });
 }
 
-function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString([], {
+function formatShortDate(iso: string, localeCode: string): string {
+  return new Date(iso).toLocaleDateString(localeCode, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -88,7 +89,7 @@ function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
       <div className="mb-6 flex items-center gap-4">
         <div className="h-px flex-1 bg-border/50" />
         <span className="text-[11px] tracking-widest uppercase text-muted-foreground/60 font-medium select-none">
-          {formatShortDate(subnote.created_at)}
+          {formatShortDate(subnote.created_at, t.localeCode)}
         </span>
         <div className="h-px flex-1 bg-border/50" />
       </div>
@@ -108,31 +109,22 @@ function SubnoteBlock({ subnote, onSave, onDelete }: SubnoteBlockProps) {
           <span className="text-[11px] text-muted-foreground/50 tracking-wide">{t.notes.saving}</span>
         )}
         <div className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {confirmDelete ? (
-            <>
-              <button
-                onClick={onDelete}
-                className="text-[11px] text-destructive hover:text-destructive/80 font-medium"
-              >
-                {t.notes.delete}
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-[11px] text-muted-foreground hover:text-foreground"
-              >
-                {t.notes.cancel}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="text-muted-foreground/50 hover:text-destructive transition-colors"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          )}
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="text-muted-foreground/50 hover:text-destructive transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        onConfirm={onDelete}
+        title="Delete entry"
+        description="This entry will be permanently deleted. This action cannot be undone."
+      />
     </div>
   );
 }
@@ -305,7 +297,7 @@ export function NoteDetail({
       {/* Top bar: date left, actions right */}
       <div className="sticky top-0 z-10 flex items-center justify-between px-10 py-3 bg-background/80 backdrop-blur-sm border-b border-border/40">
         <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
-          {formatNoteDate(note.created_at)}
+          {formatNoteDate(note.created_at, t.localeCode)}
         </time>
 
         <div className="flex items-center gap-1">
@@ -329,30 +321,20 @@ export function NoteDetail({
           >
             {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
           </button>
-          {confirmDelete ? (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onDelete}
-                className="text-xs font-medium text-destructive hover:text-destructive/80 px-2 py-1 rounded"
-              >
-                {t.notes.deleteNote}
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded"
-              >
-                {t.notes.cancel}
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="p-1.5 rounded text-muted-foreground/40 hover:text-destructive transition-colors"
-              aria-label="Delete note"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="p-1.5 rounded text-muted-foreground/40 hover:text-destructive transition-colors"
+            aria-label="Delete note"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <ConfirmDeleteDialog
+            open={confirmDelete}
+            onOpenChange={setConfirmDelete}
+            onConfirm={onDelete}
+            title="Delete note"
+            description="This note and all its entries will be permanently deleted. This action cannot be undone."
+          />
         </div>
       </div>
 

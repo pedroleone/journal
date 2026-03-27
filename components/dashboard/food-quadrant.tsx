@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { Plus } from "lucide-react";
 import { QuadrantCard } from "./quadrant-card";
 import { FoodInlineComposer } from "@/components/food/food-inline-composer";
@@ -76,6 +75,8 @@ export function FoodQuadrant({ date }: FoodQuadrantProps) {
 
   const assigned = entries.filter((e) => e.meal_slot);
   const filledSlots = new Set(assigned.map((e) => e.meal_slot));
+  const DEFAULT_MEALS = ["breakfast", "lunch", "dinner"];
+  const mealsFilled = [...filledSlots].filter((s) => DEFAULT_MEALS.includes(s as string)).length;
 
   return (
     <QuadrantCard
@@ -94,7 +95,7 @@ export function FoodQuadrant({ date }: FoodQuadrantProps) {
       }
       footer={
         <>
-          <span>{filledSlots.size} slots filled</span>
+          <span>{mealsFilled}/3 filled</span>
           <InboxBadge count={unsortedCount} />
         </>
       }
