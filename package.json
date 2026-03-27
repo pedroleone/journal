@@ -14,6 +14,7 @@
     "db:migrate": "node --experimental-strip-types scripts/run-drizzle.ts migrate",
     "db:push": "node --experimental-strip-types scripts/run-drizzle.ts push",
     "db:push:prod": "dotenv -e .env -- node --experimental-strip-types scripts/run-drizzle.ts push",
+    "db:migrate:prod": "dotenv -e .env -- node --experimental-strip-types scripts/run-drizzle.ts migrate",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "lint": "eslint",
     "test": "vitest run",
