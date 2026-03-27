@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Plus } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { QuadrantCard } from "./quadrant-card";
 import type { MediaStatus } from "@/lib/library";
 
@@ -20,7 +21,8 @@ interface LibraryItem {
   updated_at: string;
 }
 
-const DASHBOARD_ITEM_LIMIT = 6;
+const DESKTOP_ITEM_LIMIT = 30;
+const MOBILE_ITEM_LIMIT = 10;
 const RECENT_FINISHED_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 const STATUS_COLORS: Record<string, string> = {
@@ -74,17 +76,20 @@ function ItemRow({ item }: { item: LibraryItem }) {
 }
 
 export function LibraryQuadrant() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [inProgress, setInProgress] = useState<LibraryItem[]>([]);
   const [recentFinished, setRecentFinished] = useState<LibraryItem[]>([]);
   const [backlog, setBacklog] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [renderTime] = useState(() => Date.now());
 
+  const limit = isDesktop ? DESKTOP_ITEM_LIMIT : MOBILE_ITEM_LIMIT;
+
   useEffect(() => {
     Promise.all([
-      fetch("/api/library?status=in_progress").then((r) => r.json()),
-      fetch("/api/library?status=finished").then((r) => r.json()),
-      fetch("/api/library?status=backlog").then((r) => r.json()),
+      fetch(`/api/library?status=in_progress&limit=${limit}`).then((r) => r.json()),
+      fetch(`/api/library?status=finished&limit=${limit}`).then((r) => r.json()),
+      fetch(`/api/library?status=backlog&limit=${limit}`).then((r) => r.json()),
     ])
       .then(([ip, fin, backlogItems]: [LibraryItem[], LibraryItem[], LibraryItem[]]) => {
         setInProgress(ip);
@@ -97,7 +102,7 @@ export function LibraryQuadrant() {
         setBacklog([]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [limit]);
 
   const recentFinishedItems = recentFinished
     .filter((item) => {
@@ -110,7 +115,7 @@ export function LibraryQuadrant() {
     ...inProgress.toSorted((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
     ...recentFinishedItems,
     ...backlog.toSorted((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime()),
-  ].slice(0, DASHBOARD_ITEM_LIMIT);
+  ].slice(0, limit);
 
   const total = inProgress.length + recentFinishedItems.length + backlog.length;
 

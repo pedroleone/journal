@@ -13,7 +13,7 @@ import { notes } from "@/lib/schema";
 import { createNoteSchema, noteTagQuerySchema } from "@/lib/validators";
 
 export const GET = withAuth(async (userId, request: NextRequest) => {
-  const parsed = parseQuery(request, noteTagQuerySchema, ["tag"]);
+  const parsed = parseQuery(request, noteTagQuerySchema, ["tag", "limit"]);
   if (!parsed.success) return parsed.response;
 
   const conditions = [eq(notes.userId, userId)];
@@ -23,7 +23,7 @@ export const GET = withAuth(async (userId, request: NextRequest) => {
     );
   }
 
-  const result = await db
+  const query = db
     .select({
       id: notes.id,
       title: notes.title,
@@ -36,6 +36,11 @@ export const GET = withAuth(async (userId, request: NextRequest) => {
     .where(and(...conditions))
     .orderBy(desc(notes.updated_at));
 
+  if (parsed.data.limit) {
+    query.limit(parsed.data.limit);
+  }
+
+  const result = await query;
   return jsonNoStore(result);
 });
 

@@ -1,15 +1,13 @@
 import type { ReactNode } from "react";
 
 interface QuadrantGridProps {
-  main: ReactNode;
-  sidebar: ReactNode;
+  children: ReactNode;
 }
 
-export function QuadrantGrid({ main, sidebar }: QuadrantGridProps) {
+export function QuadrantGrid({ children }: QuadrantGridProps) {
   return (
-    <div className="flex flex-1 flex-col gap-px bg-border md:flex-row">
-      <div className="flex flex-1 flex-col gap-px md:flex-none md:w-3/5">{main}</div>
-      <div className="flex flex-1 flex-col gap-px md:flex-none md:w-2/5">{sidebar}</div>
+    <div className="grid flex-1 grid-cols-1 gap-px bg-border md:min-h-0 md:grid-cols-3">
+      {children}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Plus } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { QuadrantCard } from "./quadrant-card";
 
 interface NoteItem {
@@ -11,17 +12,22 @@ interface NoteItem {
   tags: string[] | null;
 }
 
+const DESKTOP_ITEM_LIMIT = 24;
+const MOBILE_ITEM_LIMIT = 6;
+
 export function NotesQuadrant() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const limit = isDesktop ? DESKTOP_ITEM_LIMIT : MOBILE_ITEM_LIMIT;
 
   useEffect(() => {
-    fetch("/api/notes")
+    fetch(`/api/notes?limit=${limit}`)
       .then((r) => r.json())
       .then((data: NoteItem[]) => setNotes(data))
       .catch(() => setNotes([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [limit]);
 
   const allTags = new Set(notes.flatMap((n) => n.tags ?? []));
 
@@ -63,7 +69,7 @@ export function NotesQuadrant() {
         </div>
       ) : notes.length > 0 ? (
         <div className="space-y-1.5">
-          {notes.slice(0, 3).map((note) => (
+          {notes.map((note) => (
             <Link
               key={note.id}
               href={`/notes/browse?id=${encodeURIComponent(note.id)}`}

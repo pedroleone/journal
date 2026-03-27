@@ -136,6 +136,7 @@ export const updateSubnoteSchema = z
 
 export const noteTagQuerySchema = z.object({
   tag: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
 export const mediaTypeEnum = z.enum(["book", "album", "movie", "game", "video", "misc"]);
@@ -181,6 +182,7 @@ export const mediaItemListQuerySchema = z.object({
   platform: z.string().optional(),
   rating: z.coerce.number().int().min(1).max(5).optional(),
   search: z.string().max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
 export const createMediaItemNoteSchema = z.object({

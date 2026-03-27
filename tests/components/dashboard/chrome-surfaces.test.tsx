@@ -13,7 +13,12 @@ vi.mock("@/hooks/use-media-query", () => ({
 
 describe("dashboard chrome surfaces", () => {
   it("uses shared surface tokens for the top navigation bars", () => {
-    render(<TopBar date={new Date("2026-03-20T00:00:00")} onDateChange={vi.fn()} />);
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    } as Response);
+
+    render(<TopBar />);
 
     expect(screen.getByRole("banner").className).toContain("bg-[var(--surface-topbar)]");
   });

@@ -15,7 +15,7 @@ import { createMediaItemSchema, mediaItemListQuerySchema } from "@/lib/validator
 
 export const GET = withAuth(async (userId, request: NextRequest) => {
   const parsed = parseQuery(request, mediaItemListQuerySchema, [
-    "type", "status", "genre", "reaction", "platform", "rating", "search",
+    "type", "status", "genre", "reaction", "platform", "rating", "search", "limit",
   ]);
   if (!parsed.success) return parsed.response;
 
@@ -52,7 +52,7 @@ export const GET = withAuth(async (userId, request: NextRequest) => {
     );
   }
 
-  const result = await db
+  const query = db
     .select({
       id: mediaItems.id,
       type: mediaItems.type,
@@ -75,6 +75,11 @@ export const GET = withAuth(async (userId, request: NextRequest) => {
     .where(and(...conditions))
     .orderBy(desc(mediaItems.updated_at));
 
+  if (parsed.data.limit) {
+    query.limit(parsed.data.limit);
+  }
+
+  const result = await query;
   return jsonNoStore(result);
 });
 

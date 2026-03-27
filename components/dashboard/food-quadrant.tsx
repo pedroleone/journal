@@ -16,22 +16,19 @@ interface FoodEntry {
   logged_at: string;
 }
 
-interface FoodQuadrantProps {
-  date: Date;
-}
-
 interface FoodSnapshot {
   requestKey: string;
   entries: FoodEntry[];
   unsortedCount: number;
 }
 
-export function FoodQuadrant({ date }: FoodQuadrantProps) {
+export function FoodQuadrant() {
   const [snapshot, setSnapshot] = useState<FoodSnapshot | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
-  const y = date.getFullYear();
-  const m = date.getMonth() + 1;
-  const d = date.getDate();
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = today.getMonth() + 1;
+  const d = today.getDate();
   const requestKey = `${y}-${m}-${d}`;
 
   const loadSnapshot = useCallback(() => {
