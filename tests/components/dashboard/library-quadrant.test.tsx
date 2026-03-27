@@ -57,6 +57,7 @@ describe("LibraryQuadrant", () => {
       status: "in_progress" | "finished" | "backlog";
       rating: number | null;
       cover_image: string | null;
+      metadata: Record<string, unknown> | null;
       added_at: string;
       finished_at: string | null;
       updated_at: string;
@@ -70,6 +71,7 @@ describe("LibraryQuadrant", () => {
       status: overrides.status ?? "in_progress",
       rating: overrides.rating ?? null,
       cover_image: overrides.cover_image ?? null,
+      metadata: overrides.metadata ?? null,
       added_at: overrides.added_at ?? "2026-03-01T00:00:00.000Z",
       finished_at: overrides.finished_at ?? null,
       updated_at: overrides.updated_at ?? "2026-03-01T00:00:00.000Z",
@@ -122,6 +124,191 @@ describe("LibraryQuadrant", () => {
       expect(image?.getAttribute("src")).toBe(
         "/api/images/user-1%2Flibrary%2Fitem-1%2Fcover%20image.enc",
       );
+    });
+  });
+
+  it("shows saved ebook progress percentages on in-progress rows", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        json: async () => [
+          makeItem("ebook-1", {
+            title: "Saved Ebook Progress",
+            type: "book",
+            status: "in_progress",
+            metadata: {
+              bookFormat: "ebook",
+              totalPages: null,
+              currentProgressPercent: 45,
+              currentProgressPage: null,
+              progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+            },
+          }),
+        ],
+      } as Response)
+      .mockResolvedValueOnce({ json: async () => [] } as Response)
+      .mockResolvedValueOnce({ json: async () => [] } as Response);
+
+    render(<LibraryQuadrant />);
+
+    expect(await screen.findByText("45%")).toBeTruthy();
+  });
+
+  it("places the percentage before the status pill on in-progress rows", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        json: async () => [
+          makeItem("ebook-1", {
+            title: "Ordered Progress",
+            type: "book",
+            status: "in_progress",
+            metadata: {
+              bookFormat: "ebook",
+              totalPages: null,
+              currentProgressPercent: 45,
+              currentProgressPage: null,
+              progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+            },
+          }),
+        ],
+      } as Response)
+      .mockResolvedValueOnce({ json: async () => [] } as Response)
+      .mockResolvedValueOnce({ json: async () => [] } as Response);
+
+    render(<LibraryQuadrant />);
+
+    const row = await screen.findByText("Ordered Progress");
+    const link = row.closest("a");
+    expect(link).toBeTruthy();
+
+    const spans = link?.querySelectorAll("span");
+    expect(spans?.[0].textContent).toBe("45%");
+    expect(spans?.[1].textContent).toBe("in progress");
+  });
+
+  it("shows derived physical book progress percentages on in-progress rows", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        json: async () => [
+          makeItem("physical-1", {
+            title: "Derived Physical Progress",
+            type: "book",
+            status: "in_progress",
+            metadata: {
+              bookFormat: "physical",
+              totalPages: 500,
+              currentProgressPercent: null,
+              currentProgressPage: 125,
+              progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+            },
+          }),
+        ],
+      } as Response)
+      .mockResolvedValueOnce({ json: async () => [] } as Response)
+      .mockResolvedValueOnce({ json: async () => [] } as Response);
+
+    render(<LibraryQuadrant />);
+
+    expect(await screen.findByText("25%")).toBeTruthy();
+  });
+
+  it("does not show progress percentages for non-book or non-in-progress rows", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        json: async () => [
+          makeItem("book-backlog", {
+            title: "Backlog Book",
+            type: "book",
+            status: "backlog",
+            metadata: {
+              bookFormat: "ebook",
+              totalPages: null,
+              currentProgressPercent: 80,
+              currentProgressPage: null,
+              progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+            },
+          }),
+        ],
+      } as Response)
+      .mockResolvedValueOnce({
+        json: async () => [
+          makeItem("album-progress", {
+            title: "In Progress Album",
+            type: "album",
+            status: "in_progress",
+            metadata: {
+              bookFormat: "physical",
+              totalPages: 200,
+              currentProgressPercent: null,
+              currentProgressPage: 50,
+              progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+            },
+          }),
+        ],
+      } as Response)
+      .mockResolvedValueOnce({
+        json: async () => [
+          makeItem("finished-book", {
+            title: "Finished Book",
+            type: "book",
+            status: "finished",
+            metadata: {
+              bookFormat: "physical",
+              totalPages: 200,
+              currentProgressPercent: null,
+              currentProgressPage: 200,
+              progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+            },
+          }),
+        ],
+      } as Response);
+
+    render(<LibraryQuadrant />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("80%")).toBeNull();
+      expect(screen.queryByText("25%")).toBeNull();
+      expect(screen.queryByText("100%")).toBeNull();
+    });
+  });
+
+  it("hides invalid book progress data on rows", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        json: async () => [
+          makeItem("ebook-invalid", {
+            title: "Invalid Ebook Progress",
+            type: "book",
+            status: "in_progress",
+            metadata: {
+              bookFormat: "ebook",
+              totalPages: null,
+              currentProgressPercent: 101,
+              currentProgressPage: null,
+              progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+            },
+          }),
+          makeItem("physical-invalid", {
+            title: "Invalid Physical Progress",
+            type: "book",
+            status: "in_progress",
+            metadata: {
+              bookFormat: "physical",
+              totalPages: 500,
+              currentProgressPercent: null,
+              currentProgressPage: 501,
+              progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+            },
+          }),
+        ],
+      } as Response)
+      .mockResolvedValueOnce({ json: async () => [] } as Response)
+      .mockResolvedValueOnce({ json: async () => [] } as Response);
+
+    render(<LibraryQuadrant />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("101%")).toBeNull();
+      expect(screen.queryByText("100%")).toBeNull();
     });
   });
 

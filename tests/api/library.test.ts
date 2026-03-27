@@ -22,6 +22,7 @@ function resetDb() {
   mockDb.from.mockReturnThis();
   mockDb.where.mockResolvedValue([]);
   mockDb.insert.mockReturnThis();
+  mockDb.transaction.mockImplementation(async (callback: (tx: typeof mockDb) => unknown) => callback(mockDb));
   mockDb.values.mockResolvedValue(undefined);
   mockDb.update.mockReturnThis();
   mockDb.set.mockReturnThis();
@@ -78,9 +79,101 @@ describe("POST /api/library", () => {
     expect(res.status).toBe(201);
   });
 
+  it("stores normalized ebook metadata on create", async () => {
+    await postItem({
+      type: "book",
+      title: "Ebook",
+      metadata: { bookFormat: "ebook" },
+    });
+
+    expect(mockDb.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          year: null,
+          bookFormat: "ebook",
+          totalPages: null,
+          currentProgressPercent: null,
+          currentProgressPage: null,
+          progressUpdatedAt: null,
+        },
+      }),
+    );
+  });
+
+  it("stores normalized physical metadata on create", async () => {
+    await postItem({
+      type: "book",
+      title: "Physical Book",
+      metadata: { bookFormat: "physical", totalPages: 320 },
+    });
+
+    expect(mockDb.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          year: null,
+          bookFormat: "physical",
+          totalPages: 320,
+          currentProgressPercent: null,
+          currentProgressPage: null,
+          progressUpdatedAt: null,
+        },
+      }),
+    );
+  });
+
+  it("stores book year when provided on create", async () => {
+    await postItem({
+      type: "book",
+      title: "Dune",
+      metadata: {
+        year: 1965,
+        bookFormat: "ebook",
+      },
+    });
+
+    expect(mockDb.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          year: 1965,
+          bookFormat: "ebook",
+          totalPages: null,
+          currentProgressPercent: null,
+          currentProgressPage: null,
+          progressUpdatedAt: null,
+        },
+      }),
+    );
+  });
+
+  it("returns 400 for unsupported book format", async () => {
+    const res = await postItem({
+      type: "book",
+      title: "Broken Book",
+      metadata: { bookFormat: "comic" },
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockDb.insert).not.toHaveBeenCalled();
+    expect(mockDb.values).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for invalid totalPages", async () => {
+    const res = await postItem({
+      type: "book",
+      title: "Broken Book",
+      metadata: { bookFormat: "physical", totalPages: 0 },
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockDb.insert).not.toHaveBeenCalled();
+    expect(mockDb.values).not.toHaveBeenCalled();
+  });
+
   it("returns 400 when title is missing", async () => {
     const res = await postItem({ type: "book" });
     expect(res.status).toBe(400);
+    expect(mockDb.insert).not.toHaveBeenCalled();
+    expect(mockDb.values).not.toHaveBeenCalled();
   });
 
   it("encrypts content when provided", async () => {
@@ -99,6 +192,21 @@ describe("POST /api/library", () => {
     await postItem({ type: "game", title: "Game" });
     expect(mockDb.values).toHaveBeenCalledWith(
       expect.objectContaining({ added_at: expect.any(String) }),
+    );
+  });
+
+  it("preserves legacy non-book create behavior", async () => {
+    const res = await postItem({
+      type: "album",
+      title: "Legacy Album",
+      metadata: { platform: ["streaming"] },
+    });
+
+    expect(res.status).toBe(201);
+    expect(mockDb.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { platform: ["streaming"] },
+      }),
     );
   });
 });
@@ -256,6 +364,55 @@ describe("GET /api/library/[id]", () => {
     expect(data.encrypted_content).toBeUndefined();
     expect(Array.isArray(data.notes)).toBe(true);
   });
+
+  it("normalizes book metadata on reads", async () => {
+    mockDb.where
+      .mockResolvedValueOnce([
+        {
+          id: "item-1",
+          userId: "user-1",
+          type: "book",
+          title: "My Book",
+          creator: "Author",
+          url: null,
+          status: "in_progress",
+          rating: 4,
+          reactions: ["interesting"],
+          genres: ["fiction"],
+          metadata: {
+            year: 1965,
+            bookFormat: "ebook",
+            totalPages: 320,
+            currentProgressPercent: 40,
+            currentProgressPage: 120,
+            progressUpdatedAt: "2026-03-07T00:00:00.000Z",
+          },
+          cover_image: null,
+          encrypted_content: null,
+          iv: null,
+          added_at: "2026-03-07T00:00:00.000Z",
+          started_at: null,
+          finished_at: null,
+          created_at: "2026-03-07T00:00:00.000Z",
+          updated_at: "2026-03-07T00:00:00.000Z",
+        },
+      ])
+      .mockReturnThis();
+    mockDb.orderBy.mockResolvedValueOnce([]);
+
+    const res = await getItem("item-1");
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.metadata).toEqual({
+      year: 1965,
+      bookFormat: "ebook",
+      totalPages: null,
+      currentProgressPercent: 40,
+      currentProgressPage: null,
+      progressUpdatedAt: null,
+    });
+  });
 });
 
 describe("PUT /api/library/[id]", () => {
@@ -300,6 +457,279 @@ describe("PUT /api/library/[id]", () => {
     mockDb.where.mockResolvedValueOnce({ rowsAffected: 1 });
     await putItem("item-1", { content: "new content" });
     expect(mockServerCrypto.encryptServerText).toHaveBeenCalledWith("new content");
+  });
+
+  it("returns 400 for unsupported book format on update", async () => {
+    mockDb.where.mockResolvedValueOnce([
+      {
+        type: "book",
+        metadata: null,
+        started_at: null,
+        finished_at: null,
+      },
+    ]);
+
+    const res = await putItem("item-1", {
+      metadata: { bookFormat: "comic" },
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockDb.update).not.toHaveBeenCalled();
+    expect(mockDb.set).not.toHaveBeenCalled();
+  });
+
+  it("clears incompatible snapshot fields when changing a book to ebook", async () => {
+    mockDb.where
+      .mockResolvedValueOnce([
+        {
+          type: "book",
+          metadata: {
+            year: 1999,
+            bookFormat: "physical",
+            totalPages: 320,
+            currentProgressPercent: null,
+            currentProgressPage: 120,
+            progressUpdatedAt: "2026-03-20T12:00:00.000Z",
+          },
+        },
+      ])
+      .mockResolvedValueOnce({ rowsAffected: 1 });
+
+    const res = await putItem("item-1", {
+      metadata: {
+        bookFormat: "ebook",
+        totalPages: 320,
+        currentProgressPercent: 45,
+        currentProgressPage: 120,
+        progressUpdatedAt: "2026-03-21T12:00:00.000Z",
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDb.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          year: 1999,
+          bookFormat: "ebook",
+          totalPages: null,
+          currentProgressPercent: 45,
+          currentProgressPage: null,
+          progressUpdatedAt: null,
+        },
+      }),
+    );
+  });
+
+  it("merges partial book metadata updates with the stored snapshot", async () => {
+    mockDb.where
+      .mockResolvedValueOnce([
+        {
+          type: "book",
+          metadata: {
+            year: 1999,
+            bookFormat: "physical",
+            totalPages: 320,
+            currentProgressPercent: null,
+            currentProgressPage: 120,
+            progressUpdatedAt: "2026-03-20T12:00:00.000Z",
+          },
+        },
+      ])
+      .mockResolvedValueOnce({ rowsAffected: 1 });
+
+    const res = await putItem("item-1", {
+      metadata: {
+        totalPages: 400,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDb.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          year: 1999,
+          bookFormat: "physical",
+          totalPages: 400,
+          currentProgressPercent: null,
+          currentProgressPage: 120,
+          progressUpdatedAt: "2026-03-20T12:00:00.000Z",
+        },
+      }),
+    );
+  });
+
+  it("accepts year updates for book metadata", async () => {
+    mockDb.where
+      .mockResolvedValueOnce([
+        {
+          type: "book",
+          metadata: {
+            year: 1999,
+            bookFormat: "ebook",
+            totalPages: null,
+            currentProgressPercent: 45,
+            currentProgressPage: null,
+            progressUpdatedAt: "2026-03-20T12:00:00.000Z",
+          },
+          started_at: null,
+          finished_at: null,
+        },
+      ])
+      .mockResolvedValueOnce({ rowsAffected: 1 });
+
+    const res = await putItem("item-1", {
+      metadata: {
+        year: 2001,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDb.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          year: 2001,
+          bookFormat: "ebook",
+          totalPages: null,
+          currentProgressPercent: 45,
+          currentProgressPage: null,
+          progressUpdatedAt: "2026-03-20T12:00:00.000Z",
+        },
+      }),
+    );
+  });
+
+  it("clears page snapshot when totalPages is lowered below current page progress", async () => {
+    mockDb.where
+      .mockResolvedValueOnce([
+        {
+          type: "book",
+          metadata: {
+            year: 1999,
+            bookFormat: "physical",
+            totalPages: 320,
+            currentProgressPercent: null,
+            currentProgressPage: 250,
+            progressUpdatedAt: "2026-03-20T12:00:00.000Z",
+          },
+        },
+      ])
+      .mockResolvedValueOnce({ rowsAffected: 1 });
+
+    const res = await putItem("item-1", {
+      metadata: {
+        bookFormat: "physical",
+        totalPages: 200,
+        currentProgressPage: 250,
+        progressUpdatedAt: "2026-03-21T12:00:00.000Z",
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDb.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          year: 1999,
+          bookFormat: "physical",
+          totalPages: 200,
+          currentProgressPercent: null,
+          currentProgressPage: null,
+          progressUpdatedAt: null,
+        },
+      }),
+    );
+  });
+
+  it("prefixes nested metadata validation paths on update", async () => {
+    mockDb.where.mockResolvedValueOnce([
+      {
+        type: "book",
+        metadata: null,
+        started_at: null,
+        finished_at: null,
+      },
+    ]);
+
+    const res = await putItem("item-1", {
+      metadata: {
+        currentProgressPercent: 101,
+      },
+    });
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.details).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: ["metadata", "currentProgressPercent"],
+        }),
+      ]),
+    );
+    expect(mockDb.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid nested progress snapshot fields on update", async () => {
+    mockDb.where.mockResolvedValueOnce([
+      {
+        type: "book",
+        metadata: null,
+        started_at: null,
+        finished_at: null,
+      },
+    ]);
+
+    const res = await putItem("item-1", {
+      metadata: {
+        currentProgressPage: 0,
+      },
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockDb.update).not.toHaveBeenCalled();
+    expect(mockDb.set).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown book metadata keys on update", async () => {
+    mockDb.where.mockResolvedValueOnce([
+      {
+        type: "book",
+        metadata: null,
+        started_at: null,
+        finished_at: null,
+      },
+    ]);
+
+    const res = await putItem("item-1", {
+      metadata: {
+        pages: 320,
+      },
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockDb.update).not.toHaveBeenCalled();
+  });
+
+  it("preserves legacy non-book metadata updates", async () => {
+    mockDb.where
+      .mockResolvedValueOnce([
+        {
+          type: "album",
+          metadata: { platform: ["streaming"] },
+          started_at: null,
+          finished_at: null,
+        },
+      ])
+      .mockResolvedValueOnce({ rowsAffected: 1 });
+
+    const res = await putItem("item-1", {
+      metadata: { platform: ["vinyl"] },
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDb.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { platform: ["vinyl"] },
+      }),
+    );
   });
 });
 

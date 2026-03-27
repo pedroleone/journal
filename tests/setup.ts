@@ -33,6 +33,7 @@ vi.mock("@/lib/db", () => ({
   db: {
     insert: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
+    transaction: vi.fn(),
     update: vi.fn().mockReturnThis(),
     delete: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),

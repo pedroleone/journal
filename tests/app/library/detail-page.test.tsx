@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import LibraryDetailPage from "@/app/library/[id]/page";
 
@@ -23,8 +23,23 @@ vi.mock("@/hooks/use-locale", () => ({
 }));
 
 vi.mock("@/components/library/library-detail", () => ({
-  LibraryDetail: ({ item }: { item: { title: string } }) => (
-    <div data-testid="library-detail">{item.title}</div>
+  LibraryDetail: ({
+    item,
+    onProgressSubmit,
+  }: {
+    item: { title: string };
+    onProgressSubmit?: (data: { progressPercent: number }) => Promise<void>;
+  }) => (
+    <div data-testid="library-detail">
+      {item.title}
+      <button
+        type="button"
+        data-testid="submit-progress"
+        onClick={() => void onProgressSubmit?.({ progressPercent: 50 })}
+      >
+        Submit progress
+      </button>
+    </div>
   ),
 }));
 
@@ -49,5 +64,40 @@ describe("LibraryDetailPage", () => {
     expect(content?.className).toContain("flex-1");
     expect(content?.className).not.toContain("overflow-y-auto");
     expect(content?.className).not.toContain("lg:overflow-hidden");
+  });
+
+  it("wires a progress submit handler into LibraryDetail", async () => {
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: "item-1",
+          title: "Test title",
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ ok: true }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: "item-1",
+          title: "Updated title",
+        }),
+      } as Response);
+
+    render(<LibraryDetailPage />);
+
+    await screen.findByTestId("library-detail");
+    fireEvent.click(screen.getByTestId("submit-progress"));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/library/item-1/progress",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+    await screen.findByText("Updated title");
   });
 });

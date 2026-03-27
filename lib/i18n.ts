@@ -139,8 +139,19 @@ export type Translations = {
     adding: string;
     platform: string;
     pages: string;
+    bookFormat: string;
+    ebook: string;
+    physical: string;
+    totalPages: string;
     duration: string;
     channel: string;
+    readingProgress: string;
+    currentProgress: string;
+    updatePercent: string;
+    updatePage: string;
+    log: string;
+    updatedDate: string;
+    finishCue: string;
     deleteItem: string;
     filters: string;
     clearFilters: string;
@@ -350,8 +361,19 @@ export const en: Translations = {
     adding: "Adding…",
     platform: "Platform",
     pages: "Pages",
+    bookFormat: "Book format",
+    ebook: "Ebook",
+    physical: "Physical",
+    totalPages: "Total pages",
     duration: "Duration",
     channel: "Channel",
+    readingProgress: "Reading progress",
+    currentProgress: "Current progress",
+    updatePercent: "Update percent",
+    updatePage: "Update page",
+    log: "Log",
+    updatedDate: "Last updated",
+    finishCue: "Almost finished",
     deleteItem: "Delete item",
     filters: "Filters",
     clearFilters: "Clear filters",
@@ -565,8 +587,19 @@ export const ptBr: Translations = {
     adding: "Adicionando\u2026",
     platform: "Plataforma",
     pages: "P\u00e1ginas",
+    bookFormat: "Formato do livro",
+    ebook: "Ebook",
+    physical: "F\u00edsico",
+    totalPages: "Total de p\u00e1ginas",
     duration: "Dura\u00e7\u00e3o",
     channel: "Canal",
+    readingProgress: "Progresso de leitura",
+    currentProgress: "Progresso atual",
+    updatePercent: "Atualizar porcentagem",
+    updatePage: "Atualizar p\u00e1gina",
+    log: "Registrar",
+    updatedDate: "Atualizado em",
+    finishCue: "Quase terminado",
     deleteItem: "Excluir item",
     filters: "Filtros",
     clearFilters: "Limpar filtros",

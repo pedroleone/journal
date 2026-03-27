@@ -7,6 +7,7 @@ import {
   foodListQuerySchema,
   assignFoodEntrySchema,
   updateFoodContentSchema,
+  bookMetadataSchema,
   backupPayloadSchema,
 } from "@/lib/validators";
 
@@ -274,6 +275,22 @@ describe("updateFoodContentSchema", () => {
   it("rejects empty content", () => {
     const result = updateFoodContentSchema.safeParse({ content: "" });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("bookMetadataSchema", () => {
+  it("accepts book year alongside progress metadata", () => {
+    const result = bookMetadataSchema.safeParse({
+      year: 2024,
+      bookFormat: "ebook",
+      totalPages: null,
+      currentProgressPercent: 35,
+      currentProgressPage: null,
+      progressUpdatedAt: "2026-03-21T12:00:00.000Z",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.year).toBe(2024);
   });
 });
 

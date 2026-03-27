@@ -6,7 +6,7 @@ import Link from "next/link";
 import { BookOpen, Plus } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { QuadrantCard } from "./quadrant-card";
-import type { MediaStatus } from "@/lib/library";
+import { getBookProgressPercent, type BookProgressMetadata, type MediaStatus } from "@/lib/library";
 
 interface LibraryItem {
   id: string;
@@ -16,6 +16,7 @@ interface LibraryItem {
   status: MediaStatus;
   rating: number | null;
   cover_image: string | null;
+  metadata: BookProgressMetadata | null;
   added_at: string;
   finished_at: string | null;
   updated_at: string;
@@ -43,6 +44,11 @@ function StatusPill({ status }: { status: string }) {
 }
 
 function ItemRow({ item }: { item: LibraryItem }) {
+  const progressPercent =
+    item.type === "book" && item.status === "in_progress"
+      ? getBookProgressPercent(item.metadata)
+      : null;
+
   return (
     <Link
       href={`/library/${encodeURIComponent(item.id)}`}
@@ -70,7 +76,14 @@ function ItemRow({ item }: { item: LibraryItem }) {
           </p>
         )}
       </div>
-      <StatusPill status={item.status} />
+      <div className="flex items-center gap-1.5">
+        {progressPercent !== null && (
+          <span className="whitespace-nowrap text-xs font-medium tabular-nums text-muted-foreground">
+            {progressPercent}%
+          </span>
+        )}
+        <StatusPill status={item.status} />
+      </div>
     </Link>
   );
 }

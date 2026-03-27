@@ -92,12 +92,6 @@ vi.mock("@/hooks/use-media-query", () => ({
   useMediaQuery: () => false,
 }));
 
-vi.mock("@/components/library/library-card", () => ({
-  LibraryCard: ({ item }: { item: { title: string } }) => (
-    <div data-testid="library-card">{item.title}</div>
-  ),
-}));
-
 function makeItem(overrides: Partial<BrowseItem> = {}): BrowseItem {
   return {
     id: "item-1",
@@ -200,5 +194,135 @@ describe("LibraryBrowse", () => {
     );
 
     expect(push).toHaveBeenCalledWith("/library/new");
+  });
+
+  it("shows saved ebook progress percentages on in-progress book cards", () => {
+    renderBrowse({
+      items: [
+        makeItem({
+          id: "ebook-1",
+          type: "book",
+          status: "in_progress",
+          title: "Saved Ebook Progress",
+          metadata: {
+            bookFormat: "ebook",
+            totalPages: null,
+            currentProgressPercent: 45,
+            currentProgressPage: null,
+            progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+          },
+        }),
+      ],
+    });
+
+    expect(screen.getByText("45%")).toBeTruthy();
+  });
+
+  it("shows derived physical book progress percentages on in-progress book cards", () => {
+    renderBrowse({
+      items: [
+        makeItem({
+          id: "physical-1",
+          type: "book",
+          status: "in_progress",
+          title: "Derived Physical Progress",
+          metadata: {
+            bookFormat: "physical",
+            totalPages: 500,
+            currentProgressPercent: null,
+            currentProgressPage: 125,
+            progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+          },
+        }),
+      ],
+    });
+
+    expect(screen.getByText("25%")).toBeTruthy();
+  });
+
+  it("does not show progress percentages for non-book or non-in-progress cards", () => {
+    renderBrowse({
+      items: [
+        makeItem({
+          id: "book-backlog",
+          type: "book",
+          status: "backlog",
+          title: "Backlog Book",
+          metadata: {
+            bookFormat: "ebook",
+            totalPages: null,
+            currentProgressPercent: 80,
+            currentProgressPage: null,
+            progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+          },
+        }),
+        makeItem({
+          id: "album-progress",
+          type: "album",
+          status: "in_progress",
+          title: "In Progress Album",
+          metadata: {
+            bookFormat: "physical",
+            totalPages: 200,
+            currentProgressPercent: null,
+            currentProgressPage: 50,
+            progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+          },
+        }),
+        makeItem({
+          id: "finished-book",
+          type: "book",
+          status: "finished",
+          title: "Finished Book",
+          metadata: {
+            bookFormat: "physical",
+            totalPages: 200,
+            currentProgressPercent: null,
+            currentProgressPage: 200,
+            progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+          },
+        }),
+      ],
+    });
+
+    expect(screen.queryByText("80%")).toBeNull();
+    expect(screen.queryByText("25%")).toBeNull();
+    expect(screen.queryByText("100%")).toBeNull();
+  });
+
+  it("hides invalid book progress data on cards", () => {
+    renderBrowse({
+      items: [
+        makeItem({
+          id: "ebook-invalid",
+          type: "book",
+          status: "in_progress",
+          title: "Invalid Ebook Progress",
+          metadata: {
+            bookFormat: "ebook",
+            totalPages: null,
+            currentProgressPercent: 101,
+            currentProgressPage: null,
+            progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+          },
+        }),
+        makeItem({
+          id: "physical-invalid",
+          type: "book",
+          status: "in_progress",
+          title: "Invalid Physical Progress",
+          metadata: {
+            bookFormat: "physical",
+            totalPages: 500,
+            currentProgressPercent: null,
+            currentProgressPage: 501,
+            progressUpdatedAt: "2026-03-23T00:00:00.000Z",
+          },
+        }),
+      ],
+    });
+
+    expect(screen.queryByText("101%")).toBeNull();
+    expect(screen.queryByText("100%")).toBeNull();
   });
 });

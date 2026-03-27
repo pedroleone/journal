@@ -141,19 +141,75 @@ export const noteTagQuerySchema = z.object({
 
 export const mediaTypeEnum = z.enum(["book", "album", "movie", "game", "video", "misc"]);
 export const mediaStatusEnum = z.enum(["backlog", "in_progress", "finished", "dropped"]);
+export const bookFormatEnum = z.enum(["ebook", "physical"]);
 
-export const createMediaItemSchema = z.object({
-  type: mediaTypeEnum,
-  title: z.string().min(1),
-  creator: z.string().nullable().optional(),
-  url: z.string().nullable().optional(),
-  status: mediaStatusEnum.default("backlog"),
-  rating: z.number().int().min(1).max(5).nullable().optional(),
-  reactions: z.array(z.string().min(1)).nullable().optional(),
-  genres: z.array(z.string().min(1)).nullable().optional(),
-  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
-  content: z.string().nullable().optional(),
-});
+const positiveIntSchema = z.number().int().positive();
+
+export const bookMetadataSchema = z.object({
+  year: z.coerce.number().int().nullable().optional(),
+  bookFormat: bookFormatEnum.nullable().optional(),
+  totalPages: positiveIntSchema.nullable().optional(),
+  currentProgressPercent: z.number().int().min(0).max(100).nullable().optional(),
+  currentProgressPage: positiveIntSchema.nullable().optional(),
+  progressUpdatedAt: z.string().datetime().nullable().optional(),
+}).strict();
+
+function addBookMetadataIssues(
+  metadata: unknown,
+  ctx: z.RefinementCtx,
+) {
+  const result = bookMetadataSchema.safeParse(metadata);
+  if (result.success) return;
+
+  for (const issue of result.error.issues) {
+    ctx.addIssue({
+      ...issue,
+      path: ["metadata", ...issue.path],
+    });
+  }
+}
+
+export const bookProgressPercentPayloadSchema = z.object({
+  progressPercent: z.number().int().min(0).max(100),
+}).strict();
+
+export const bookProgressPagePayloadSchema = z.object({
+  currentPage: positiveIntSchema,
+}).strict();
+
+const bookProgressPayloadSchemasByFormat = {
+  ebook: bookProgressPercentPayloadSchema,
+  physical: bookProgressPagePayloadSchema,
+} as const;
+
+// Kept alongside book metadata validation because the next route in this feature
+// set consumes the same book-specific payload contract.
+export const bookProgressPayloadSchema = z.union([
+  bookProgressPayloadSchemasByFormat.ebook,
+  bookProgressPayloadSchemasByFormat.physical,
+]);
+
+export function getBookProgressPayloadSchema(bookFormat: z.infer<typeof bookFormatEnum> | null) {
+  return bookFormat ? bookProgressPayloadSchemasByFormat[bookFormat] : null;
+}
+
+export const createMediaItemSchema = z
+  .object({
+    type: mediaTypeEnum,
+    title: z.string().min(1),
+    creator: z.string().nullable().optional(),
+    url: z.string().nullable().optional(),
+    status: mediaStatusEnum.default("backlog"),
+    rating: z.number().int().min(1).max(5).nullable().optional(),
+    reactions: z.array(z.string().min(1)).nullable().optional(),
+    genres: z.array(z.string().min(1)).nullable().optional(),
+    metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+    content: z.string().nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.type !== "book" || value.metadata == null) return;
+    addBookMetadataIssues(value.metadata, ctx);
+  });
 
 export const updateMediaItemSchema = z
   .object({

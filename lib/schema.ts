@@ -1,10 +1,12 @@
 import {
+  check,
   sqliteTable,
   text,
   integer,
   index,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 
 export const users = sqliteTable(
   "users",
@@ -185,5 +187,48 @@ export const mediaItemNotes = sqliteTable(
   },
   (table) => [
     index("idx_media_item_notes_item").on(table.mediaItemId),
+  ],
+);
+
+export const mediaItemProgressUpdates = sqliteTable(
+  "media_item_progress_updates",
+  {
+    id: text("id").primaryKey(),
+    mediaItemId: text("media_item_id")
+      .notNull()
+      .references(() => mediaItems.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    progress_kind: text("progress_kind", {
+      enum: ["percent", "page"],
+    }).notNull(),
+    progress_value: integer("progress_value").notNull(),
+    max_value: integer("max_value"),
+    created_at: text("created_at").notNull(),
+  },
+  (table) => [
+    index("idx_media_item_progress_updates_item").on(table.mediaItemId),
+    index("idx_media_item_progress_updates_user_created").on(table.userId, table.created_at),
+    check(
+      "media_item_progress_updates_progress_kind_check",
+      sql`${table.progress_kind} in ('percent', 'page')`,
+    ),
+    check(
+      "media_item_progress_updates_progress_value_check",
+      sql`${table.progress_value} >= 0`,
+    ),
+    check(
+      "media_item_progress_updates_max_value_check",
+      sql`${table.max_value} is null or ${table.max_value} > 0`,
+    ),
+    check(
+      "media_item_progress_updates_progress_range_check",
+      sql`${table.max_value} is null or ${table.progress_value} <= ${table.max_value}`,
+    ),
+    check(
+      "media_item_progress_updates_percent_value_check",
+      sql`${table.progress_kind} != 'percent' or ${table.progress_value} <= 100`,
+    ),
   ],
 );

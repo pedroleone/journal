@@ -10,7 +10,7 @@ import {
 import { db } from "@/lib/db";
 import { jsonNoStore } from "@/lib/http";
 import { mediaItems } from "@/lib/schema";
-import { computeStatusTimestamps } from "@/lib/library";
+import { computeStatusTimestamps, normalizeBookMetadata } from "@/lib/library";
 import { createMediaItemSchema, mediaItemListQuerySchema } from "@/lib/validators";
 
 export const GET = withAuth(async (userId, request: NextRequest) => {
@@ -98,6 +98,10 @@ export const POST = withAuth(async (userId, request) => {
     iv = encrypted.iv;
   }
 
+  const metadata = parsed.data.type === "book"
+    ? normalizeBookMetadata(parsed.data.metadata)
+    : parsed.data.metadata ?? null;
+
   await db.insert(mediaItems).values({
     id,
     userId,
@@ -109,7 +113,7 @@ export const POST = withAuth(async (userId, request) => {
     rating: parsed.data.rating ?? null,
     reactions: parsed.data.reactions ?? null,
     genres: parsed.data.genres ?? null,
-    metadata: parsed.data.metadata ?? null,
+    metadata,
     cover_image: null,
     encrypted_content,
     iv,

@@ -33,7 +33,6 @@ export interface BrowseItem extends LibraryCardItem {
   url: string | null;
   reactions: string[] | null;
   genres: string[] | null;
-  metadata: Record<string, unknown> | null;
   added_at: string;
   started_at: string | null;
   finished_at: string | null;

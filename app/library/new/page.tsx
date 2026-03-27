@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { LibraryTypePicker } from "@/components/library/library-type-picker";
 import { LibraryDetail, type LibraryDetailData } from "@/components/library/library-detail";
 import { useLocale } from "@/hooks/use-locale";
+import { normalizeBookMetadata } from "@/lib/library";
 import type { MediaType } from "@/lib/library";
 
 const NEW_ITEM_ID = "__new__";
@@ -22,7 +23,7 @@ function buildDraftItem(type: MediaType): LibraryDetailData {
     rating: null,
     reactions: null,
     genres: null,
-    metadata: null,
+    metadata: type === "book" ? normalizeBookMetadata(null) : null,
     cover_image: null,
     content: null,
     added_at: now,
@@ -32,6 +33,18 @@ function buildDraftItem(type: MediaType): LibraryDetailData {
     updated_at: now,
     notes: [],
   };
+}
+
+function getMetadataForDraftType(
+  type: MediaType,
+  currentMetadata: LibraryDetailData["metadata"],
+  nextMetadata: Record<string, unknown> | null | undefined,
+) {
+  if (type !== "book") {
+    return nextMetadata ?? null;
+  }
+
+  return normalizeBookMetadata(nextMetadata ?? currentMetadata);
 }
 
 export default function LibraryNewPage() {
@@ -47,7 +60,28 @@ export default function LibraryNewPage() {
 
   async function handleUpdate(data: Record<string, unknown>) {
     if (!draft) return;
-    setDraft((current) => current ? { ...current, ...data } as LibraryDetailData : current);
+    setDraft((current) => {
+      if (!current) return current;
+
+      const nextType = (typeof data.type === "string" ? data.type : current.type) as MediaType;
+      const metadataOverride = data.metadata;
+      const nextMetadata = getMetadataForDraftType(
+        nextType,
+        current.metadata,
+        metadataOverride && typeof metadataOverride === "object"
+          ? metadataOverride as Record<string, unknown>
+          : metadataOverride === null
+            ? null
+            : undefined,
+      );
+
+      return {
+        ...current,
+        ...data,
+        type: nextType,
+        metadata: nextMetadata,
+      } as LibraryDetailData;
+    });
   }
 
   async function handleCreate(data: Record<string, unknown>) {

@@ -3,7 +3,7 @@
 import { Star, Book, Disc3, Film, Gamepad2, Video, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
-import type { MediaType, MediaStatus } from "@/lib/library";
+import { getBookProgressPercent, type BookProgressMetadata, type MediaType, type MediaStatus } from "@/lib/library";
 
 const TYPE_ICONS: Record<MediaType, typeof Book> = {
   book: Book,
@@ -38,6 +38,7 @@ export interface LibraryCardItem {
   status: MediaStatus;
   rating: number | null;
   cover_image: string | null;
+  metadata: BookProgressMetadata | null;
 }
 
 interface LibraryCardProps {
@@ -49,6 +50,10 @@ export function LibraryCard({ item, onClick }: LibraryCardProps) {
   const { t } = useLocale();
   const Icon = TYPE_ICONS[item.type];
   const isAlbum = item.type === "album";
+  const progressPercent =
+    item.type === "book" && item.status === "in_progress"
+      ? getBookProgressPercent(item.metadata)
+      : null;
 
   const statusLabels: Record<MediaStatus, string> = {
     backlog: t.library.backlog,
@@ -99,6 +104,9 @@ export function LibraryCard({ item, onClick }: LibraryCardProps) {
         <p className="text-sm font-medium leading-tight truncate">{displayTitle}</p>
         {displayCreator && (
           <p className="text-xs text-muted-foreground truncate">{displayCreator}</p>
+        )}
+        {progressPercent !== null && (
+          <p className="text-xs text-muted-foreground truncate">{progressPercent}%</p>
         )}
         {(item.status === "finished" || item.status === "dropped") && item.rating && (
           <div className="flex gap-0.5 pt-0.5">

@@ -126,6 +126,17 @@ export default function LibraryDetailPage() {
     await refreshCurrent({ showLoading: false });
   }
 
+  async function handleProgressSubmit(data: { progressPercent: number } | { currentPage: number }) {
+    const current = itemRef.current;
+    if (!current) return;
+    await fetch(`/api/library/${current.id}/progress`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    await refreshCurrent({ showLoading: false });
+  }
+
   return (
     <div className="h-full flex flex-col">
       {/* Back button */}
@@ -160,6 +171,7 @@ export default function LibraryDetailPage() {
             onDeleteNote={handleDeleteNote}
             onUploadCover={handleUploadCover}
             onDeleteCover={handleDeleteCover}
+            onProgressSubmit={handleProgressSubmit}
           />
         )}
       </div>

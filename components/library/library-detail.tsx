@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { Trash2, Plus, Star, ImagePlus, X as XIcon, Pencil } from "lucide-react";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
@@ -8,8 +8,13 @@ import { VocabularyInput } from "@/components/library/vocabulary-input";
 import { StatusTransition } from "@/components/library/status-transition";
 import { useLocale } from "@/hooks/use-locale";
 import { cn } from "@/lib/utils";
-import { MEDIA_TYPES, CREATOR_LABELS } from "@/lib/library";
-import type { MediaType, MediaStatus } from "@/lib/library";
+import {
+  MEDIA_TYPES,
+  CREATOR_LABELS,
+  deriveBookProgressPercent,
+  normalizeBookMetadata,
+} from "@/lib/library";
+import type { MediaType, MediaStatus, BookFormat, BookMetadata } from "@/lib/library";
 
 const STATUS_BADGE_COLORS: Record<MediaStatus, string> = {
   backlog: "bg-muted text-muted-foreground",
@@ -51,6 +56,7 @@ interface LibraryDetailProps {
   item: LibraryDetailData;
   onUpdate: (data: Record<string, unknown>) => Promise<void>;
   onCreate?: (data: Record<string, unknown>) => Promise<void>;
+  onProgressSubmit?: (data: { progressPercent: number } | { currentPage: number }) => Promise<void>;
   onAddNote: (content: string) => Promise<void>;
   onUpdateNote: (noteId: string, content: string) => Promise<void>;
   onDelete: () => Promise<void>;
@@ -76,6 +82,38 @@ function formatShortDate(iso: string, localeCode: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function formatProgressDate(iso: string, localeCode: string): string {
+  return new Date(iso).toLocaleDateString(localeCode, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getLocaleCode(
+  translations: { localeCode?: string; library?: Record<string, unknown> },
+): string {
+  const libraryLocaleCode = translations.library?.localeCode;
+  return typeof translations.localeCode === "string"
+    ? translations.localeCode
+    : typeof libraryLocaleCode === "string"
+      ? libraryLocaleCode
+      : "en-US";
+}
+
+function areBookMetadataEqual(a: BookMetadata, b: BookMetadata): boolean {
+  return a.year === b.year
+    && a.bookFormat === b.bookFormat
+    && a.totalPages === b.totalPages
+    && a.currentProgressPercent === b.currentProgressPercent
+    && a.currentProgressPage === b.currentProgressPage
+    && a.progressUpdatedAt === b.progressUpdatedAt;
+}
+
+function isBookFormat(value: string): value is BookFormat {
+  return value === "ebook" || value === "physical";
 }
 
 export function getFieldDisplayMode(editMode: boolean): "view" | "edit" {
@@ -119,6 +157,7 @@ function NoteBlock({ note, onSave, onDelete }: NoteBlockProps) {
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { t } = useLocale();
+  const localeCode = getLocaleCode(t);
 
   useEffect(() => { setDraft(note.content); }, [note.content]);
 
@@ -140,7 +179,7 @@ function NoteBlock({ note, onSave, onDelete }: NoteBlockProps) {
       <div className="mb-6 flex items-center gap-4">
         <div className="h-px flex-1 bg-border/50" />
         <span className="text-[11px] tracking-widest uppercase text-muted-foreground/60 font-medium select-none">
-          {formatShortDate(note.created_at, t.localeCode)}
+          {formatShortDate(note.created_at, localeCode)}
         </span>
         <div className="h-px flex-1 bg-border/50" />
       </div>
@@ -180,6 +219,7 @@ export function LibraryDetail({
   item,
   onUpdate,
   onCreate,
+  onProgressSubmit,
   onAddNote,
   onUpdateNote,
   onDelete,
@@ -188,13 +228,21 @@ export function LibraryDetail({
   onDeleteCover,
   coverUploadDisabled = false,
 }: LibraryDetailProps) {
+  const { t } = useLocale();
+  const localeCode = getLocaleCode(t);
+  const currentBookMetadata = item.type === "book" ? normalizeBookMetadata(item.metadata) : null;
   const [titleDraft, setTitleDraft] = useState(item.title);
   const [creatorDraft, setCreatorDraft] = useState(item.creator ?? "");
   const [urlDraft, setUrlDraft] = useState(item.url ?? "");
   const [yearDraft, setYearDraft] = useState(
-    (item.metadata as Record<string, unknown>)?.year as number | undefined ?? ""
+    item.type === "book"
+      ? normalizeBookMetadata(item.metadata).year ?? ""
+      : (item.metadata as Record<string, unknown>)?.year as number | undefined ?? ""
   );
+  const [bookDraft, setBookDraft] = useState<BookMetadata>(() => normalizeBookMetadata(item.metadata));
   const [contentDraft, setContentDraft] = useState(item.content ?? "");
+  const [progressDraft, setProgressDraft] = useState("");
+  const [submittingProgress, setSubmittingProgress] = useState(false);
   const [savingContent, setSavingContent] = useState(false);
   const [addingNote, setAddingNote] = useState(false);
   const [newNoteContent, setNewNoteContent] = useState("");
@@ -203,11 +251,46 @@ export function LibraryDetail({
   const [uploadingCover, setUploadingCover] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const bookFormatInputId = useId();
+  const totalPagesInputId = useId();
+  const progressInputId = useId();
   const isNew = item.id === "__new__";
   // TODO: Support cover upload for unsaved library items by creating the item first and then uploading the selected cover.
   const isCoverUploadDisabled = coverUploadDisabled || uploadingCover;
-  const { t } = useLocale();
   const mode = getFieldDisplayMode(editMode || isNew);
+  const libraryText = {
+    format: t.library.bookFormat ?? "Format",
+    ebook: t.library.ebook ?? "Ebook",
+    physical: t.library.physical ?? "Physical",
+    totalPages: t.library.totalPages ?? "Total pages",
+    readingProgress: t.library.readingProgress ?? "Reading progress",
+    currentProgress: t.library.currentProgress ?? "Current progress",
+    updatePercent: t.library.updatePercent ?? "Progress percent",
+    updatePage: t.library.updatePage ?? "Current page",
+    log: t.library.log ?? "Log",
+    updatedDate: t.library.updatedDate ?? "Last updated",
+    finishCue: t.library.finishCue ?? "Almost finished",
+  };
+  const progressPercent = currentBookMetadata?.bookFormat === "ebook"
+    ? currentBookMetadata.currentProgressPercent
+    : currentBookMetadata
+      ? deriveBookProgressPercent(currentBookMetadata)
+      : null;
+  const primaryProgressValue = currentBookMetadata?.bookFormat === "physical"
+    ? currentBookMetadata.currentProgressPage === null
+      ? "0"
+      : currentBookMetadata.totalPages === null
+        ? String(currentBookMetadata.currentProgressPage)
+        : `${currentBookMetadata.currentProgressPage} / ${currentBookMetadata.totalPages}`
+    : `${currentBookMetadata?.currentProgressPercent ?? 0}%`;
+  const showProgressCard = item.type === "book"
+    && !isNew
+    && currentBookMetadata?.bookFormat !== null;
+  const isProgressReadOnly = item.status === "finished";
+  const showCompletionCue = item.status !== "finished"
+    && progressPercent !== null
+    && progressPercent >= 99;
+  const bookYearDraftValue = yearDraft !== "" ? Number(yearDraft) : null;
 
   const enterEditMode = useCallback(() => {
     setEditMode(true);
@@ -217,10 +300,13 @@ export function LibraryDetail({
     setTitleDraft(item.title);
     setCreatorDraft(item.creator ?? "");
     setUrlDraft(item.url ?? "");
-    setYearDraft((item.metadata as Record<string, unknown>)?.year as number | undefined ?? "");
+    setYearDraft(item.type === "book"
+      ? normalizeBookMetadata(item.metadata).year ?? ""
+      : (item.metadata as Record<string, unknown>)?.year as number | undefined ?? "");
+    setBookDraft(normalizeBookMetadata(item.metadata));
     setContentDraft(item.content ?? "");
     setEditMode(false);
-  }, [item.title, item.creator, item.url, item.metadata, item.content]);
+  }, [item.title, item.creator, item.url, item.metadata, item.content, item.type]);
 
   const saveAndExitEdit = useCallback(async () => {
     // Trigger saves for any changed fields
@@ -231,16 +317,27 @@ export function LibraryDetail({
     if (creatorVal !== item.creator) updates.creator = creatorVal;
     const urlVal = urlDraft.trim() || null;
     if (urlVal !== item.url) updates.url = urlVal;
-    const yearVal = yearDraft !== "" ? Number(yearDraft) : null;
+    const yearVal = bookYearDraftValue;
     const currentYear = (item.metadata as Record<string, unknown> | null)?.year as number | null ?? null;
-    if (yearVal !== currentYear) updates.metadata = { ...(item.metadata ?? {}), year: yearVal };
+    if (item.type !== "book" && yearVal !== currentYear) {
+      updates.metadata = { ...(item.metadata ?? {}), year: yearVal };
+    }
+    if (item.type === "book" && currentBookMetadata) {
+      const nextBookMetadata = normalizeBookMetadata({
+        ...bookDraft,
+        year: yearVal,
+      });
+      if (!areBookMetadataEqual(nextBookMetadata, currentBookMetadata)) {
+        updates.metadata = nextBookMetadata;
+      }
+    }
     if (contentDraft !== (item.content ?? "")) updates.content = contentDraft || null;
 
     if (Object.keys(updates).length > 0) {
       await onUpdate(updates).catch(() => undefined);
     }
     setEditMode(false);
-  }, [titleDraft, creatorDraft, urlDraft, yearDraft, contentDraft, item, onUpdate]);
+  }, [titleDraft, creatorDraft, urlDraft, bookYearDraftValue, bookDraft, contentDraft, item, currentBookMetadata, onUpdate]);
 
   const typeLabels: Record<MediaType, string> = {
     book: t.library.book, album: t.library.album, movie: t.library.movie,
@@ -251,7 +348,9 @@ export function LibraryDetail({
     setTitleDraft(item.title);
     setCreatorDraft(item.creator ?? "");
     setUrlDraft(item.url ?? "");
-    setYearDraft((item.metadata as Record<string, unknown>)?.year as number | undefined ?? "");
+    setYearDraft(item.type === "book"
+      ? normalizeBookMetadata(item.metadata).year ?? ""
+      : (item.metadata as Record<string, unknown>)?.year as number | undefined ?? "");
     setContentDraft(item.content ?? "");
     setAddingNote(false);
     setNewNoteContent("");
@@ -260,7 +359,24 @@ export function LibraryDetail({
     setSubmittingNote(false);
     setEditMode(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.id]);
+  }, [item.id, item.metadata, item.type]);
+
+  useEffect(() => {
+    if (item.type !== "book") {
+      setBookDraft(normalizeBookMetadata(null));
+      setProgressDraft("");
+      setYearDraft((item.metadata as Record<string, unknown>)?.year as number | undefined ?? "");
+      return;
+    }
+    const nextBookMetadata = normalizeBookMetadata(item.metadata);
+    setBookDraft(nextBookMetadata);
+    setYearDraft(nextBookMetadata.year ?? "");
+    setProgressDraft(
+      nextBookMetadata.bookFormat === "physical"
+        ? nextBookMetadata.currentProgressPage?.toString() ?? ""
+        : nextBookMetadata.currentProgressPercent?.toString() ?? ""
+    );
+  }, [item.type, item.metadata]);
 
   async function handleCreate() {
     const newTitle = titleDraft.trim();
@@ -274,10 +390,15 @@ export function LibraryDetail({
       rating: item.rating,
       reactions: item.reactions,
       genres: item.genres,
-      metadata: {
-        ...(item.metadata ?? {}),
-        year: yearDraft !== "" ? Number(yearDraft) : null,
-      },
+      metadata: item.type === "book"
+        ? normalizeBookMetadata({
+          ...bookDraft,
+          year: bookYearDraftValue,
+        })
+        : {
+          ...(item.metadata ?? {}),
+          year: bookYearDraftValue,
+        },
       content: contentDraft || null,
     }).catch(() => undefined);
   }
@@ -323,11 +444,90 @@ export function LibraryDetail({
   }
 
   async function handleYearBlur() {
-    const val = yearDraft !== "" ? Number(yearDraft) : null;
+    const val = bookYearDraftValue;
+    if (item.type === "book") {
+      const nextMetadata = normalizeBookMetadata({
+        ...bookDraft,
+        year: val,
+      });
+      setBookDraft(nextMetadata);
+      const current = currentBookMetadata?.year ?? null;
+      if (isNew || val !== current) {
+        await onUpdate({ metadata: nextMetadata }).catch(() => undefined);
+      }
+      return;
+    }
     const current = (item.metadata as Record<string, unknown> | null)?.year as number | null ?? null;
     if (isNew || val !== current) {
       await onUpdate({ metadata: { ...(item.metadata ?? {}), year: val } }).catch(() => undefined);
     }
+  }
+
+  async function persistBookMetadata(nextMetadata: BookMetadata) {
+    setBookDraft(nextMetadata);
+    if (isNew) {
+      await onUpdate({ metadata: nextMetadata }).catch(() => undefined);
+    }
+  }
+
+  async function handleBookMetadataBlur() {
+    if (!currentBookMetadata) return;
+    const nextMetadata = normalizeBookMetadata({
+      ...bookDraft,
+      year: bookYearDraftValue,
+    });
+    setBookDraft(nextMetadata);
+    if (isNew || !areBookMetadataEqual(nextMetadata, currentBookMetadata)) {
+      await onUpdate({ metadata: nextMetadata }).catch(() => undefined);
+    }
+  }
+
+  async function handleBookFormatChange(value: string) {
+    const nextMetadata = normalizeBookMetadata({
+      ...bookDraft,
+      year: bookYearDraftValue,
+      bookFormat: isBookFormat(value) ? value : null,
+    });
+    await persistBookMetadata(nextMetadata);
+  }
+
+  async function handleTotalPagesChange(value: string) {
+    const nextMetadata = normalizeBookMetadata({
+      ...bookDraft,
+      year: bookYearDraftValue,
+      totalPages: value ? Number(value) : null,
+    });
+    await persistBookMetadata(nextMetadata);
+  }
+
+  async function handleProgressLog() {
+    if (!onProgressSubmit || !currentBookMetadata?.bookFormat) return;
+
+    const numericValue = Number(progressDraft);
+    if (!Number.isFinite(numericValue)) return;
+
+    setSubmittingProgress(true);
+    try {
+      if (currentBookMetadata.bookFormat === "ebook") {
+        const progressPercentValue = Math.trunc(numericValue);
+        if (progressPercentValue < 0 || progressPercentValue > 100) return;
+        await onProgressSubmit({ progressPercent: progressPercentValue });
+      } else {
+        const currentPage = Math.trunc(numericValue);
+        if (currentPage <= 0) return;
+        await onProgressSubmit({ currentPage });
+      }
+    } finally {
+      setSubmittingProgress(false);
+    }
+  }
+
+  async function handleNewTypeChange(value: string) {
+    const nextType = value as MediaType;
+    await onUpdate({
+      type: nextType,
+      metadata: nextType === "book" ? normalizeBookMetadata(null) : null,
+    }).catch(() => undefined);
   }
 
   async function handleContentBlur() {
@@ -382,7 +582,7 @@ export function LibraryDetail({
           </span>
         ) : (
           <time className="text-[11px] tracking-widest uppercase text-muted-foreground/50 font-medium select-none">
-            {formatDate(item.created_at, t.localeCode)}
+            {formatDate(item.created_at, localeCode)}
           </time>
         )}
 
@@ -593,7 +793,22 @@ export function LibraryDetail({
                 <ViewModeTagField label={t.library.platform} values={((item.metadata as Record<string, unknown>)?.platform as string[]) ?? []} />
               )}
               {item.type === "book" && (
-                <ViewModeField label={t.library.pages} value={String((item.metadata as Record<string, unknown>)?.pages ?? "")} />
+                <>
+                  <ViewModeField
+                    label={libraryText.format}
+                    value={
+                      currentBookMetadata?.bookFormat === "ebook"
+                        ? libraryText.ebook
+                        : currentBookMetadata?.bookFormat === "physical"
+                          ? libraryText.physical
+                          : ""
+                    }
+                  />
+                  <ViewModeField
+                    label={libraryText.totalPages}
+                    value={String(currentBookMetadata?.totalPages ?? "")}
+                  />
+                </>
               )}
               {item.type === "movie" && (
                 <ViewModeField label={t.library.duration} value={((item.metadata as Record<string, unknown>)?.duration as string) ?? ""} />
@@ -613,7 +828,7 @@ export function LibraryDetail({
                   <select
                     className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
                     value={item.type}
-                    onChange={(e) => onUpdate({ type: e.target.value })}
+                    onChange={(e) => void handleNewTypeChange(e.target.value)}
                   >
                     {MEDIA_TYPES.map((mt) => (
                       <option key={mt} value={mt}>{typeLabels[mt]}</option>
@@ -701,17 +916,47 @@ export function LibraryDetail({
                 </div>
               )}
               {item.type === "book" && (
-                <div>
-                  <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.pages}</label>
-                  <input
-                    type="number"
-                    className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
-                    value={(item.metadata as Record<string, unknown>)?.pages as number ?? ""}
-                    onChange={(e) => onUpdate({ metadata: { ...item.metadata, pages: e.target.value ? Number(e.target.value) : null } })}
-                    autoComplete="off"
-                    data-1p-ignore
-                  />
-                </div>
+                <>
+                  <div>
+                    <label
+                      htmlFor={bookFormatInputId}
+                      className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1"
+                    >
+                      {libraryText.format}
+                    </label>
+                    <select
+                      id={bookFormatInputId}
+                      className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
+                      value={bookDraft.bookFormat ?? ""}
+                      onChange={(e) => void handleBookFormatChange(e.target.value)}
+                      onBlur={() => void handleBookMetadataBlur()}
+                    >
+                      <option value="">{t.library.select}</option>
+                      <option value="ebook">{libraryText.ebook}</option>
+                      <option value="physical">{libraryText.physical}</option>
+                    </select>
+                  </div>
+                  {bookDraft.bookFormat === "physical" && (
+                    <div>
+                      <label
+                        htmlFor={totalPagesInputId}
+                        className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1"
+                      >
+                        {libraryText.totalPages}
+                      </label>
+                      <input
+                        id={totalPagesInputId}
+                        type="number"
+                        className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
+                        value={bookDraft.totalPages ?? ""}
+                        onChange={(e) => void handleTotalPagesChange(e.target.value)}
+                        onBlur={() => void handleBookMetadataBlur()}
+                        autoComplete="off"
+                        data-1p-ignore
+                      />
+                    </div>
+                  )}
+                </>
               )}
               {item.type === "movie" && (
                 <div>
@@ -758,6 +1003,79 @@ export function LibraryDetail({
         {/* Right column: reactions, content, thoughts */}
         <div className="flex-1 p-6 lg:p-8 lg:pl-10">
           <div className="max-w-3xl">
+            {showProgressCard && currentBookMetadata && (
+              <section
+                role="group"
+                aria-label={libraryText.readingProgress}
+                className="mb-8 rounded-2xl border border-border/60 bg-muted/20 p-5"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground/60">
+                      {libraryText.readingProgress}
+                    </p>
+                    <p className="mt-3 text-xs font-medium text-muted-foreground">
+                      {libraryText.currentProgress}
+                    </p>
+                    <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
+                      {primaryProgressValue}
+                    </p>
+                  </div>
+                  {showCompletionCue && (
+                    <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                      {libraryText.finishCue}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-border/60">
+                  <div
+                    className="h-full rounded-full bg-foreground transition-[width]"
+                    style={{ width: `${progressPercent ?? 0}%` }}
+                  />
+                </div>
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <label
+                      htmlFor={progressInputId}
+                      className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1"
+                    >
+                      {currentBookMetadata.bookFormat === "ebook" ? libraryText.updatePercent : libraryText.updatePage}
+                    </label>
+                    <input
+                      id={progressInputId}
+                      type="number"
+                      min={currentBookMetadata.bookFormat === "ebook" ? 0 : 1}
+                      max={currentBookMetadata.bookFormat === "ebook" ? 100 : currentBookMetadata.totalPages ?? undefined}
+                      className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
+                      value={progressDraft}
+                      onChange={(e) => setProgressDraft(e.target.value)}
+                      disabled={isProgressReadOnly}
+                      readOnly={isProgressReadOnly}
+                      autoComplete="off"
+                      data-1p-ignore
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleProgressLog()}
+                    disabled={isProgressReadOnly || submittingProgress || !progressDraft || !onProgressSubmit}
+                    className="rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background disabled:opacity-30 hover:opacity-80 transition-opacity"
+                  >
+                    {libraryText.log}
+                  </button>
+                </div>
+
+                {currentBookMetadata.progressUpdatedAt && (
+                  <div className="mt-4 text-xs text-muted-foreground">
+                    <span className="font-medium">{libraryText.updatedDate}</span>
+                    <p className="mt-1">{formatProgressDate(currentBookMetadata.progressUpdatedAt, localeCode)}</p>
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* Reactions */}
             <div className="mb-8">
               <label className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1">{t.library.reactions}</label>
