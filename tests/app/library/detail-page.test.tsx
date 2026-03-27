@@ -44,15 +44,21 @@ vi.mock("@/components/library/library-detail", () => ({
 }));
 
 describe("LibraryDetailPage", () => {
+  function jsonResponse(body: unknown) {
+    return new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({
+    global.fetch = vi.fn().mockResolvedValue(
+      jsonResponse({
         id: "item-1",
         title: "Test title",
       }),
-    });
+    );
   });
 
   it("lets the browser handle page scrolling for library detail pages", async () => {
@@ -68,24 +74,19 @@ describe("LibraryDetailPage", () => {
 
   it("wires a progress submit handler into LibraryDetail", async () => {
     vi.mocked(global.fetch)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: vi.fn().mockResolvedValue({
+      .mockResolvedValueOnce(
+        jsonResponse({
           id: "item-1",
           title: "Test title",
         }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: vi.fn().mockResolvedValue({ ok: true }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: vi.fn().mockResolvedValue({
+      )
+      .mockResolvedValueOnce(jsonResponse({ ok: true }))
+      .mockResolvedValueOnce(
+        jsonResponse({
           id: "item-1",
           title: "Updated title",
         }),
-      } as Response);
+      );
 
     render(<LibraryDetailPage />);
 

@@ -64,6 +64,7 @@ export const POST = withAuth<{ id: string }>(async (userId, request, { params })
     if (
       metadata.bookFormat === "physical"
       && metadata.totalPages !== null
+      && "currentPage" in parsed.data
       && parsed.data.currentPage > metadata.totalPages
     ) {
       return {
@@ -83,28 +84,36 @@ export const POST = withAuth<{ id: string }>(async (userId, request, { params })
     }
 
     const now = new Date().toISOString();
-    const nextMetadata = normalizeBookMetadata(
-      metadata.bookFormat === "ebook"
-        ? {
-          ...metadata,
-          currentProgressPercent: parsed.data.progressPercent,
-          progressUpdatedAt: now,
-        }
-        : {
-          ...metadata,
-          currentProgressPage: parsed.data.currentPage,
-          progressUpdatedAt: now,
-        },
-    );
+    let progressKind: "percent" | "page";
+    let progressValue: number;
+    let nextMetadata;
+
+    if ("progressPercent" in parsed.data) {
+      progressKind = "percent";
+      progressValue = parsed.data.progressPercent;
+      nextMetadata = normalizeBookMetadata({
+        ...metadata,
+        currentProgressPercent: progressValue,
+        currentProgressPage: null,
+        progressUpdatedAt: now,
+      });
+    } else {
+      progressKind = "page";
+      progressValue = parsed.data.currentPage;
+      nextMetadata = normalizeBookMetadata({
+        ...metadata,
+        currentProgressPercent: null,
+        currentProgressPage: progressValue,
+        progressUpdatedAt: now,
+      });
+    }
 
     await tx.insert(mediaItemProgressUpdates).values({
       id: nanoid(),
       mediaItemId: params.id,
       userId,
-      progress_kind: metadata.bookFormat === "ebook" ? "percent" : "page",
-      progress_value: metadata.bookFormat === "ebook"
-        ? parsed.data.progressPercent
-        : parsed.data.currentPage,
+      progress_kind: progressKind,
+      progress_value: progressValue,
       max_value: metadata.bookFormat === "physical" ? metadata.totalPages : null,
       created_at: now,
     });

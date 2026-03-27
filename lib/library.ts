@@ -14,7 +14,9 @@ export type BookMetadata = {
 export type BookProgressMetadata = Pick<
   BookMetadata,
   "bookFormat" | "currentProgressPercent" | "currentProgressPage" | "totalPages"
->;
+> & {
+  progressUpdatedAt?: string | null;
+};
 
 export const MEDIA_TYPES: MediaType[] = ["book", "album", "movie", "game", "video", "misc"];
 export const MEDIA_STATUSES: MediaStatus[] = ["backlog", "in_progress", "finished", "dropped"];
