@@ -3,14 +3,36 @@ import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockDb = vi.mocked(db) as any;
+type DbMock = {
+  select: ReturnType<typeof vi.fn>;
+  from: ReturnType<typeof vi.fn>;
+  where: ReturnType<typeof vi.fn>;
+  insert: ReturnType<typeof vi.fn>;
+  transaction: ReturnType<typeof vi.fn>;
+  values: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+  set: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
+  orderBy: ReturnType<typeof vi.fn>;
+};
+
+type TxMock = {
+  select: ReturnType<typeof vi.fn>;
+  from: ReturnType<typeof vi.fn>;
+  where: ReturnType<typeof vi.fn>;
+  insert: ReturnType<typeof vi.fn>;
+  values: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+  set: ReturnType<typeof vi.fn>;
+};
+
+const mockDb = vi.mocked(db) as unknown as DbMock;
 const mockAuth = auth as unknown as {
   mockReset: () => void;
   mockResolvedValue: (value: unknown) => void;
   mockResolvedValueOnce: (value: unknown) => void;
 };
-let mockTx: any;
+let mockTx: TxMock;
 
 function authed() {
   mockAuth.mockResolvedValue({ user: { id: "user-1", email: "user@example.com" } });
