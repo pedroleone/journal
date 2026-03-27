@@ -23,7 +23,7 @@ export function QuadrantCard({
   children,
 }: QuadrantCardProps) {
   return (
-    <div className="flex flex-1 flex-col bg-[var(--surface-panel)] p-3 transition-colors hover:bg-[var(--surface-panel-hover)]">
+    <div className="flex flex-col bg-[var(--surface-panel)] p-3 transition-colors hover:bg-[var(--surface-panel-hover)] md:min-h-0 md:flex-1">
       <div className="mb-3 flex items-center justify-between">
         <Link href={href} className="flex items-center gap-2">
           <AccentDot domain={domain} />
@@ -33,14 +33,14 @@ export function QuadrantCard({
         </Link>
         {actions && <div className="flex items-center gap-1">{actions}</div>}
       </div>
-      <div className="relative flex flex-1 flex-col overflow-hidden">
+      <div className="relative flex flex-col md:min-h-0 md:flex-1 md:overflow-hidden">
         <Link
           href={href}
           aria-hidden="true"
           tabIndex={-1}
           className="absolute inset-0 rounded-md pointer-events-none"
         />
-        <div className="relative z-10 flex-1 overflow-hidden">
+        <div className="relative z-10 md:flex-1 md:overflow-y-scroll scrollbar-hide">
           {children}
         </div>
         {footer && (

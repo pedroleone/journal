@@ -41,6 +41,10 @@ vi.mock("@/components/dashboard/quadrant-card", () => ({
   QuadrantCard: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
 }));
 
+vi.mock("@/hooks/use-media-query", () => ({
+  useMediaQuery: () => true,
+}));
+
 describe("LibraryQuadrant", () => {
   const realDateNow = Date.now;
 
@@ -121,26 +125,35 @@ describe("LibraryQuadrant", () => {
     });
   });
 
-  it("fills all six slots with in-progress items before recent finished or backlog items", async () => {
+  it("prioritises in-progress, then recent finished, then backlog up to 30 items", async () => {
+    const ipItems = Array.from({ length: 28 }, (_, i) =>
+      makeItem(`ip-${i + 1}`, {
+        title: `In Progress ${i + 1}`,
+        updated_at: `2026-03-${String(Math.min(24, 24 - (i % 24))).padStart(2, "0")}T${String(23 - Math.floor(i / 24)).padStart(2, "0")}:00:00.000Z`,
+      }),
+    );
+
     vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce({
-        json: async () => [
-          makeItem("ip-1", { title: "In Progress 1", updated_at: "2026-03-24T08:00:00.000Z" }),
-          makeItem("ip-2", { title: "In Progress 2", updated_at: "2026-03-24T07:00:00.000Z" }),
-          makeItem("ip-3", { title: "In Progress 3", updated_at: "2026-03-24T06:00:00.000Z" }),
-          makeItem("ip-4", { title: "In Progress 4", updated_at: "2026-03-24T05:00:00.000Z" }),
-          makeItem("ip-5", { title: "In Progress 5", updated_at: "2026-03-24T04:00:00.000Z" }),
-          makeItem("ip-6", { title: "In Progress 6", updated_at: "2026-03-24T03:00:00.000Z" }),
-          makeItem("ip-7", { title: "In Progress 7", updated_at: "2026-03-24T02:00:00.000Z" }),
-        ],
-      } as Response)
+      .mockResolvedValueOnce({ json: async () => ipItems } as Response)
       .mockResolvedValueOnce({
         json: async () => [
           makeItem("fin-1", {
-            title: "Recent Finish",
+            title: "Recent Finish 1",
             status: "finished",
             finished_at: "2026-03-23T00:00:00.000Z",
             updated_at: "2026-03-23T00:00:00.000Z",
+          }),
+          makeItem("fin-2", {
+            title: "Recent Finish 2",
+            status: "finished",
+            finished_at: "2026-03-22T00:00:00.000Z",
+            updated_at: "2026-03-22T00:00:00.000Z",
+          }),
+          makeItem("fin-3", {
+            title: "Recent Finish 3",
+            status: "finished",
+            finished_at: "2026-03-21T00:00:00.000Z",
+            updated_at: "2026-03-21T00:00:00.000Z",
           }),
         ],
       } as Response)
@@ -149,44 +162,40 @@ describe("LibraryQuadrant", () => {
           makeItem("backlog-1", {
             title: "Backlog Item",
             status: "backlog",
-            added_at: "2026-03-22T00:00:00.000Z",
-            updated_at: "2026-03-22T00:00:00.000Z",
+            added_at: "2026-03-20T00:00:00.000Z",
           }),
         ],
       } as Response);
 
     render(<LibraryQuadrant />);
 
-    expect(await screen.findByRole("link", { name: /in progress 1/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /in progress 6/i })).toBeTruthy();
-    expect(screen.queryByRole("link", { name: /in progress 7/i })).toBeNull();
-    expect(screen.queryByRole("link", { name: /recent finish/i })).toBeNull();
-    expect(screen.queryByRole("link", { name: /backlog item/i })).toBeNull();
+    // All 28 in-progress shown
+    expect(await screen.findByText("In Progress 1")).toBeTruthy();
+    expect(screen.getByText("In Progress 28")).toBeTruthy();
+    // 2 of 3 recent finished fit (28 + 2 = 30)
+    expect(screen.getByText("Recent Finish 1")).toBeTruthy();
+    expect(screen.getByText("Recent Finish 2")).toBeTruthy();
+    // 31st item cut off
+    expect(screen.queryByText("Recent Finish 3")).toBeNull();
+    expect(screen.queryByText("Backlog Item")).toBeNull();
   });
 
-  it("uses recent finished items before backlog and ignores finished items older than 30 days", async () => {
+  it("ignores finished items older than 30 days regardless of available slots", async () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce({
         json: async () => [
           makeItem("ip-1", { title: "In Progress 1", updated_at: "2026-03-24T08:00:00.000Z" }),
-          makeItem("ip-2", { title: "In Progress 2", updated_at: "2026-03-24T07:00:00.000Z" }),
         ],
       } as Response)
       .mockResolvedValueOnce({
         json: async () => [
           makeItem("fin-1", {
-            title: "Finished Recent 1",
+            title: "Finished Recent",
             status: "finished",
             finished_at: "2026-03-23T00:00:00.000Z",
             updated_at: "2026-03-23T00:00:00.000Z",
           }),
           makeItem("fin-2", {
-            title: "Finished Recent 2",
-            status: "finished",
-            finished_at: "2026-03-10T00:00:00.000Z",
-            updated_at: "2026-03-10T00:00:00.000Z",
-          }),
-          makeItem("fin-3", {
             title: "Finished Old",
             status: "finished",
             finished_at: "2026-02-20T00:00:00.000Z",
@@ -197,33 +206,20 @@ describe("LibraryQuadrant", () => {
       .mockResolvedValueOnce({
         json: async () => [
           makeItem("backlog-1", {
-            title: "Backlog Newer",
+            title: "Backlog Item",
             status: "backlog",
             added_at: "2026-03-21T00:00:00.000Z",
             updated_at: "2026-03-21T00:00:00.000Z",
-          }),
-          makeItem("backlog-2", {
-            title: "Backlog Older",
-            status: "backlog",
-            added_at: "2026-03-18T00:00:00.000Z",
-            updated_at: "2026-03-18T00:00:00.000Z",
-          }),
-          makeItem("backlog-3", {
-            title: "Backlog Oldest",
-            status: "backlog",
-            added_at: "2026-03-15T00:00:00.000Z",
-            updated_at: "2026-03-15T00:00:00.000Z",
           }),
         ],
       } as Response);
 
     render(<LibraryQuadrant />);
 
-    expect(await screen.findByRole("link", { name: /finished recent 1/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /finished recent 2/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /backlog newer/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /backlog older/i })).toBeTruthy();
+    expect(await screen.findByRole("link", { name: /in progress 1/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /finished recent/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /backlog item/i })).toBeTruthy();
+    // Old finished (>30 days) excluded by time filter
     expect(screen.queryByRole("link", { name: /finished old/i })).toBeNull();
-    expect(screen.queryByRole("link", { name: /backlog oldest/i })).toBeNull();
   });
 });

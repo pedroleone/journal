@@ -66,14 +66,14 @@ describe("FoodQuadrant", () => {
         json: async () => [],
       } as Response);
 
-    render(<FoodQuadrant date={new Date("2026-03-20T10:00:00.000Z")} />);
+    render(<FoodQuadrant />);
 
     expect((await screen.findByRole("link", { name: /food/i })).getAttribute("href")).toBe(
       "/food",
     );
   });
 
-  it("opens a dashboard-local food composer for the selected date", async () => {
+  it("opens a dashboard-local food composer for today", async () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce({
         json: async () => [],
@@ -82,12 +82,13 @@ describe("FoodQuadrant", () => {
         json: async () => [],
       } as Response);
 
-    render(<FoodQuadrant date={new Date("2026-03-21T10:00:00.000Z")} />);
+    render(<FoodQuadrant />);
 
     fireEvent.click(await screen.findByRole("button", { name: /quick add food/i }));
 
+    const today = new Date();
     expect(await screen.findByPlaceholderText(/what are you eating/i)).toBeTruthy();
-    expect(screen.getByText("2026-3-21")).toBeTruthy();
+    expect(screen.getByText(`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`)).toBeTruthy();
   });
 
   it("stays on the dashboard after dashboard quick add saves and refreshes the quadrant", async () => {
@@ -106,7 +107,7 @@ describe("FoodQuadrant", () => {
         json: async () => [{ id: "u1" }],
       } as Response);
 
-    render(<FoodQuadrant date={new Date("2026-03-21T10:00:00.000Z")} />);
+    render(<FoodQuadrant />);
 
     fireEvent.click(await screen.findByRole("button", { name: /quick add food/i }));
     fireEvent.click(screen.getByRole("button", { name: /^log$/i }));

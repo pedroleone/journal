@@ -21,6 +21,10 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@/hooks/use-media-query", () => ({
+  useMediaQuery: () => true,
+}));
+
 describe("NotesQuadrant", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
