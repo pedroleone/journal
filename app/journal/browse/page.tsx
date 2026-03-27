@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useLocale } from "@/hooks/use-locale";
@@ -34,15 +33,6 @@ function parseSelectedDate(searchParams: URLSearchParams): JournalCalendarDay | 
 
 function toDateKey(value: JournalCalendarDay): string {
   return `${value.year}-${String(value.month).padStart(2, "0")}-${String(value.day).padStart(2, "0")}`;
-}
-
-function formatSelectedDate(value: JournalCalendarDay, localeCode: string): string {
-  return new Date(value.year, value.month - 1, value.day).toLocaleDateString(localeCode, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 function getInitialMonth(selection: JournalCalendarDay | null): JournalCalendarMonth {
@@ -152,35 +142,11 @@ export default function BrowsePage() {
             }}
           />
 
-          {selectedEmptyDay ? (
-            <section className="rounded-[28px] border border-border/60 bg-card/35 px-6 py-7">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                {formatSelectedDate(selectedEmptyDay, t.localeCode)}
-              </p>
-              <h2 className="mt-3 font-display text-3xl tracking-tight text-foreground">
-                No entry for this day
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                Pick another marked date to read an entry, or start writing for this day.
-              </p>
-              <div className="mt-6">
-                <Link
-                  href={`/journal/write?year=${selectedEmptyDay.year}&month=${selectedEmptyDay.month}&day=${selectedEmptyDay.day}`}
-                  className="inline-flex items-center justify-center rounded-md bg-[var(--journal)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-                >
-                  Write for this day
-                </Link>
-              </div>
-            </section>
-          ) : !isOnline ? (
+          {!isOnline ? (
             <div className="flex min-h-[22vh] items-center justify-center rounded-[28px] border border-border/60 bg-card/35 px-6 text-center">
               <p className="text-sm text-muted-foreground">{t.journal.reconnectToLoad}</p>
             </div>
-          ) : (
-            <div className="flex min-h-[22vh] items-center justify-center rounded-[28px] border border-border/60 bg-card/35 px-6 text-center">
-              <p className="text-sm text-muted-foreground">{t.journal.selectDate}</p>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

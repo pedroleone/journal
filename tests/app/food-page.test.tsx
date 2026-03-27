@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FoodPage from "@/app/food/page";
 
@@ -426,9 +426,10 @@ describe("FoodPage", () => {
 
     expect(await screen.findByRole("button", { name: /quick add/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /inbox \(2\)/i })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /previous day/i })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /next day/i })).toBeTruthy();
     expect(screen.getByLabelText(/jump to date/i)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /previous day/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /next day/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /select date/i })).toBeNull();
     expect(screen.getByText("Breakfast")).toBeTruthy();
     expect(screen.getByText("Morning Snack")).toBeTruthy();
     expect(screen.getByText("Lunch")).toBeTruthy();
@@ -436,34 +437,26 @@ describe("FoodPage", () => {
     expect(screen.getByText("Observation")).toBeTruthy();
   });
 
-  it("loads adjacent days from previous and next navigation", async () => {
-    const previousDate = new Date(testBaseDate);
-    previousDate.setDate(testBaseDate.getDate() - 1);
+  it("loads other days from the remaining date picker control", async () => {
     const nextDate = new Date(testBaseDate);
     nextDate.setDate(testBaseDate.getDate() + 1);
+    const nextValue = [
+      nextDate.getFullYear(),
+      String(nextDate.getMonth() + 1).padStart(2, "0"),
+      String(nextDate.getDate()).padStart(2, "0"),
+    ].join("-");
 
     render(<FoodPage />);
 
     expect(await screen.findByText("Eggs")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: /previous day/i }));
-
-    expect(await screen.findByText("Previous oats")).toBeTruthy();
-    await waitFor(() => {
-      expect(replace).toHaveBeenLastCalledWith(
-        `/food?date=${previousDate.getFullYear()}-${String(previousDate.getMonth() + 1).padStart(2, "0")}-${String(previousDate.getDate()).padStart(2, "0")}&view=day`,
-        { scroll: false },
-      );
-      expect(fetch).toHaveBeenCalledWith(
-        `/api/food?year=${previousDate.getFullYear()}&month=${previousDate.getMonth() + 1}&day=${previousDate.getDate()}`,
-      );
+    fireEvent.change(screen.getByLabelText(/jump to date/i), {
+      target: { value: nextValue },
     });
-
-    fireEvent.click(screen.getByRole("button", { name: /next day/i }));
-    fireEvent.click(screen.getByRole("button", { name: /next day/i }));
 
     expect(await screen.findByText("Next pancakes")).toBeTruthy();
     await waitFor(() => {
+      expect(replace).toHaveBeenLastCalledWith(`/food?date=${nextValue}&view=day`, { scroll: false });
       expect(fetch).toHaveBeenCalledWith(
         `/api/food?year=${nextDate.getFullYear()}&month=${nextDate.getMonth() + 1}&day=${nextDate.getDate()}`,
       );
@@ -493,17 +486,6 @@ describe("FoodPage", () => {
         `/api/food?year=${nextDate.getFullYear()}&month=${nextDate.getMonth() + 1}&day=${nextDate.getDate()}`,
       );
     });
-  });
-
-  it("uses the calendar action to focus the date jump control", async () => {
-    render(<FoodPage />);
-
-    const jumpInput = screen.getByLabelText(/jump to date/i);
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /select date/i }));
-    });
-
-    expect(document.activeElement).toBe(jumpInput);
   });
 
   it("opens inbox mode in place and returns to day mode without route navigation", async () => {
@@ -782,7 +764,9 @@ describe("FoodPage", () => {
 
     expect(await screen.findByText("Eggs")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: /next day/i }));
+    fireEvent.change(screen.getByLabelText(/jump to date/i), {
+      target: { value: formatDateForExpectation(nextDate) },
+    });
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
@@ -804,7 +788,9 @@ describe("FoodPage", () => {
 
     expect(await screen.findByText("Eggs")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: /next day/i }));
+    fireEvent.change(screen.getByLabelText(/jump to date/i), {
+      target: { value: formatDateForExpectation(nextDate) },
+    });
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
@@ -826,7 +812,9 @@ describe("FoodPage", () => {
 
     expect(await screen.findByText("Eggs")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: /next day/i }));
+    fireEvent.change(screen.getByLabelText(/jump to date/i), {
+      target: { value: formatDateForExpectation(nextDate) },
+    });
 
     expect(screen.getByText("Loading...")).toBeTruthy();
     expect(screen.queryByText("Eggs")).toBeNull();
@@ -844,7 +832,9 @@ describe("FoodPage", () => {
     expect(await screen.findByText("Eggs")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /delete breakfast/i }));
-    fireEvent.click(screen.getByRole("button", { name: /next day/i }));
+    fireEvent.change(screen.getByLabelText(/jump to date/i), {
+      target: { value: formatDateForExpectation(new Date(testBaseDate.getFullYear(), testBaseDate.getMonth(), testBaseDate.getDate() + 1)) },
+    });
 
     expect(await screen.findByText("Next pancakes")).toBeTruthy();
 

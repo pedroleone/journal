@@ -1,8 +1,5 @@
 "use client";
 
-import { useRef } from "react";
-import { CalendarDays } from "lucide-react";
-import { DateNavigator } from "@/components/shared/date-navigator";
 import { FoodQuickAdd } from "@/components/food/food-quick-add";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/hooks/use-locale";
@@ -56,19 +53,16 @@ export function FoodPageShell({
   children,
 }: FoodPageShellProps) {
   const { t } = useLocale();
-  const dateInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <div className="animate-page min-h-dvh bg-[var(--surface-canvas)]">
       <div className="mx-auto flex w-full max-w-7xl flex-col">
         <div className="px-4 py-4">
           <div className="mb-5 flex flex-wrap items-center gap-3">
-            <DateNavigator date={date} onDateChange={onDateChange} />
             <label className="sr-only" htmlFor="food-date-jump">
               {t.food.jumpToDate}
             </label>
             <input
-              ref={dateInputRef}
               id="food-date-jump"
               aria-label={t.food.jumpToDate}
               type="date"
@@ -79,21 +73,6 @@ export function FoodPageShell({
               }}
               className="rounded-md border border-border/60 bg-background px-3 py-2 text-sm"
             />
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              onClick={() => {
-                if (typeof dateInputRef.current?.showPicker === "function") {
-                  dateInputRef.current.showPicker();
-                } else {
-                  dateInputRef.current?.focus();
-                }
-              }}
-            >
-              <CalendarDays className="h-4 w-4" />
-              {t.food.selectDate}
-            </Button>
             <FoodQuickAdd
               year={date.getFullYear()}
               month={date.getMonth() + 1}

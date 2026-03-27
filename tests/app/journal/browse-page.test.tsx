@@ -61,19 +61,19 @@ describe("BrowsePage", () => {
     fireEvent.click(await screen.findByRole("button", { name: /march 8, 2026/i }));
 
     expect(replace).toHaveBeenCalledWith("/journal/browse?date=2026-03-08");
+    expect(screen.queryByText(/no entry for this day/i)).toBeNull();
   });
 
-  it("shows an inline empty-day state with Write for this day when opened on an empty day", async () => {
+  it("does not show an inline empty-day panel when opened on an empty day", async () => {
     currentSearchParams = new URLSearchParams("date=2026-03-08");
 
     render(<BrowsePage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/no entry for this day/i)).toBeTruthy();
+      expect(screen.getByRole("heading", { name: /march 2026/i })).toBeTruthy();
     });
-    expect(screen.getByRole("link", { name: /write for this day/i }).getAttribute("href")).toBe(
-      "/journal/write?year=2026&month=3&day=8",
-    );
+    expect(screen.queryByText(/no entry for this day/i)).toBeNull();
+    expect(screen.queryByRole("link", { name: /write for this day/i })).toBeNull();
   });
 
   it("changes the visible month from the query-selected date", async () => {
