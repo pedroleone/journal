@@ -51,27 +51,27 @@
 :root {
   --radius: 0.5rem;
   /* Shared semantic surfaces */
-  --surface-base: #f4efe6;
-  --surface-topbar: #e8dfd0;
-  --surface-panel: #f7f1e8;
-  --surface-panel-hover: #efe5d7;
-  --surface-card: #fbf7f0;
-  --text-primary: #221d16;
-  --text-secondary: #6f6253;
-  --text-muted: #9b8e7d;
-  --border-strong: #d2c4b3;
-  --border-subtle: #e4dacc;
+  --surface-base: #f7f8fa;
+  --surface-topbar: #eef0f4;
+  --surface-panel: #f1f3f7;
+  --surface-panel-hover: #e6e9ef;
+  --surface-card: #ffffff;
+  --text-primary: #1a1d24;
+  --text-secondary: #5c6370;
+  --text-muted: #8c929e;
+  --border-strong: #d1d5dc;
+  --border-subtle: #e3e6ec;
   /* Domain accent colors */
-  --journal: #6070e4;
-  --journal-dim: rgba(96, 112, 228, 0.12);
-  --food: #4b9e88;
-  --food-dim: rgba(75, 158, 136, 0.12);
-  --notes: #9d72db;
-  --notes-dim: rgba(157, 114, 219, 0.12);
-  --library: #dd7676;
-  --library-dim: rgba(221, 118, 118, 0.12);
-  --inbox: #b08f57;
-  --inbox-dim: rgba(176, 143, 87, 0.12);
+  --journal: #4f5fd4;
+  --journal-dim: rgba(79, 95, 212, 0.08);
+  --food: #2d8f73;
+  --food-dim: rgba(45, 143, 115, 0.08);
+  --notes: #8a5cc7;
+  --notes-dim: rgba(138, 92, 199, 0.08);
+  --library: #cc5f5f;
+  --library-dim: rgba(204, 95, 95, 0.08);
+  --inbox: #9a7d42;
+  --inbox-dim: rgba(154, 125, 66, 0.08);
   /* App-facing tokens remapped from semantic palette */
   --background: var(--surface-base);
   --foreground: var(--text-primary);
@@ -90,7 +90,7 @@
   --destructive: #c25151;
   --border: var(--border-strong);
   --input: var(--border-strong);
-  --ring: #8e7d69;
+  --ring: #6b7280;
   --chart-1: oklch(0.55 0.15 45);
   --chart-2: oklch(0.60 0.10 160);
   --chart-3: oklch(0.45 0.06 230);
@@ -103,7 +103,7 @@
   --sidebar-accent: var(--surface-panel-hover);
   --sidebar-accent-foreground: var(--text-primary);
   --sidebar-border: var(--border-subtle);
-  --sidebar-ring: #8e7d69;
+  --sidebar-ring: #6b7280;
   /* Compatibility aliases for existing dashboard classes */
   --bg-quad: var(--surface-panel);
   --bg-topbar: var(--surface-topbar);
