@@ -43,6 +43,13 @@
       "when": 1774584120121,
       "tag": "0005_book_progress_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1774915872551,
+      "tag": "0006_audiobook_progress",
+      "breakpoints": true
     }
   ]
 }

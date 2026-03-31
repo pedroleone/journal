@@ -83,9 +83,32 @@ export const POST = withAuth<{ id: string }>(async (userId, request, { params })
       } as const;
     }
 
+    if (
+      metadata.bookFormat === "audiobook"
+      && metadata.totalDurationMinutes !== null
+      && "currentMinutes" in parsed.data
+      && parsed.data.currentMinutes > metadata.totalDurationMinutes
+    ) {
+      return {
+        kind: "invalid",
+        response: jsonNoStore(
+          {
+            error: "Invalid input",
+            details: [{
+              code: "custom",
+              message: "Current progress cannot exceed total duration",
+              path: ["currentMinutes"],
+            }],
+          },
+          { status: 400 },
+        ),
+      } as const;
+    }
+
     const now = new Date().toISOString();
-    let progressKind: "percent" | "page";
+    let progressKind: "percent" | "page" | "duration_minutes";
     let progressValue: number;
+    let maxValue: number | null = null;
     let nextMetadata;
 
     if ("progressPercent" in parsed.data) {
@@ -95,15 +118,29 @@ export const POST = withAuth<{ id: string }>(async (userId, request, { params })
         ...metadata,
         currentProgressPercent: progressValue,
         currentProgressPage: null,
+        currentProgressMinutes: null,
         progressUpdatedAt: now,
       });
-    } else {
+    } else if ("currentPage" in parsed.data) {
       progressKind = "page";
       progressValue = parsed.data.currentPage;
+      maxValue = metadata.totalPages;
       nextMetadata = normalizeBookMetadata({
         ...metadata,
         currentProgressPercent: null,
         currentProgressPage: progressValue,
+        currentProgressMinutes: null,
+        progressUpdatedAt: now,
+      });
+    } else {
+      progressKind = "duration_minutes";
+      progressValue = parsed.data.currentMinutes;
+      maxValue = metadata.totalDurationMinutes;
+      nextMetadata = normalizeBookMetadata({
+        ...metadata,
+        currentProgressPercent: null,
+        currentProgressPage: null,
+        currentProgressMinutes: progressValue,
         progressUpdatedAt: now,
       });
     }
@@ -114,7 +151,7 @@ export const POST = withAuth<{ id: string }>(async (userId, request, { params })
       userId,
       progress_kind: progressKind,
       progress_value: progressValue,
-      max_value: metadata.bookFormat === "physical" ? metadata.totalPages : null,
+      max_value: maxValue,
       created_at: now,
     });
 

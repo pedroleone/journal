@@ -13,6 +13,8 @@ import {
   CREATOR_LABELS,
   deriveBookProgressPercent,
   normalizeBookMetadata,
+  formatMinutesAsTime,
+  parseTimeToMinutes,
 } from "@/lib/library";
 import type { MediaType, MediaStatus, BookFormat, BookMetadata } from "@/lib/library";
 
@@ -56,7 +58,7 @@ interface LibraryDetailProps {
   item: LibraryDetailData;
   onUpdate: (data: Record<string, unknown>) => Promise<void>;
   onCreate?: (data: Record<string, unknown>) => Promise<void>;
-  onProgressSubmit?: (data: { progressPercent: number } | { currentPage: number }) => Promise<void>;
+  onProgressSubmit?: (data: { progressPercent: number } | { currentPage: number } | { currentMinutes: number }) => Promise<void>;
   onAddNote: (content: string) => Promise<void>;
   onUpdateNote: (noteId: string, content: string) => Promise<void>;
   onDelete: () => Promise<void>;
@@ -107,13 +109,15 @@ function areBookMetadataEqual(a: BookMetadata, b: BookMetadata): boolean {
   return a.year === b.year
     && a.bookFormat === b.bookFormat
     && a.totalPages === b.totalPages
+    && a.totalDurationMinutes === b.totalDurationMinutes
+    && a.currentProgressMinutes === b.currentProgressMinutes
     && a.currentProgressPercent === b.currentProgressPercent
     && a.currentProgressPage === b.currentProgressPage
     && a.progressUpdatedAt === b.progressUpdatedAt;
 }
 
 function isBookFormat(value: string): value is BookFormat {
-  return value === "ebook" || value === "physical";
+  return value === "ebook" || value === "physical" || value === "audiobook";
 }
 
 export function getFieldDisplayMode(editMode: boolean): "view" | "edit" {
@@ -242,6 +246,7 @@ export function LibraryDetail({
   const [bookDraft, setBookDraft] = useState<BookMetadata>(() => normalizeBookMetadata(item.metadata));
   const [contentDraft, setContentDraft] = useState(item.content ?? "");
   const [progressDraft, setProgressDraft] = useState("");
+  const [totalDurationDraft, setTotalDurationDraft] = useState("");
   const [submittingProgress, setSubmittingProgress] = useState(false);
   const [savingContent, setSavingContent] = useState(false);
   const [addingNote, setAddingNote] = useState(false);
@@ -253,6 +258,7 @@ export function LibraryDetail({
   const coverInputRef = useRef<HTMLInputElement>(null);
   const bookFormatInputId = useId();
   const totalPagesInputId = useId();
+  const totalDurationInputId = useId();
   const progressInputId = useId();
   const isNew = item.id === "__new__";
   // TODO: Support cover upload for unsaved library items by creating the item first and then uploading the selected cover.
@@ -262,11 +268,14 @@ export function LibraryDetail({
     format: t.library.bookFormat ?? "Format",
     ebook: t.library.ebook ?? "Ebook",
     physical: t.library.physical ?? "Physical",
+    audiobook: t.library.audiobook ?? "Audiobook",
     totalPages: t.library.totalPages ?? "Total pages",
+    totalDuration: t.library.totalDuration ?? "Total duration",
     readingProgress: t.library.readingProgress ?? "Reading progress",
     currentProgress: t.library.currentProgress ?? "Current progress",
     updatePercent: t.library.updatePercent ?? "Progress percent",
     updatePage: t.library.updatePage ?? "Current page",
+    updateTime: t.library.updateTime ?? "Time listened",
     log: t.library.log ?? "Log",
     updatedDate: t.library.updatedDate ?? "Last updated",
     finishCue: t.library.finishCue ?? "Almost finished",
@@ -282,7 +291,13 @@ export function LibraryDetail({
       : currentBookMetadata.totalPages === null
         ? String(currentBookMetadata.currentProgressPage)
         : `${currentBookMetadata.currentProgressPage} / ${currentBookMetadata.totalPages}`
-    : `${currentBookMetadata?.currentProgressPercent ?? 0}%`;
+    : currentBookMetadata?.bookFormat === "audiobook"
+      ? currentBookMetadata.totalDurationMinutes === null
+        ? null
+        : currentBookMetadata.currentProgressMinutes === null
+          ? formatMinutesAsTime(currentBookMetadata.totalDurationMinutes)
+          : formatMinutesAsTime(currentBookMetadata.totalDurationMinutes - currentBookMetadata.currentProgressMinutes)
+      : `${currentBookMetadata?.currentProgressPercent ?? 0}%`;
   const showProgressCard = item.type === "book"
     && !isNew
     && currentBookMetadata?.bookFormat !== null;
@@ -300,10 +315,16 @@ export function LibraryDetail({
     setTitleDraft(item.title);
     setCreatorDraft(item.creator ?? "");
     setUrlDraft(item.url ?? "");
+    const restoredBookMeta = normalizeBookMetadata(item.metadata);
     setYearDraft(item.type === "book"
-      ? normalizeBookMetadata(item.metadata).year ?? ""
+      ? restoredBookMeta.year ?? ""
       : (item.metadata as Record<string, unknown>)?.year as number | undefined ?? "");
-    setBookDraft(normalizeBookMetadata(item.metadata));
+    setBookDraft(restoredBookMeta);
+    setTotalDurationDraft(
+      restoredBookMeta.totalDurationMinutes != null
+        ? formatMinutesAsTime(restoredBookMeta.totalDurationMinutes)
+        : ""
+    );
     setContentDraft(item.content ?? "");
     setEditMode(false);
   }, [item.title, item.creator, item.url, item.metadata, item.content, item.type]);
@@ -371,10 +392,19 @@ export function LibraryDetail({
     const nextBookMetadata = normalizeBookMetadata(item.metadata);
     setBookDraft(nextBookMetadata);
     setYearDraft(nextBookMetadata.year ?? "");
+    setTotalDurationDraft(
+      nextBookMetadata.totalDurationMinutes != null
+        ? formatMinutesAsTime(nextBookMetadata.totalDurationMinutes)
+        : ""
+    );
     setProgressDraft(
       nextBookMetadata.bookFormat === "physical"
         ? nextBookMetadata.currentProgressPage?.toString() ?? ""
-        : nextBookMetadata.currentProgressPercent?.toString() ?? ""
+        : nextBookMetadata.bookFormat === "audiobook"
+          ? nextBookMetadata.currentProgressMinutes != null && nextBookMetadata.totalDurationMinutes != null
+            ? formatMinutesAsTime(nextBookMetadata.totalDurationMinutes - nextBookMetadata.currentProgressMinutes)
+            : ""
+          : nextBookMetadata.currentProgressPercent?.toString() ?? ""
     );
   }, [item.type, item.metadata]);
 
@@ -500,22 +530,41 @@ export function LibraryDetail({
     await persistBookMetadata(nextMetadata);
   }
 
+  async function handleTotalDurationBlur() {
+    const minutes = parseTimeToMinutes(totalDurationDraft);
+    const nextMetadata = normalizeBookMetadata({
+      ...bookDraft,
+      year: bookYearDraftValue,
+      totalDurationMinutes: minutes,
+    });
+    await persistBookMetadata(nextMetadata);
+  }
+
   async function handleProgressLog() {
     if (!onProgressSubmit || !currentBookMetadata?.bookFormat) return;
 
-    const numericValue = Number(progressDraft);
-    if (!Number.isFinite(numericValue)) return;
-
     setSubmittingProgress(true);
     try {
-      if (currentBookMetadata.bookFormat === "ebook") {
-        const progressPercentValue = Math.trunc(numericValue);
-        if (progressPercentValue < 0 || progressPercentValue > 100) return;
-        await onProgressSubmit({ progressPercent: progressPercentValue });
+      if (currentBookMetadata.bookFormat === "audiobook") {
+        if (currentBookMetadata.totalDurationMinutes === null) return;
+        const remaining = parseTimeToMinutes(progressDraft);
+        if (remaining === null || remaining < 0) return;
+        const listened = currentBookMetadata.totalDurationMinutes - remaining;
+        if (listened <= 0) return;
+        await onProgressSubmit({ currentMinutes: listened });
       } else {
-        const currentPage = Math.trunc(numericValue);
-        if (currentPage <= 0) return;
-        await onProgressSubmit({ currentPage });
+        const numericValue = Number(progressDraft);
+        if (!Number.isFinite(numericValue)) return;
+
+        if (currentBookMetadata.bookFormat === "ebook") {
+          const progressPercentValue = Math.trunc(numericValue);
+          if (progressPercentValue < 0 || progressPercentValue > 100) return;
+          await onProgressSubmit({ progressPercent: progressPercentValue });
+        } else {
+          const currentPage = Math.trunc(numericValue);
+          if (currentPage <= 0) return;
+          await onProgressSubmit({ currentPage });
+        }
       }
     } finally {
       setSubmittingProgress(false);
@@ -934,6 +983,7 @@ export function LibraryDetail({
                       <option value="">{t.library.select}</option>
                       <option value="ebook">{libraryText.ebook}</option>
                       <option value="physical">{libraryText.physical}</option>
+                      <option value="audiobook">{libraryText.audiobook}</option>
                     </select>
                   </div>
                   {bookDraft.bookFormat === "physical" && (
@@ -951,6 +1001,27 @@ export function LibraryDetail({
                         value={bookDraft.totalPages ?? ""}
                         onChange={(e) => void handleTotalPagesChange(e.target.value)}
                         onBlur={() => void handleBookMetadataBlur()}
+                        autoComplete="off"
+                        data-1p-ignore
+                      />
+                    </div>
+                  )}
+                  {bookDraft.bookFormat === "audiobook" && (
+                    <div>
+                      <label
+                        htmlFor={totalDurationInputId}
+                        className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1"
+                      >
+                        {libraryText.totalDuration}
+                      </label>
+                      <input
+                        id={totalDurationInputId}
+                        type="text"
+                        placeholder="12h 30min"
+                        className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
+                        value={totalDurationDraft}
+                        onChange={(e) => setTotalDurationDraft(e.target.value)}
+                        onBlur={() => void handleTotalDurationBlur()}
                         autoComplete="off"
                         data-1p-ignore
                       />
@@ -1041,21 +1112,40 @@ export function LibraryDetail({
                       htmlFor={progressInputId}
                       className="block text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-1"
                     >
-                      {currentBookMetadata.bookFormat === "ebook" ? libraryText.updatePercent : libraryText.updatePage}
+                      {currentBookMetadata.bookFormat === "ebook"
+                        ? libraryText.updatePercent
+                        : currentBookMetadata.bookFormat === "audiobook"
+                          ? libraryText.updateTime
+                          : libraryText.updatePage}
                     </label>
-                    <input
-                      id={progressInputId}
-                      type="number"
-                      min={currentBookMetadata.bookFormat === "ebook" ? 0 : 1}
-                      max={currentBookMetadata.bookFormat === "ebook" ? 100 : currentBookMetadata.totalPages ?? undefined}
-                      className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
-                      value={progressDraft}
-                      onChange={(e) => setProgressDraft(e.target.value)}
-                      disabled={isProgressReadOnly}
-                      readOnly={isProgressReadOnly}
-                      autoComplete="off"
-                      data-1p-ignore
-                    />
+                    {currentBookMetadata.bookFormat === "audiobook" ? (
+                      <input
+                        id={progressInputId}
+                        type="text"
+                        placeholder="2h 30min"
+                        className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
+                        value={progressDraft}
+                        onChange={(e) => setProgressDraft(e.target.value)}
+                        disabled={isProgressReadOnly}
+                        readOnly={isProgressReadOnly}
+                        autoComplete="off"
+                        data-1p-ignore
+                      />
+                    ) : (
+                      <input
+                        id={progressInputId}
+                        type="number"
+                        min={currentBookMetadata.bookFormat === "ebook" ? 0 : 1}
+                        max={currentBookMetadata.bookFormat === "ebook" ? 100 : currentBookMetadata.totalPages ?? undefined}
+                        className="w-full bg-transparent border border-border/60 rounded-md px-2 py-1.5 text-sm focus:outline-none"
+                        value={progressDraft}
+                        onChange={(e) => setProgressDraft(e.target.value)}
+                        disabled={isProgressReadOnly}
+                        readOnly={isProgressReadOnly}
+                        autoComplete="off"
+                        data-1p-ignore
+                      />
+                    )}
                   </div>
                   <button
                     type="button"

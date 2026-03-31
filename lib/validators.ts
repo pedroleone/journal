@@ -141,7 +141,7 @@ export const noteTagQuerySchema = z.object({
 
 export const mediaTypeEnum = z.enum(["book", "album", "movie", "game", "video", "misc"]);
 export const mediaStatusEnum = z.enum(["backlog", "in_progress", "finished", "dropped"]);
-export const bookFormatEnum = z.enum(["ebook", "physical"]);
+export const bookFormatEnum = z.enum(["ebook", "physical", "audiobook"]);
 
 const positiveIntSchema = z.number().int().positive();
 
@@ -151,6 +151,8 @@ export const bookMetadataSchema = z.object({
   totalPages: positiveIntSchema.nullable().optional(),
   currentProgressPercent: z.number().int().min(0).max(100).nullable().optional(),
   currentProgressPage: positiveIntSchema.nullable().optional(),
+  totalDurationMinutes: positiveIntSchema.nullable().optional(),
+  currentProgressMinutes: positiveIntSchema.nullable().optional(),
   progressUpdatedAt: z.string().datetime().nullable().optional(),
 }).strict();
 
@@ -177,9 +179,14 @@ export const bookProgressPagePayloadSchema = z.object({
   currentPage: positiveIntSchema,
 }).strict();
 
+export const bookProgressTimePayloadSchema = z.object({
+  currentMinutes: positiveIntSchema,
+}).strict();
+
 const bookProgressPayloadSchemasByFormat = {
   ebook: bookProgressPercentPayloadSchema,
   physical: bookProgressPagePayloadSchema,
+  audiobook: bookProgressTimePayloadSchema,
 } as const;
 
 // Kept alongside book metadata validation because the next route in this feature
@@ -187,6 +194,7 @@ const bookProgressPayloadSchemasByFormat = {
 export const bookProgressPayloadSchema = z.union([
   bookProgressPayloadSchemasByFormat.ebook,
   bookProgressPayloadSchemasByFormat.physical,
+  bookProgressPayloadSchemasByFormat.audiobook,
 ]);
 
 export function getBookProgressPayloadSchema(bookFormat: z.infer<typeof bookFormatEnum> | null) {

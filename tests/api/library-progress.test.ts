@@ -66,6 +66,8 @@ function bookMetadata(overrides: Record<string, unknown> = {}) {
     totalPages: null,
     currentProgressPercent: null,
     currentProgressPage: null,
+    totalDurationMinutes: null,
+    currentProgressMinutes: null,
     progressUpdatedAt: null,
     ...overrides,
   };

@@ -126,7 +126,7 @@ export default function LibraryDetailPage() {
     await refreshCurrent({ showLoading: false });
   }
 
-  async function handleProgressSubmit(data: { progressPercent: number } | { currentPage: number }) {
+  async function handleProgressSubmit(data: { progressPercent: number } | { currentPage: number } | { currentMinutes: number }) {
     const current = itemRef.current;
     if (!current) return;
     await fetch(`/api/library/${current.id}/progress`, {

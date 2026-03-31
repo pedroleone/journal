@@ -231,6 +231,8 @@ describe("LibraryDetail layout", () => {
             totalPages: null,
             currentProgressPercent: 45,
             currentProgressPage: null,
+            totalDurationMinutes: null,
+            currentProgressMinutes: null,
             progressUpdatedAt: "2026-03-21T12:00:00.000Z",
           },
         })}
@@ -257,6 +259,8 @@ describe("LibraryDetail layout", () => {
             totalPages: 320,
             currentProgressPercent: null,
             currentProgressPage: 120,
+            totalDurationMinutes: null,
+            currentProgressMinutes: null,
             progressUpdatedAt: "2026-03-21T12:00:00.000Z",
           },
         })}
@@ -289,6 +293,8 @@ describe("LibraryDetail layout", () => {
             totalPages: null,
             currentProgressPercent: 45,
             currentProgressPage: null,
+            totalDurationMinutes: null,
+            currentProgressMinutes: null,
             progressUpdatedAt: "2026-03-21T12:00:00.000Z",
           },
         })}
@@ -318,6 +324,8 @@ describe("LibraryDetail layout", () => {
             totalPages: null,
             currentProgressPercent: 100,
             currentProgressPage: null,
+            totalDurationMinutes: null,
+            currentProgressMinutes: null,
             progressUpdatedAt: "2026-03-21T12:00:00.000Z",
           },
         })}
@@ -346,6 +354,8 @@ describe("LibraryDetail layout", () => {
             totalPages: null,
             currentProgressPercent: 99,
             currentProgressPage: null,
+            totalDurationMinutes: null,
+            currentProgressMinutes: null,
             progressUpdatedAt: "2026-03-21T12:00:00.000Z",
           },
         })}

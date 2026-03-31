@@ -28,7 +28,7 @@ vi.mock("@/components/library/library-detail", () => ({
     onProgressSubmit,
   }: {
     item: { title: string };
-    onProgressSubmit?: (data: { progressPercent: number }) => Promise<void>;
+    onProgressSubmit?: (data: { progressPercent: number } | { currentPage: number } | { currentMinutes: number }) => Promise<void>;
   }) => (
     <div data-testid="library-detail">
       {item.title}

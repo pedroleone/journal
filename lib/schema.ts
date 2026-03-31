@@ -201,7 +201,7 @@ export const mediaItemProgressUpdates = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     progress_kind: text("progress_kind", {
-      enum: ["percent", "page"],
+      enum: ["percent", "page", "duration_minutes"],
     }).notNull(),
     progress_value: integer("progress_value").notNull(),
     max_value: integer("max_value"),
@@ -212,7 +212,7 @@ export const mediaItemProgressUpdates = sqliteTable(
     index("idx_media_item_progress_updates_user_created").on(table.userId, table.created_at),
     check(
       "media_item_progress_updates_progress_kind_check",
-      sql`${table.progress_kind} in ('percent', 'page')`,
+      sql`${table.progress_kind} in ('percent', 'page', 'duration_minutes')`,
     ),
     check(
       "media_item_progress_updates_progress_value_check",

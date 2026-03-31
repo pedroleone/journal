@@ -142,7 +142,10 @@ export type Translations = {
     bookFormat: string;
     ebook: string;
     physical: string;
+    audiobook: string;
     totalPages: string;
+    totalDuration: string;
+    updateTime: string;
     duration: string;
     channel: string;
     readingProgress: string;
@@ -364,7 +367,10 @@ export const en: Translations = {
     bookFormat: "Book format",
     ebook: "Ebook",
     physical: "Physical",
+    audiobook: "Audiobook",
     totalPages: "Total pages",
+    totalDuration: "Total duration",
+    updateTime: "Time remaining",
     duration: "Duration",
     channel: "Channel",
     readingProgress: "Reading progress",
@@ -590,7 +596,10 @@ export const ptBr: Translations = {
     bookFormat: "Formato do livro",
     ebook: "Ebook",
     physical: "F\u00edsico",
+    audiobook: "Audiobook",
     totalPages: "Total de p\u00e1ginas",
+    totalDuration: "Dura\u00e7\u00e3o total",
+    updateTime: "Tempo restante",
     duration: "Dura\u00e7\u00e3o",
     channel: "Canal",
     readingProgress: "Progresso de leitura",
