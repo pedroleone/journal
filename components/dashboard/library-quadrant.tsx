@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Pencil, Plus } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { QuadrantCard } from "./quadrant-card";
+import { LibraryProgressModal } from "./library-progress-modal";
 import { getBookProgressPercent, type BookProgressMetadata, type MediaStatus } from "@/lib/library";
 
 interface LibraryItem {
@@ -43,7 +44,7 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-function ItemRow({ item }: { item: LibraryItem }) {
+function ItemRow({ item, onOpenProgressModal }: { item: LibraryItem; onOpenProgressModal?: (id: string) => void }) {
   const progressPercent =
     item.type === "book" && item.status === "in_progress"
       ? getBookProgressPercent(item.metadata)
@@ -83,6 +84,16 @@ function ItemRow({ item }: { item: LibraryItem }) {
           </span>
         )}
         <StatusPill status={item.status} />
+        {item.type === "book" && item.status === "in_progress" && onOpenProgressModal && (
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenProgressModal(item.id); }}
+            className="shrink-0 rounded p-0.5 text-muted-foreground/40 hover:text-[var(--library)] hover:bg-[var(--library-dim)] transition-colors"
+            aria-label="Update progress"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        )}
       </div>
     </Link>
   );
@@ -95,10 +106,12 @@ export function LibraryQuadrant() {
   const [backlog, setBacklog] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [renderTime] = useState(() => Date.now());
+  const [progressModalItemId, setProgressModalItemId] = useState<string | null>(null);
 
   const limit = isDesktop ? DESKTOP_ITEM_LIMIT : MOBILE_ITEM_LIMIT;
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
+    setLoading(true);
     Promise.all([
       fetch(`/api/library?status=in_progress&limit=${limit}`).then((r) => r.json()),
       fetch(`/api/library?status=finished&limit=${limit}`).then((r) => r.json()),
@@ -117,6 +130,8 @@ export function LibraryQuadrant() {
       .finally(() => setLoading(false));
   }, [limit]);
 
+  useEffect(() => { fetchData(); }, [fetchData]);
+
   const recentFinishedItems = recentFinished
     .filter((item) => {
       if (!item.finished_at) return false;
@@ -133,6 +148,7 @@ export function LibraryQuadrant() {
   const total = inProgress.length + recentFinishedItems.length + backlog.length;
 
   return (
+    <>
     <QuadrantCard
       domain="library"
       label="Library"
@@ -166,7 +182,7 @@ export function LibraryQuadrant() {
       ) : prioritizedItems.length > 0 ? (
         <div className="space-y-1">
           {prioritizedItems.map((item) => (
-            <ItemRow key={item.id} item={item} />
+            <ItemRow key={item.id} item={item} onOpenProgressModal={setProgressModalItemId} />
           ))}
         </div>
       ) : (
@@ -175,5 +191,13 @@ export function LibraryQuadrant() {
         </p>
       )}
     </QuadrantCard>
+
+    <LibraryProgressModal
+      itemId={progressModalItemId ?? ""}
+      open={progressModalItemId !== null}
+      onOpenChange={(open) => { if (!open) setProgressModalItemId(null); }}
+      onSuccess={fetchData}
+    />
+    </>
   );
 }
