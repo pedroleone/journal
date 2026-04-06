@@ -112,7 +112,6 @@ export function LibraryQuadrant() {
   const limit = isDesktop ? DESKTOP_ITEM_LIMIT : MOBILE_ITEM_LIMIT;
 
   useEffect(() => {
-    setLoading(true);
     Promise.all([
       fetch(`/api/library?status=in_progress&limit=${limit}`).then((r) => r.json()),
       fetch(`/api/library?status=finished&limit=${limit}`).then((r) => r.json()),
