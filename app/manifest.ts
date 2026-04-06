@@ -9,6 +9,9 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
+    // display_override gives Android 12+ the best fullscreen TWA behavior
+    display_override: ["window-controls-overlay", "standalone"],
+    orientation: "portrait",
     background_color: "#f8f7f2",
     theme_color: "#f8f7f2",
     icons: [
