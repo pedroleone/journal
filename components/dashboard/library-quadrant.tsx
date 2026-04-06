@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Pencil, Plus } from "lucide-react";
@@ -107,10 +107,11 @@ export function LibraryQuadrant() {
   const [loading, setLoading] = useState(true);
   const [renderTime] = useState(() => Date.now());
   const [progressModalItemId, setProgressModalItemId] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   const limit = isDesktop ? DESKTOP_ITEM_LIMIT : MOBILE_ITEM_LIMIT;
 
-  const fetchData = useCallback(() => {
+  useEffect(() => {
     setLoading(true);
     Promise.all([
       fetch(`/api/library?status=in_progress&limit=${limit}`).then((r) => r.json()),
@@ -128,9 +129,7 @@ export function LibraryQuadrant() {
         setBacklog([]);
       })
       .finally(() => setLoading(false));
-  }, [limit]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  }, [limit, refreshToken]);
 
   const recentFinishedItems = recentFinished
     .filter((item) => {
@@ -196,7 +195,7 @@ export function LibraryQuadrant() {
       itemId={progressModalItemId ?? ""}
       open={progressModalItemId !== null}
       onOpenChange={(open) => { if (!open) setProgressModalItemId(null); }}
-      onSuccess={fetchData}
+      onSuccess={() => setRefreshToken((t) => t + 1)}
     />
     </>
   );
